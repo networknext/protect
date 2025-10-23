@@ -1,0 +1,18 @@
+
+Necessary components:
+
+    ----------------
+
+    Start with SDK
+
+    I want a client SDK with no threads for packet send and receive
+
+    ----------------
+
+    Server should have a process running that handles the network next stuff in XDP
+
+    Minimal, if any, changes made on the server-side to packet processing
+
+    No packets read on a background thread, XDP for the parts that need to respond right away
+
+    ----------------
