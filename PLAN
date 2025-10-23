@@ -1,0 +1,26 @@
+
+---------------------------------------
+
+Client creates socket
+
+Client socket is singlethreaded. No background thread. Just a UDP socket.
+
+Client communicates directly to the backend over UDP.
+
+Client is pumped at game framerate (60HZ variable, give or take...).
+
+Client inits with backend and gets a backend token (as per-space game).
+
+Client has to refresh this backend token at some rate, like every 60 seconds.
+
+Client requests a ping token from the backend (passing in backend token) and gets it.
+
+Client pings the relays its given for a certain amount of time (and is able to request a new set of ping tokens and repeat pings until it is happy with the a result)
+
+Once the the client has the ping results, they can be accessed as a base64 string.
+
+Passing up this base64 string to the backend, the client can now be given routes.
+
+Aim to have multiple routes active at the same time. Refresh them once per-second, and be persistent, if we can't communicate over the routes retry until we can. Don't give up!
+
+---------------------------------------
