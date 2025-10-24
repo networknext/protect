@@ -28,6 +28,7 @@ struct next_client_t
 {
     void * context;
     int state;
+    uint16_t bound_port;
     next_platform_socket_t * socket;
     void (*packet_received_callback)( next_client_t * client, void * context, const uint8_t * packet_data, int packet_bytes );
     next_client_stats_t client_stats;
@@ -52,13 +53,13 @@ next_client_t * next_client_create( void * context, uint64_t server_id, void (*p
 
     next_address_t bind_address;
     memset( &bind_address, 0, sizeof(bind_address) );
+    bind_address.type = NEXT_ADDRESS_IPV4;
 
     // IMPORTANT: for many platforms it's best practice to bind to ipv6 and go dual stack on the client
     if ( next_platform_client_dual_stack() )
     {
         next_printf( NEXT_LOG_LEVEL_INFO, "client socket is dual stack ipv4 and ipv6" );
         bind_address.type = NEXT_ADDRESS_IPV6;
-        memset( bind_address.data.ipv6, 0, sizeof(bind_address.data.ipv6) );
     }
 
     // IMPORTANT: some platforms (GDK) have a preferred port that we must use to access packet tagging
@@ -73,16 +74,18 @@ next_client_t * next_client_create( void * context, uint64_t server_id, void (*p
         }
     }
 
-    char address_string[NEXT_MAX_ADDRESS_STRING_LENGTH];
-    next_printf( NEXT_LOG_LEVEL_INFO, "client bind address is %s", next_address_to_string( &bind_address, address_string ) );
-
-    client->socket = next_platform_socket_create( client->context, &bind_address, NEXT_PLATFORM_SOCKET_BLOCKING, 0.1f, next_global_config.socket_send_buffer_size, next_global_config.socket_receive_buffer_size );
+    client->socket = next_platform_socket_create( client->context, &bind_address, NEXT_PLATFORM_SOCKET_NON_BLOCKING, 0.0f, next_global_config.socket_send_buffer_size, next_global_config.socket_receive_buffer_size );
     if ( client->socket == NULL )
     {
         next_printf( NEXT_LOG_LEVEL_ERROR, "client could not create socket" );
         next_client_destroy( client );
         return NULL;
     }
+
+    char address_string[NEXT_MAX_ADDRESS_STRING_LENGTH];
+    next_printf( NEXT_LOG_LEVEL_INFO, "client bound to %s", next_address_to_string( &bind_address, address_string ) );
+
+    client->bound_port = bind_address.port;
 
     return client;    
 }
@@ -98,9 +101,7 @@ void next_client_update( next_client_t * client )
 void next_client_disconnect( next_client_t * client )
 {
     next_assert( client );
-
-    // todo
-    (void) client;
+    client->state = NEXT_CLIENT_DISCONNECTED;
 }
 
 int next_client_state( next_client_t * client )
