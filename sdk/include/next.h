@@ -371,51 +371,6 @@ struct next_client_stats_t
 
 // -----------------------------------------
 
-#define NEXT_CLIENT_STATE_CLOSED        0
-#define NEXT_CLIENT_STATE_OPEN          1
-#define NEXT_CLIENT_STATE_ERROR         2
-
-struct next_client_t;
-struct next_address_t;
-
-NEXT_EXPORT_FUNC struct next_client_t * next_client_create( void * context, const char * bind_address, void (*packet_received_callback)( struct next_client_t * client, void * context, const struct next_address_t * from, const uint8_t * packet_data, int packet_bytes ) );
-
-NEXT_EXPORT_FUNC void next_client_destroy( struct next_client_t * client );
-
-NEXT_EXPORT_FUNC uint16_t next_client_port( struct next_client_t * client );
-
-NEXT_EXPORT_FUNC void next_client_open_session( struct next_client_t * client, const char * server_address );
-
-NEXT_EXPORT_FUNC void next_client_close_session( struct next_client_t * client );
-
-NEXT_EXPORT_FUNC bool next_client_is_session_open( struct next_client_t * client );
-
-NEXT_EXPORT_FUNC int next_client_state( struct next_client_t * client );
-
-NEXT_EXPORT_FUNC void next_client_update( struct next_client_t * client );
-
-NEXT_EXPORT_FUNC void next_client_send_packet( struct next_client_t * client, const uint8_t * packet_data, int packet_bytes );
-
-NEXT_EXPORT_FUNC void next_client_send_packet_direct( struct next_client_t * client, const uint8_t * packet_data, int packet_bytes );
-
-NEXT_EXPORT_FUNC void next_client_send_packet_raw( struct next_client_t * client, const struct next_address_t * address, const uint8_t * packet_data, int packet_bytes );
-
-NEXT_EXPORT_FUNC void next_client_report_session( struct next_client_t * client );
-
-NEXT_EXPORT_FUNC uint64_t next_client_session_id( struct next_client_t * client );
-
-NEXT_EXPORT_FUNC const struct next_client_stats_t * next_client_stats( struct next_client_t * client );
-
-NEXT_EXPORT_FUNC const struct next_address_t * next_client_server_address( struct next_client_t * client );
-
-NEXT_EXPORT_FUNC bool next_client_ready( struct next_client_t * client );
-
-NEXT_EXPORT_FUNC bool next_client_fallback_to_direct( struct next_client_t * client );
-
-NEXT_EXPORT_FUNC void next_client_game_stats( next_client_t * client, float game_rtt, float game_jitter, float game_packet_loss );
-
-// -----------------------------------------
-
 struct next_server_stats_t
 {
     uint64_t session_id;

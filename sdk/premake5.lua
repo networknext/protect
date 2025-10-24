@@ -80,3 +80,15 @@ project "test"
 		links { "pthread" }
 	filter "system:macosx"
 		linkoptions { "-framework SystemConfiguration -framework CoreFoundation" }
+
+project "client"
+	kind "ConsoleApp"
+	links { "next", "sodium" }
+	files { "client.cpp" }
+	includedirs { "include" }
+	filter "system:windows"
+		disablewarnings { "4324" }
+	filter "system:not windows"
+		links { "pthread" }
+	filter "system:macosx"
+		linkoptions { "-framework SystemConfiguration -framework CoreFoundation" }

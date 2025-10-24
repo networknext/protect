@@ -4,8 +4,13 @@
 */
 
 #include "next_client.h"
-#include "next_memory_checks.h"
+#include "next_config.h"
+#include "next_internal_config.h"
+#include "next_constants.h"
 #include "next_platform.h"
+
+// todo
+/*
 #include "next_packet_loss_tracker.h"
 #include "next_out_of_order_tracker.h"
 #include "next_jitter_tracker.h"
@@ -15,96 +20,113 @@
 #include "next_internal_config.h"
 #include "next_value_tracker.h"
 #include "next_hash.h"
+*/
 
-#include <atomic>
-#include <stdio.h>
-#include <stdlib.h>
+#include <memory.h>
+
+struct next_client_t
+{
+    void * context;
+    int state;
+    next_platform_socket_t * socket;
+    void (*packet_received_callback)( next_client_t * client, void * context, const uint8_t * packet_data, int packet_bytes );
+    next_client_stats_t client_stats;
+};
+
+extern next_internal_config_t next_global_config;
+
+next_client_t * next_client_create( void * context, uint64_t server_id, void (*packet_received_callback)( next_client_t * client, void * context, const uint8_t * packet_data, int packet_bytes ) )
+{
+    // todo
+    (void) server_id;
+
+    next_assert( packet_received_callback );
+
+    next_client_t * client = (next_client_t*) next_malloc( context, sizeof(next_client_t) );
+    if ( !client )
+        return NULL;
+
+    memset( client, 0, sizeof( next_client_t) );
+    
+    client->context = context;
+
+    next_address_t bind_address;
+    memset( &bind_address, 0, sizeof(bind_address) );
+
+    // IMPORTANT: for many platforms it's best practice to bind to ipv6 and go dual stack on the client
+    if ( next_platform_client_dual_stack() )
+    {
+        next_printf( NEXT_LOG_LEVEL_INFO, "client socket is dual stack ipv4 and ipv6" );
+        bind_address.type = NEXT_ADDRESS_IPV6;
+        memset( bind_address.data.ipv6, 0, sizeof(bind_address.data.ipv6) );
+    }
+
+    // IMPORTANT: some platforms (GDK) have a preferred port that we must use to access packet tagging
+    // If the bind address has set port of 0, substitute the preferred client port here
+    if ( bind_address.port == 0 )
+    {
+        int preferred_client_port = next_platform_preferred_client_port();
+        if ( preferred_client_port != 0 )
+        {
+            next_printf( NEXT_LOG_LEVEL_INFO, "client socket using preferred port %d", preferred_client_port );
+            bind_address.port = preferred_client_port;
+        }
+    }
+
+    char address_string[NEXT_MAX_ADDRESS_STRING_LENGTH];
+    next_printf( NEXT_LOG_LEVEL_INFO, "client bind address is %s", next_address_to_string( &bind_address, address_string ) );
+
+    client->socket = next_platform_socket_create( client->context, &bind_address, NEXT_PLATFORM_SOCKET_BLOCKING, 0.1f, next_global_config.socket_send_buffer_size, next_global_config.socket_receive_buffer_size );
+    if ( client->socket == NULL )
+    {
+        next_printf( NEXT_LOG_LEVEL_ERROR, "client could not create socket" );
+        next_client_destroy( client );
+        return NULL;
+    }
+
+    return client;    
+}
+
+void next_client_update( next_client_t * client )
+{
+    next_assert( client );
+
+    // todo
+    (void) client;
+}
+
+void next_client_disconnect( next_client_t * client )
+{
+    next_assert( client );
+
+    // todo
+    (void) client;
+}
+
+int next_client_state( next_client_t * client )
+{
+    next_assert( client );
+    return client->state;
+}
+
+void next_client_destroy( next_client_t * client )
+{
+    if ( client->socket )
+    {
+        next_platform_socket_destroy( client->socket );
+    }
+
+    next_clear_and_free( client->context, client, sizeof(next_client_t) );
+}
+
+
+
+
+
+
+
 
 #if 0
-
-// ---------------------------------------------------------------
-
-#define NEXT_CLIENT_COMMAND_OPEN_SESSION            0
-#define NEXT_CLIENT_COMMAND_CLOSE_SESSION           1
-#define NEXT_CLIENT_COMMAND_UPDATE                  2
-#define NEXT_CLIENT_COMMAND_DESTROY                 3
-#define NEXT_CLIENT_COMMAND_REPORT_SESSION          4
-
-struct next_client_command_t
-{
-    int type;
-};
-
-struct next_client_command_open_session_t : public next_client_command_t
-{
-    next_address_t server_address;
-};
-
-struct next_client_command_close_session_t : public next_client_command_t
-{
-    // ...
-};
-
-struct next_client_command_update_t : public next_client_command_t
-{
-    float delta_time;
-    float game_rtt;
-    float game_jitter;
-    float game_packet_loss;
-};
-
-struct next_client_command_destroy_t : public next_client_command_t
-{
-    // ...
-};
-
-struct next_client_command_report_session_t : public next_client_command_t
-{
-    // ...
-};
-
-// ---------------------------------------------------------------
-
-#define NEXT_CLIENT_NOTIFY_PACKET_RECEIVED          0
-#define NEXT_CLIENT_NOTIFY_UPGRADED                 1
-#define NEXT_CLIENT_NOTIFY_STATS_UPDATED            2
-#define NEXT_CLIENT_NOTIFY_MAGIC_UPDATED            3
-#define NEXT_CLIENT_NOTIFY_READY                    4
-
-struct next_client_notify_t
-{
-    int type;
-};
-
-struct next_client_notify_packet_received_t : public next_client_notify_t
-{
-    bool direct;
-    bool already_received;
-    int payload_bytes;
-    uint8_t payload_data[NEXT_MAX_PACKET_BYTES-1];
-};
-
-struct next_client_notify_upgraded_t : public next_client_notify_t
-{
-    uint64_t session_id;
-    next_address_t client_external_address;
-    uint8_t current_magic[8];
-};
-
-struct next_client_notify_stats_updated_t : public next_client_notify_t
-{
-    next_client_stats_t stats;
-    bool fallback_to_direct;
-};
-
-struct next_client_notify_magic_updated_t : public next_client_notify_t
-{
-    uint8_t current_magic[8];
-};
-
-struct next_client_notify_ready_t : public next_client_notify_t
-{
-};
 
 // ---------------------------------------------------------------
 
@@ -163,7 +185,6 @@ struct next_client_internal_t
     void * context;
     next_queue_t * command_queue;
     next_queue_t * notify_queue;
-    next_platform_socket_t * socket;
     next_platform_mutex_t command_mutex;
     next_platform_mutex_t notify_mutex;
     next_address_t server_address;
