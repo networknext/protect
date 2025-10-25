@@ -32,10 +32,8 @@ struct next_client_t
     int num_updates;
     uint64_t session_id;
     uint64_t server_id;
-    uint64_t match_id;
     next_platform_socket_t * socket;
     void (*packet_received_callback)( next_client_t * client, void * context, const uint8_t * packet_data, int packet_bytes );
-    next_client_stats_t client_stats;
 };
 
 extern next_internal_config_t next_global_config;
@@ -160,14 +158,6 @@ uint64_t next_client_server_id( next_client_t * client )
     next_assert( client );
     return client->server_id;
 }
-
-uint64_t next_client_match_id( next_client_t * client )
-{
-    next_assert( client );
-    return client->match_id;
-}
-
-
 
 
 

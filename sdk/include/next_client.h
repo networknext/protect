@@ -30,6 +30,4 @@ uint64_t next_client_session_id( next_client_t * client );
 
 uint64_t next_client_server_id( next_client_t * client );
 
-uint64_t next_client_match_id( next_client_t * client );
-
 #endif // #ifndef NEXT_CLIENT_H
