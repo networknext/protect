@@ -30,6 +30,9 @@ struct next_client_t
     int state;
     uint16_t bound_port;
     int num_updates;
+    uint64_t session_id;
+    uint64_t server_id;
+    uint64_t match_id;
     next_platform_socket_t * socket;
     void (*packet_received_callback)( next_client_t * client, void * context, const uint8_t * packet_data, int packet_bytes );
     next_client_stats_t client_stats;
@@ -37,10 +40,10 @@ struct next_client_t
 
 extern next_internal_config_t next_global_config;
 
-next_client_t * next_client_create( void * context, uint64_t server_id, void (*packet_received_callback)( next_client_t * client, void * context, const uint8_t * packet_data, int packet_bytes ) )
+next_client_t * next_client_create( void * context, const char * connect_token, void (*packet_received_callback)( next_client_t * client, void * context, const uint8_t * packet_data, int packet_bytes ) )
 {
     // todo
-    (void) server_id;
+    (void) connect_token;
 
     next_assert( packet_received_callback );
 
@@ -51,6 +54,7 @@ next_client_t * next_client_create( void * context, uint64_t server_id, void (*p
     memset( client, 0, sizeof( next_client_t) );
     
     client->context = context;
+    client->packet_received_callback = packet_received_callback;
 
     next_address_t bind_address;
     memset( &bind_address, 0, sizeof(bind_address) );
@@ -91,6 +95,19 @@ next_client_t * next_client_create( void * context, uint64_t server_id, void (*p
     return client;    
 }
 
+void next_client_destroy( next_client_t * client )
+{
+    // IMPORTANT: Please disconnect and wait for the client to disconnect before destroying the client
+    next_assert( client->state == NEXT_CLIENT_DISCONNECTED );
+
+    if ( client->socket )
+    {
+        next_platform_socket_destroy( client->socket );
+    }
+
+    next_clear_and_free( client->context, client, sizeof(next_client_t) );
+}
+
 void next_client_update( next_client_t * client )
 {
     next_assert( client );
@@ -111,6 +128,9 @@ void next_client_send_packet( next_client_t * client, const uint8_t * packet_dat
 {
     next_assert( client );
 
+    if ( client->state != NEXT_CLIENT_CONNECTED )
+        return;
+
     // todo
     (void) client;
     (void) packet_data;
@@ -129,18 +149,66 @@ int next_client_state( next_client_t * client )
     return client->state;
 }
 
-void next_client_destroy( next_client_t * client )
+uint64_t next_client_session_id( next_client_t * client )
 {
-    // IMPORTANT: Please disconnect and wait for the client to disconnect before destroying the client
-    next_assert( client->state == NEXT_CLIENT_DISCONNECTED );
-
-    if ( client->socket )
-    {
-        next_platform_socket_destroy( client->socket );
-    }
-
-    next_clear_and_free( client->context, client, sizeof(next_client_t) );
+    next_assert( client );
+    return client->session_id;
 }
+
+uint64_t next_client_server_id( next_client_t * client )
+{
+    next_assert( client );
+    return client->server_id;
+}
+
+uint64_t next_client_match_id( next_client_t * client )
+{
+    next_assert( client );
+    return client->match_id;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

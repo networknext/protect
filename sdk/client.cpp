@@ -37,7 +37,9 @@ int main()
         return 1;        
     }
 
-    next_client_t * client = next_client_create( NULL, 0, packet_received_callback );
+    const char * connect_token = "connect token";
+
+    next_client_t * client = next_client_create( NULL, connect_token, packet_received_callback );
     if ( !client )
     {
         next_printf( NEXT_LOG_LEVEL_ERROR, "could not create client" );

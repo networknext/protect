@@ -14,7 +14,9 @@ struct next_client_t;
 #define NEXT_CLIENT_CONNECTED         1
 #define NEXT_CLIENT_DISCONNECTED      2
 
-next_client_t * next_client_create( void * context, uint64_t server_id, void (*packet_received_callback)( next_client_t * client, void * context, const uint8_t * packet_data, int packet_bytes ) );
+next_client_t * next_client_create( void * context, const char * connect_token, void (*packet_received_callback)( next_client_t * client, void * context, const uint8_t * packet_data, int packet_bytes ) );
+
+void next_client_destroy( next_client_t * client );
 
 void next_client_update( next_client_t * client );
 
@@ -24,6 +26,10 @@ void next_client_disconnect( next_client_t * client );
 
 int next_client_state( next_client_t * client );
 
-void next_client_destroy( next_client_t * client );
+uint64_t next_client_session_id( next_client_t * client );
+
+uint64_t next_client_server_id( next_client_t * client );
+
+uint64_t next_client_match_id( next_client_t * client );
 
 #endif // #ifndef NEXT_CLIENT_H
