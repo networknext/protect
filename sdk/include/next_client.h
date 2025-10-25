@@ -10,9 +10,9 @@
 
 struct next_client_t;
 
-#define NEXT_CLIENT_CONNECTING        0
-#define NEXT_CLIENT_CONNECTED         1
-#define NEXT_CLIENT_DISCONNECTED      2
+#define NEXT_CLIENT_DISCONNECTED      0
+#define NEXT_CLIENT_CONNECTING        1
+#define NEXT_CLIENT_CONNECTED         2
 
 next_client_t * next_client_create( void * context, const char * connect_token, void (*packet_received_callback)( next_client_t * client, void * context, const uint8_t * packet_data, int packet_bytes ) );
 

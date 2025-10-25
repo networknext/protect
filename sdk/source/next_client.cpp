@@ -52,6 +52,7 @@ next_client_t * next_client_create( void * context, const char * connect_token, 
     memset( client, 0, sizeof( next_client_t) );
     
     client->context = context;
+    client->state = NEXT_CLIENT_CONNECTING;
     client->packet_received_callback = packet_received_callback;
 
     next_address_t bind_address;
