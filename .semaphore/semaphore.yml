@@ -46,7 +46,7 @@ blocks:
     dependencies: []
     task:
       jobs:
-        - name: "XDP"
+        - name: "Build XDP Relay"
           commands:
             - |
               if [ -z "$SEMAPHORE_GIT_TAG_NAME" ]; then
@@ -72,6 +72,16 @@ blocks:
             - mv relay relay-release
             - artifact push workflow relay-release --force
             - make relay_xdp.o
-            - popd
-            - cd module && tar -zcvf module.tar.gz *
-            - artifact push workflow ./module.tar.gz --force
+
+  - name: "Module"
+    dependencies: []
+    task:
+      jobs:
+        - name: "Build Linux Kernel Module"
+          commands:
+            - checkout
+            - uname -r
+            - sudo DEBIAN_FRONTEND=noninteractive apt update -y
+            - sudo DEBIAN_FRONTEND=noninteractive apt install -y build-essential libsodium-dev libcurl4-openssl-dev clang linux-headers-generic linux-headers-`uname -r` linux-tools-`uname -r` libc6-dev-i386 gcc-12 dwarves libelf-dev pkg-config m4 libpcap-dev net-tools
+            - sudo cp /sys/kernel/btf/vmlinux /usr/lib/modules/`uname -r`/build/
+            - cd module
