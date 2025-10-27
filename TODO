@@ -9,15 +9,17 @@ DONE
 
     Setup terraform on the project and build SDK and relay
 
-TODO
-    
     I'd like to build the relay module separately, and actually test building it and installing it works?
 
+    OK all the stuff is building in semaphore.
+
+TODO
+    
+    Implement server with XDP (so we can do relay-like stuff and respond immediately to pings etc.
+
+    Sketch out some sort of AF_XDP server with a bpf map registering, yes, I'm this server id on this port.
+
     ------
-
-    Implement client backend with XDP, model it on the relay
-
-    Implement server with XDP (so we can do relay-like stuff and return )
 
     Should we implement client and server backend in XDP? I think yes. We want this to be as scalable and low-cost as possible
 
@@ -25,6 +27,8 @@ TODO
 
     Sketch out server backend
 
-    Extend relay to support
+    ------
+
+    Extend relay to support packets that close sessions
 
     ------
