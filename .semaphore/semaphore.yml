@@ -13,11 +13,12 @@ agent:
 
 blocks:
 
-  - name: "Sodium"
+  - name: "Build"
     dependencies: []
     task:
       jobs:
-        - name: "Build libsodium.so"
+
+        - name: "Sodium"
           commands:
             - wget https://download.libsodium.org/libsodium/releases/libsodium-1.0.18.tar.gz
             - tar -zxf libsodium*
@@ -28,11 +29,7 @@ blocks:
             - ls -al /usr/local/lib
             - artifact push workflow /usr/local/lib/libsodium.so --force
             
-  - name: "SDK"
-    dependencies: []
-    task:
-      jobs:
-        - name: "Build SDK"
+        - name: "SDK"
           commands:
             - sudo DEBIAN_FRONTEND=noninteractive apt-get install -y libsodium-dev wget
             - checkout
@@ -42,11 +39,7 @@ blocks:
             - ./premake5 gmake
             - make -j
 
-  - name: "Relay"
-    dependencies: []
-    task:
-      jobs:
-        - name: "Build XDP Relay"
+        - name: "Relay"
           commands:
             - |
               if [ -z "$SEMAPHORE_GIT_TAG_NAME" ]; then
@@ -61,11 +54,18 @@ blocks:
             - artifact push workflow relay --force
             - make relay_xdp.o
 
-  - name: "Module"
-    dependencies: []
-    task:
-      jobs:
-        - name: "Build Linux Kernel Module"
+        - name: "Client Backend"
+          commands:
+            - checkout
+            - uname -r
+            - sudo DEBIAN_FRONTEND=noninteractive apt update -y
+            - sudo DEBIAN_FRONTEND=noninteractive apt install -y build-essential libsodium-dev libcurl4-openssl-dev clang linux-headers-generic linux-headers-`uname -r` linux-tools-`uname -r` libc6-dev-i386 gcc-12 dwarves libelf-dev pkg-config m4 libpcap-dev net-tools libbpf-dev libxdp-dev xdp-tools
+            - sudo cp /sys/kernel/btf/vmlinux /usr/lib/modules/`uname -r`/build/
+            - cd cmd/client_backend && make -j build
+            - artifact push workflow client_backend --force
+            - make client_backend_xdp.o
+
+        - name: "Kernel Module"
           commands:
             - checkout
             - uname -r
