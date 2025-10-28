@@ -21,72 +21,9 @@ DONE
 
 TODO
 
-    ----------
+    Implement the client_backend as a test
 
-    We need to define the client token.
-
-    It can be a fixed size:
-
-        (nonce)
-        [timestamp]             8 bytes
-        [user_hash]             8 bytes
-        [session_id]            8 bytes
-        [server_id]             8 bytes
-        [buyer_id]              8 bytes
-        [client_backends]       (ipv6 address+port * n bytes, where n = number of backends, say 32...)
-        [ping_rate]             4 bytes (default 10 pings per-second, per-backend)
-        [ping_retries]          4 bytes (default 10)
-        (hmac)
-
-    The client needs access to some data in it, so it should be signed, but not encrypted.
-
-    We rely on the game backend transmitting it to the client securely over HTTPS or however they choose to do it.
-
-    ----------
-
-    The client reads the client token and extracts server backends and tries to init and ping each one in ||.
-
-    Each frame it stops and checks if it has a response with more than half the pings responded to (in the last second...)
-
-    If it finds one or more, then it randomly selects from the set with the most pings responded (tie break), and that's the backend it chooses to use.
-
-    If it doesn't find any client backend to talk to, it tries again n times (as per-connect token data)
-
-    This should connect to the best client backend for wherever the client is located (by latency), and by packet loss.
-
-    ----------
-
-    I'd like to implement the client backend as an XDP program
-
-    The client backend will check if the timestamp is not expired, and that the buyer is a known buyer id, and then checks the signature for the connect token, and ignores if it has expired.
-
-    The init should then respond with a "client state" which is a smaller encrypted block of state that is passed back and forth between the client and the backend.
-
-    ----------
-
-    At minimum the client state should be:
-
-        (nonce)
-        [timestamp]
-        [user_hash]
-        [session_id]
-        [server_id]
-        [client_relay_ids]
-        [client_relay_rtts]
-        [client_relay_jitter]
-        [client_relay_pl]
-        (hmac)
-
-    ----------
-
-    The client backend also supports a ping/pong, with the client state being passed in (to make the ping request packet larger than the pong response).
-
-    To reply with a pong the "client state" must not have expired (20 seconds?)
-
-    ----------
-
-
-
+    After doing this, generalize the functionality so we can re-use code across multiple backend and the relay.
 
 
 
