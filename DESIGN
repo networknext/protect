@@ -26,6 +26,10 @@ DESIGN
 
     13. We might need to implement some fast reconnect logic when the same user hash tries to connect to the server again, while there is a timing out entry for that user hash (30 seconds+ timeout...)
 
+
+
+NOTES
+
 ------
 
 All comms between the client and the backend should be UDP
@@ -67,5 +71,13 @@ Players cannot connect without a next route, so we can no longer use [0,254] for
 ------
 
 Can we have more than 16 near relays?
+
+------
+
+Both the server and the relays should have an explicit close session so we can detect clean vs. dirty disconnects
+
+------
+
+No golang. I want the backends written in XDP and C for the most efficient scaling of components, especially the client and server backends.
 
 ------

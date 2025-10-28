@@ -15,79 +15,86 @@ DONE
 
 TODO
 
-    *** DESIGN ***
+    ----------
 
-    Sequence of operations I want:
+    We need to define the client token.
 
-        1. Client generates a connect token (this would be given to it by the game's backend...). This connect token basically says "timestamp: the client user hash X from buyer Y wants to connect to server id Z", signed by some secret private key corresponding to the buyer, for which we know the public key. It should be super simple and stupid to generate (server id is just the hash of the public address + port of the server) so it doesn't require the customer to hit our backend from their backend to generate it.
+    It can be a fixed size:
 
-        2. The client passes the connect token to the client backend, which checks it and returns some "client state" (encrypted with backend private key) to be used on any other calls, plus enough information for the client to start pinging near relays.
+        (nonce)
+        [timestamp]             8 bytes
+        [user_hash]             8 bytes
+        [session_id]            8 bytes
+        [server_id]             8 bytes
+        [buyer_id]              8 bytes
+        [client_backends]       (ipv6 address+port * n bytes, where n = number of backends, say 32...)
+        [ping_rate]             4 bytes (default 10 pings per-second, per-backend)
+        [ping_retries]          4 bytes (default 10)
+        (hmac)
 
-        3. The client pings near relays for 10 seconds. Possibly with an early out at 5 seconds if there is low jitter and packet loss (common case --> fast connect).
+    The client needs access to some data in it, so it should be signed, but not encrypted.
 
-        4. The client passes the relay ping results up to the client backend with the "client state".
+    We rely on the game backend transmitting it to the client securely over HTTPS or however they choose to do it.
 
-        5. The client backend may evolve the client state and return it back down, along with "OK, here are two routes to use to server" *or* "Try pinging relays again, here are the relays to ping", *or* "Fail". We do this because if decisions are made primarily on the backend then it can be must easier to tune and fix. We need to keep the SDK as stupid as possible.
+    ----------
 
-        6. The client punches the two routes through relays, and once they are both confirmed considers itself connected and the game can start sending UDP packets.
+    The client reads the client token and extracts server backends and tries to init and ping each one in ||.
 
-        7. Every 10 seconds the client renews the two routes. If one route is not confirmed, the system will keep trying, potentially passing down a different route for the route that is not confirmed, or even generating two different routes randomly.
+    Each frame it stops and checks if it has a response with more than half the pings responded to (in the last second...)
 
-        8. After n retries (probably 30 seconds...) the connect will fail.
+    If it finds one or more, then it randomly selects from the set with the most pings responded (tie break), and that's the backend it chooses to use.
 
-        9. Every 5 minutes the client will be told to do near relay pings again, again, the client can be told to retry this n times.
+    If it doesn't find any client backend to talk to, it tries again n times (as per-connect token data)
 
-        10. The timeouts for anything should be generous (for example 30 seconds, not 10)
+    This should connect to the best client backend for wherever the client is located (by latency), and by packet loss.
 
-        11. The goal is to be relaxed and allow clients to weather temporary periods of broken connectivity without being disconnected.
+    ----------
 
-        12. The client should also have a clean disconnect to the server, sent across relays whenever the route changes (to close down the old route...), and to the server in the end (sent across both routes together...), so the server knows that the client has disconnected clean, or 
+    I'd like to implement the client backend as an XDP program
 
-        13. We might need to implement some fast reconnect logic when the same user hash tries to connect to the server again, while there is a timing out entry for that user hash (30 seconds+ timeout...)
+    The client backend will check if the timestamp is not expired, and that the buyer is a known buyer id, and then checks the signature for the connect token, and ignores if it has expired.
 
-    ------
+    The init should then respond with a "client state" which is a smaller encrypted block of state that is passed back and forth between the client and the backend.
 
-    All comms between the client and the backend should be UDP
+    ----------
 
-    This allows us to do smart stuff in the future, like multiple backends for init, and we talk to the lowest latency one, or backends inside mainland china vs. outside, or multi-region, or multi-cloud.
+    At minimum the client state should be:
 
-    ------
+        (nonce)
+        [timestamp]
+        [user_hash]
+        [session_id]
+        [server_id]
+        [client_relay_ids]
+        [client_relay_rtts]
+        [client_relay_jitter]
+        [client_relay_pl]
+        (hmac)
 
-    Should the multiple backends be passed down to the client inside the connect token? Probably...
+    ----------
 
-    We should probably do like a few seconds handshake init, to pick the client backend we can talk to. Assume that some players won't be able to talk to all backends.
+    The client backend also supports a ping/pong, with the client state being passed in (to make the ping request packet larger than the pong response).
 
-    I'd like as close to zero configuration stuff living in the client, period.
+    To reply with a pong the "client state" must not have expired (20 seconds?)
 
-    ------
+    ----------
 
-    We probably want there to be some token or acknowledgement that comes from the server that *confirms* the client is connected to it, so we can enforce that we only enable this client to keep hitting our backend as long as it actually is able to talk to the server.
+    Can we switch over from libsodium to libhydrogen on the client, since the client will really not benefit significantly from any advanced assembly shit?
 
-    ------
+    This way we could avoid using our franken-libsodium in most places, and then link on the server to libsodium for fast routines where it matters (or do it all in XDP?)
 
-    We also want to protect against sharing of connect tokens, so we can do the same thing we did in space game with the whole server disconnects if the user hash is no longer assigned to it (newest client connecting takes over per-user hash, ie. only one connection per-user hash allowed)
+    ----------
 
-    ------
 
-    One question is whether we can fit two routes into the one UDP response packet, or if we need to have two response packets for the one request, or maybe two requests, one per-route.
 
-    ------
 
-    The route state should be pretty minimal, compared with the previous network next logic.
 
-    ------
 
-    Zero copy packet send and receive design on client and server.
 
-    ------
 
-    Players cannot connect without a next route, so we can no longer use [0,254] for near relays. We should increase to [0,1022] and use 1023 for not routable.
 
-    ------
 
-    Can we have more than 16 near relays?
 
-    ------
 
 
 
@@ -110,41 +117,3 @@ TODO
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    ------
-    
-    Implement server with XDP (so we can do relay-like stuff and respond immediately to pings etc.
-
-    Sketch out some sort of AF_XDP server with a bpf map registering, yes, I'm this server id on this port.
-
-    ------
-
-    Should we implement client and server backend in XDP? I think yes. We want this to be as scalable and low-cost as possible
-
-    Sketch out client backend
-
-    Sketch out server backend
-
-    ------
-
-    Extend relay to support packets that close sessions
-
-    ------
