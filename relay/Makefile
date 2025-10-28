@@ -1,5 +1,5 @@
 
-RELAY_VERSION := "relay-release"
+RELAY_VERSION := "relay"
 
 # hulk test
 RELAY_PUBLIC_ADDRESS = 192.168.1.40:40000

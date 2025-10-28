@@ -50,7 +50,7 @@ blocks:
           commands:
             - |
               if [ -z "$SEMAPHORE_GIT_TAG_NAME" ]; then
-                export SEMAPHORE_GIT_TAG_NAME=relay-release
+                export SEMAPHORE_GIT_TAG_NAME=relay
               fi
             - checkout
             - uname -r
@@ -58,8 +58,8 @@ blocks:
             - sudo DEBIAN_FRONTEND=noninteractive apt install -y build-essential libsodium-dev libcurl4-openssl-dev clang linux-headers-generic linux-headers-`uname -r` linux-tools-`uname -r` libc6-dev-i386 gcc-12 dwarves libelf-dev pkg-config m4 libpcap-dev net-tools libbpf-dev libxdp-dev xdp-tools
             - sudo cp /sys/kernel/btf/vmlinux /usr/lib/modules/`uname -r`/build/
             - cd relay && make RELAY_VERSION=$SEMAPHORE_GIT_TAG_NAME -j build
-            - mv relay relay-release
-            - artifact push workflow relay-release --force
+            - mv relay relay
+            - artifact push workflow relay --force
             - make relay_xdp.o
 
   - name: "Module"

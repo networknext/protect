@@ -14,6 +14,20 @@ DONE
     OK all the stuff is building in semaphore.
 
 TODO
+
+    Sequence of operations I want:
+
+        1. Client generates a connect token (this would be given to it by the game backend...). This connect token basically says "this client user hash wants to connect to server id X"
+
+        2. The client passes this connect token to the client backend, which auths it (JWT style)
+
+        3. The 
+
+        3. The client takes the connect token and pings the near relays, and then passes up that connect token + the relay ping results to the "client backend" over UDP (golang for now...)
+
+        4. The client backend checks the connect token and the ping results and returns an initial route to the client
+
+    ------
     
     Implement server with XDP (so we can do relay-like stuff and respond immediately to pings etc.
 

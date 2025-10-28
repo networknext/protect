@@ -68,7 +68,7 @@ static void cleanup()
 }
 
 #ifndef RELAY_VERSION
-#define RELAY_VERSION "relay-release"
+#define RELAY_VERSION "relay"
 #endif // #ifndef RELAY_VERSION
 
 int main( int argc, char *argv[] )
