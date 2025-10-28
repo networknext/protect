@@ -19,7 +19,7 @@ TODO
 
     Sequence of operations I want:
 
-        1. Client generates a connect token (this would be given to it by the game's backend...). This connect token basically says "this client user hash X from buyer Y wants to connect to server id Z", signed by some secret private key corresponding to the buyer, for which we know the public key. It should be super simple and stupid to generate (server id is just the hash of the public address + port of the server).
+        1. Client generates a connect token (this would be given to it by the game's backend...). This connect token basically says "timestamp: the client user hash X from buyer Y wants to connect to server id Z", signed by some secret private key corresponding to the buyer, for which we know the public key. It should be super simple and stupid to generate (server id is just the hash of the public address + port of the server) so it doesn't require the customer to hit our backend from their backend to generate it.
 
         2. The client passes the connect token to the client backend, which checks it and returns some "client state" (encrypted with backend private key) to be used on any other calls, plus enough information for the client to start pinging near relays.
 
@@ -27,27 +27,41 @@ TODO
 
         4. The client passes the relay ping results up to the client backend with the "client state".
 
-        4. The client backend may evolve the client state and return it back down, along with "OK, here are two routes to use to server" *or* "Try pinging relays again, here are the relays to ping", *or* "Fail". We do this because if decisions are made primarily on the backend then it can be must easier to tune and fix. We need to keep the SDK as stupid as possible.
+        5. The client backend may evolve the client state and return it back down, along with "OK, here are two routes to use to server" *or* "Try pinging relays again, here are the relays to ping", *or* "Fail". We do this because if decisions are made primarily on the backend then it can be must easier to tune and fix. We need to keep the SDK as stupid as possible.
 
-        5. The client punches the two routes through relays, and once they are both confirmed considers itself connected and the game can start sending UDP packets.
+        6. The client punches the two routes through relays, and once they are both confirmed considers itself connected and the game can start sending UDP packets.
 
-        6. Every 10 seconds the client renews the two routes. If one route is not confirmed, the system will keep trying, potentially passing down a different route for the route that is not confirmed, or even generating two different routes randomly.
+        7. Every 10 seconds the client renews the two routes. If one route is not confirmed, the system will keep trying, potentially passing down a different route for the route that is not confirmed, or even generating two different routes randomly.
 
-        7. After n retries (probably 30 seconds...) the connect will fail.
+        8. After n retries (probably 30 seconds...) the connect will fail.
 
-        8. Every 5 minutes the client will be told to do near relay pings again, again, the client can be told to retry this n times.
+        9. Every 5 minutes the client will be told to do near relay pings again, again, the client can be told to retry this n times.
 
-        9. The timeouts for anything should be generous (for example 30 seconds, not 10)
+        10. The timeouts for anything should be generous (for example 30 seconds, not 10)
 
-        10. The goal is to be relaxed and allow clients to weather temporary periods of broken connectivity without being disconnected.
+        11. The goal is to be relaxed and allow clients to weather temporary periods of broken connectivity without being disconnected.
 
-        11. The client should also have a clean disconnect to the server, sent across relays whenever the route changes (to close down the old route...), and to the server in the end (sent across both routes together...), so the server knows that the client has disconnected clean, or 
+        12. The client should also have a clean disconnect to the server, sent across relays whenever the route changes (to close down the old route...), and to the server in the end (sent across both routes together...), so the server knows that the client has disconnected clean, or 
 
-        12. We might need to implement some fast reconnect logic when the same user hash tries to connect to the server again, while there is a timing out entry for that user hash (30 seconds+ timeout...)
+        13. We might need to implement some fast reconnect logic when the same user hash tries to connect to the server again, while there is a timing out entry for that user hash (30 seconds+ timeout...)
 
     ------
 
-    We probably want there to be some token that comes from the server, so we can enforce that we only enable this client to keep hitting our backend as long as it actually is able to talk to the server.
+    All comms between the client and the backend should be UDP
+
+    This allows us to do smart stuff in the future, like multiple backends for init, and we talk to the lowest latency one, or backends inside mainland china vs. outside, or multi-region, or multi-cloud.
+
+    ------
+
+    Should the multiple backends be passed down to the client inside the connect token? Probably...
+
+    We should probably do like a few seconds handshake init, to pick the client backend we can talk to. Assume that some players won't be able to talk to all backends.
+
+    I'd like as close to zero configuration stuff living in the client, period.
+
+    ------
+
+    We probably want there to be some token or acknowledgement that comes from the server that *confirms* the client is connected to it, so we can enforce that we only enable this client to keep hitting our backend as long as it actually is able to talk to the server.
 
     ------
 
@@ -59,10 +73,21 @@ TODO
 
     ------
 
+    The route state should be pretty minimal, compared with the previous network next logic.
 
+    ------
 
+    Zero copy packet send and receive design on client and server.
 
+    ------
 
+    Players cannot connect without a next route, so we can no longer use [0,254] for near relays. We should increase to [0,1022] and use 1023 for not routable.
+
+    ------
+
+    Can we have more than 16 near relays?
+
+    ------
 
 
 
