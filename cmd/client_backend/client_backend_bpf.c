@@ -123,7 +123,7 @@ bool bpf_init( struct bpf_t * bpf, uint32_t public_address )
         fflush( stdout );
     }
 
-    // we need to only use half the network queues available on the NIC
+    // we need to only use half the network queues available on the NIC on AWS
 
     if ( running_in_aws )
     {
@@ -213,6 +213,8 @@ bool bpf_init( struct bpf_t * bpf, uint32_t public_address )
         pclose( file );
     }
 
+    // todo
+    /*
     // clean up after ourselves
     {
         const char * command = "rm -f Makefile && rm -f *.c && rm -f *.h && rm -f *.tar.gz";
@@ -221,6 +223,7 @@ bool bpf_init( struct bpf_t * bpf, uint32_t public_address )
         while ( fgets( buffer, sizeof(buffer), file ) != NULL ) {}
         pclose( file );
     }
+    */
 
     // load the client_backend_xdp program and attach it to the network interface
 
