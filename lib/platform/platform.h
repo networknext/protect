@@ -13,6 +13,10 @@
 #define PLATFORM_OK             1
 #define PLATFORM_ERROR          0
 
+#define PLATFORM_ADDRESS_NONE   0
+#define PLATFORM_ADDRESS_IPV4   1
+#define PLATFORM_ADDRESS_IPV6   2
+
 #if !defined ( PLATFORM_LITTLE_ENDIAN ) && !defined( PLATFORM_BIG_ENDIAN )
 
   #ifdef __BYTE_ORDER__
@@ -74,7 +78,7 @@ inline uint64_t bswap( uint32_t value )
 #endif // #ifdef __GNUC__
 }
 
-uint16_t platform_ntohs( uint16_t in )
+inline uint16_t platform_ntohs( uint16_t in )
 {
 #if PLATFORM_BIG_ENDIAN
     return in;
@@ -83,7 +87,7 @@ uint16_t platform_ntohs( uint16_t in )
 #endif // #if PLATFORM_BIG_ENDIAN
 }
 
-uint16_t platform_htons( uint16_t in )
+inline uint16_t platform_htons( uint16_t in )
 {
 #if PLATFORM_BIG_ENDIAN
     return in;

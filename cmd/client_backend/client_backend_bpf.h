@@ -6,14 +6,17 @@
 #ifndef CLIENT_BACKEND_BPF_H
 #define CLIENT_BACKEND_BPF_H
 
-#include "relay.h"
+#include "client_backend.h"
 
+#ifdef __linux__
 #include <bpf/bpf.h>
 #include <bpf/libbpf.h>
 #include <xdp/libxdp.h>
+#endif // #ifdef __linux__
 
 struct bpf_t
 {
+#ifdef __linux__
     int interface_index;
     struct xdp_program * program;
     bool attached_native;
@@ -26,9 +29,10 @@ struct bpf_t
     int session_map_fd;
     int whitelist_map_fd;
     */
+#endif // #ifdef __linux__
 };
 
-int bpf_init( struct bpf_t * bpf, uint32_t public_address );
+bool bpf_init( struct bpf_t * bpf, uint32_t public_address );
 
 void bpf_shutdown( struct bpf_t * bpf );
 

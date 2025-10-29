@@ -3,6 +3,8 @@
     Licensed under the Network Next Source Available License 1.0
 */
 
+#ifdef __linux__
+
 #include <linux/in.h>
 #include <linux/if_ether.h>
 #include <linux/if_packet.h>
@@ -2861,3 +2863,5 @@ SEC("relay_xdp") int relay_xdp_filter( struct xdp_md *ctx )
 char _license[] SEC("license") = "GPL";
 
 #endif
+
+#endif // #ifdef __linux__

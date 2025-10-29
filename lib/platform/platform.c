@@ -18,7 +18,7 @@
 
 static double time_start;
 
-int shared_platform_init()
+int platform_init()
 {
     struct timespec ts;
     clock_gettime( CLOCK_MONOTONIC_RAW, &ts );
@@ -28,7 +28,7 @@ int shared_platform_init()
     return PLATFORM_OK;
 }
 
-double shared_platform_time()
+double platform_time()
 {
     struct timespec ts;
     clock_gettime( CLOCK_MONOTONIC_RAW, &ts );
@@ -36,7 +36,7 @@ double shared_platform_time()
     return current - time_start;
 }
 
-void shared_platform_sleep( double time )
+void platform_sleep( double time )
 {
     usleep( (int) ( time * 1000000 ) );
 }

@@ -4,10 +4,12 @@
 */
 
 #include "client_backend_config.h"
-#include "client_backend_platform.h"
-#include "client_backend_base64.h"
+#include "platform/platform.h"
+#include "shared/shared_base64.h"
 
+#ifdef __linux__
 #include <linux/if_ether.h>
+#endif // #ifdef __linux__
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -145,8 +147,6 @@ int read_config( struct config_t * config )
 
     // -----------------------------------------------------------------------------------------------------------------------------
 
-#if !RELAY_DEBUG
-
     const char * relay_backend_url = getenv( "RELAY_BACKEND_URL" );
     if ( !relay_backend_url )
     {
@@ -157,8 +157,6 @@ int read_config( struct config_t * config )
     printf( "Relay backend url is %s\n", relay_backend_url );
 
     strncpy( config->relay_backend_url, relay_backend_url, sizeof(config->relay_backend_url) - 1 );
-
-#endif // #if !RELAY_DEBUG
 
     // -----------------------------------------------------------------------------------------------------------------------------
 
@@ -203,5 +201,5 @@ int read_config( struct config_t * config )
 
 #endif
 
-    return CLIENT_BACKEND_OK;
+    return true;
 }

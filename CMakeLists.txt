@@ -54,3 +54,20 @@ file(GLOB PLATFORM_SOURCE lib/platform/*.c)
 file(GLOB PLATFORM_HEADERS lib/platform/*.h)
 
 add_library(platform ${PLATFORM_SOURCE} ${PLATFORM_HEADERS})
+
+
+
+# client backend
+
+project(client_backend)
+
+file(GLOB CLIENT_BACKEND_SOURCE cmd/client_backend/*.c)
+file(GLOB CLIENT_BACKEND_HEADERS cmd/client_backend/*.h)
+
+add_executable(client_backend ${CLIENT_BACKEND_SOURCE} ${CLIENT_BACKEND_HEADERS})
+
+add_dependencies(client_backend platform shared sodium)
+
+find_package(Threads REQUIRED)
+
+target_link_libraries(client_backend platform shared sodium Threads::Threads)

@@ -5,8 +5,6 @@
 
 #include "client_backend_bpf.h"
 
-#if COMPILE_WITH_BPF
-
 #include <stdio.h>
 #include <unistd.h>
 #include <ifaddrs.h>
@@ -15,19 +13,21 @@
 #include <errno.h>
 #include <stdlib.h>
 
+#ifdef __linux__
 #include "client_backend_xdp_source.h"
+#endif // #ifdef __linux__
 
-int bpf_init( struct bpf_t * bpf, uint32_t public_address )
+bool bpf_init( struct bpf_t * bpf, uint32_t public_address )
 {
+#ifdef __linux__
+
     // we can only run xdp programs as root
 
     if ( geteuid() != 0 ) 
     {
         printf( "\nerror: this program must be run as root\n\n" );
-        return RELAY_ERROR;
+        return true;
     }
-
-#if 0
 
     // find the network interface that matches the relay public address *or* relay private address
 
@@ -307,14 +307,16 @@ int bpf_init( struct bpf_t * bpf, uint32_t public_address )
         return RELAY_ERROR;
     }
 
-#endif
+#endif // #ifdef __linux__
 
-    return RELAY_OK;
+    return true;
 }
 
 void bpf_shutdown( struct bpf_t * bpf )
 {
     assert( bpf );
+
+#ifdef __linux__
 
     if ( bpf->program != NULL )
     {
@@ -328,18 +330,6 @@ void bpf_shutdown( struct bpf_t * bpf )
         }
         xdp_program__close( bpf->program );
     }
+
+#endif // #ifdef __linux__
 }
-
-#else // #if COMPILE_WITH_BPF
-
-int bpf_init( struct bpf_t * bpf, uint32_t relay_public_address )
-{
-    return RELAY_OK;
-}
-
-void bpf_shutdown( struct bpf_t * bpf )
-{
-    // ...
-}
-
-#endif // #if COMPILE_WITH_BPF

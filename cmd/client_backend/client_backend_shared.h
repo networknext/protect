@@ -8,7 +8,9 @@
 
 #include "client_backend_constants.h"
 
+#ifdef __linux__
 #include <linux/types.h>
+#endif // #ifdef __linux__
 
 #if 0
 

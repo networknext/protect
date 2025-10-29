@@ -10,9 +10,11 @@
 
 struct config_t
 {
+    uint32_t public_address;
+    uint16_t port;
+
     /*
     char relay_name[256];
-    uint16_t relay_port;
     uint32_t relay_public_address;
     uint32_t relay_internal_address;
     uint8_t relay_public_key[RELAY_PUBLIC_KEY_BYTES];

@@ -29,7 +29,7 @@ struct main_t
 struct config_t;
 struct bpf_t;
 
-int main_init( struct main_t * main, struct config_t * config, struct bpf_t * bpf );
+bool main_init( struct main_t * main, struct config_t * config, struct bpf_t * bpf );
 
 int main_run( struct main_t * main );
 

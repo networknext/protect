@@ -4,10 +4,11 @@
 */
 
 #include "client_backend.h"
-#include "client_backend_platform.h"
 #include "client_backend_main.h"
 #include "client_backend_bpf.h"
 #include "client_backend_config.h"
+
+#include "platform/platform.h"
 
 #include <memory.h>
 #include <stdio.h>
@@ -35,19 +36,14 @@ void clean_shutdown_handler( int signal )
 
 static void cleanup()
 {
-#if RELAY_DEBUG
-    debug_shutdown( &debug );
-#else // #if RELAY_DEBUG
-    ping_shutdown( &ping );
     main_shutdown( &main_data );
     bpf_shutdown( &bpf );
-#endif // #if RELAY_DEBUG
     fflush( stdout );
 }
 
 int main( int argc, char *argv[] )
 {
-    client_backend_platform_init();
+    platform_init();
 
     printf( "Network Next Client Backend\n" );
 
@@ -61,7 +57,7 @@ int main( int argc, char *argv[] )
 
     fflush( stdout );
 
-    if ( read_config( &config ) != RELAY_OK )
+    if ( !read_config( &config ) )
     {
         cleanup();
         return 1;
@@ -73,7 +69,7 @@ int main( int argc, char *argv[] )
 
     fflush( stdout );
 
-    if ( bpf_init( &bpf, config.public_address ) != RELAY_OK )
+    if ( !bpf_init( &bpf, config.public_address ) )
     {
         cleanup();
         return 1;
@@ -85,7 +81,7 @@ int main( int argc, char *argv[] )
 
     fflush( stdout );
 
-    if ( main_init( &main_data, &config, &bpf ) != RELAY_OK )
+    if ( !main_init( &main_data, &config, &bpf ) )
     {
         cleanup();
         return 1;

@@ -7,6 +7,8 @@
 #define SHARED_ENCODING_H
 
 #include "platform/platform.h"
+#include <memory.h>
+#include <stdio.h>
 
 inline void shared_write_uint8( uint8_t ** p, uint8_t value )
 {
@@ -178,7 +180,7 @@ inline void shared_read_string( const uint8_t ** p, char * string_data, uint32_t
 inline bool shared_read_address( const uint8_t ** p, uint32_t * address, uint16_t * port )
 {
     uint8_t type = shared_read_uint8( p );
-    if ( type != RELAY_ADDRESS_IPV4 )
+    if ( type != PLATFORM_ADDRESS_IPV4 )
     {
         printf( "error: only ipv4 addresses are currently supported\n" );
         return false;
@@ -187,6 +189,8 @@ inline bool shared_read_address( const uint8_t ** p, uint32_t * address, uint16_
     *port = shared_read_uint16( p );
 
     *address = ntohl( *address );
+
+    return true;
 }
 
 #endif // #ifndef SHARED_ENCODING_H
