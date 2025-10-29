@@ -22,6 +22,9 @@ void packet_received_callback( next_client_t * client, void * context, const uin
     (void) context;
     (void) packet_data;
     (void) packet_bytes;
+
+    // todo
+    next_printf( NEXT_LOG_LEVEL_INFO, "client received %d byte packet", packet_bytes );
 }
 
 int main()
@@ -50,7 +53,7 @@ int main()
 
     bool previous_connected = false;
 
-    uint8_t packet_data[1024];
+    uint8_t packet_data[100];
     memset( packet_data, 0, sizeof(packet_data) );
 
     while ( !quit )
