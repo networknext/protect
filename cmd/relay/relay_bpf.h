@@ -13,7 +13,7 @@
 
 struct bpf_t
 {
-#ifdef COMPILE_WITH_BPF
+#if COMPILE_WITH_BPF
     int interface_index;
     struct xdp_program * program;
     bool attached_native;
@@ -24,7 +24,7 @@ struct bpf_t
     int relay_map_fd;
     int session_map_fd;
     int whitelist_map_fd;
-#endif // #ifdef COMPILE_WITH_BPF
+#endif // #if COMPILE_WITH_BPF
 };
 
 int bpf_init( struct bpf_t * bpf, uint32_t relay_public_address, uint32_t relay_internal_address );

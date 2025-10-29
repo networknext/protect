@@ -1,9 +1,10 @@
 /*
-    Network Next XDP Relay
+    Network Next. Copyright 2017 - 2025 Network Next, Inc.  
+    Licensed under the Network Next Source Available License 1.0
 */
 
-#ifndef RELAY_BPF_H
-#define RELAY_BPF_H
+#ifndef CLIENT_BACKEND_BPF_H
+#define CLIENT_BACKEND_BPF_H
 
 #include "relay.h"
 
@@ -13,22 +14,22 @@
 
 struct bpf_t
 {
-#ifdef COMPILE_WITH_BPF
     int interface_index;
     struct xdp_program * program;
     bool attached_native;
     bool attached_skb;
+    /*
     int config_fd;
     int state_fd;
     int stats_fd;
     int relay_map_fd;
     int session_map_fd;
     int whitelist_map_fd;
-#endif // #ifdef COMPILE_WITH_BPF
+    */
 };
 
-int bpf_init( struct bpf_t * bpf, uint32_t relay_public_address, uint32_t relay_internal_address );
+int bpf_init( struct bpf_t * bpf, uint32_t public_address );
 
 void bpf_shutdown( struct bpf_t * bpf );
 
-#endif // #ifndef RELAY_BPF_H
+#endif // #ifndef CLIENT_BACKEND_BPF_H

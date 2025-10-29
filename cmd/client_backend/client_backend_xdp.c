@@ -1,12 +1,6 @@
 /*
-    Network Next Relay XDP program
-
-    USAGE:
-
-        clang -Ilibbpf/src -g -O2 -target bpf -c relay_xdp.c -o relay_xdp.o
-        sudo ip link set dev enp4s0 xdp obj relay_xdp.o sec relay_xdp
-        sudo cat /sys/kernel/debug/tracing/trace_pipe
-        sudo ip link set dev enp4s0 xdp off
+    Network Next. Copyright 2017 - 2025 Network Next, Inc.  
+    Licensed under the Network Next Source Available License 1.0
 */
 
 #include <linux/in.h>

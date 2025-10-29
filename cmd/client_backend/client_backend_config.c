@@ -1,5 +1,6 @@
 /*
-    Network Next XDP Relay (userspace)
+    Network Next. Copyright 2017 - 2025 Network Next, Inc.  
+    Licensed under the Network Next Source Available License 1.0
 */
 
 #include "client_backend_config.h"
@@ -39,7 +40,7 @@ int read_config( struct config_t * config )
         return RELAY_ERROR;
     }
 
-    if ( relay_platform_parse_address( relay_public_address_env, &config->relay_public_address, &config->relay_port  ) != RELAY_OK )
+    if ( relay_platform_parse_address( relay_public_address_env, &config->relay_public_address, &config->relay_port ) != RELAY_OK )
     {
         printf( "\nerror: invalid relay public address '%s'\n\n", relay_public_address_env );
         return RELAY_ERROR;
@@ -202,5 +203,5 @@ int read_config( struct config_t * config )
 
 #endif
 
-    return RELAY_OK;
+    return CLIENT_BACKEND_OK;
 }

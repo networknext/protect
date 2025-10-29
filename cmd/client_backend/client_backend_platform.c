@@ -1,5 +1,6 @@
 /*
-    Network Next XDP Relay
+    Network Next. Copyright 2017 - 2025 Network Next, Inc.  
+    Licensed under the Network Next Source Available License 1.0
 */
 
 #include "client_backend_platform.h"
@@ -23,7 +24,7 @@ int client_backend_platform_init()
     time_start = ts.tv_sec + ( (double) ( ts.tv_nsec ) ) / 1000000000.0;
     int result = sodium_init();
     (void) result;
-    return RELAY_OK;
+    return CLIENT_BACKEND_OK;
 }
 
 double client_backend_platform_time()
@@ -73,11 +74,13 @@ int client_backend_platform_parse_address( char * address_string, uint32_t * add
     }
 
     if ( inet_pton( AF_INET, address_string, address ) != 1 ) 
-        return RELAY_ERROR;
+    {
+        return CLIENT_BACKEND_ERROR;
+    }
 
     *address = htonl( *address );
 
-    return RELAY_OK;
+    return CLIENT_BACKEND_OK;
 }
 
 // -----------------------------------------------------------------------------------------------------------------------------------------------
@@ -138,7 +141,7 @@ struct client_backend_platform_socket_t * client_backend_platform_socket_create(
 
     // set non-blocking io and receive timeout
 
-    if ( socket_type == RELAY_PLATFORM_SOCKET_NON_BLOCKING )
+    if ( socket_type == CLIENT_BACKEND_PLATFORM_SOCKET_NON_BLOCKING )
     {
         if ( fcntl( s->handle, F_SETFL, O_NONBLOCK, 1 ) == -1 )
         {
@@ -205,7 +208,7 @@ int client_backend_platform_socket_receive_packet( struct client_backend_platfor
 
     socklen_t from_length = sizeof( sockaddr_from );
 
-    int result = (int) recvfrom( socket->handle, (char*) packet_data, max_packet_size, socket->type == RELAY_PLATFORM_SOCKET_NON_BLOCKING ? MSG_DONTWAIT : 0, (struct sockaddr*) &sockaddr_from, &from_length );
+    int result = (int) recvfrom( socket->handle, (char*) packet_data, max_packet_size, socket->type == CLIENT_BACKEND_PLATFORM_SOCKET_NON_BLOCKING ? MSG_DONTWAIT : 0, (struct sockaddr*) &sockaddr_from, &from_length );
     if ( result <= 0 )
         return 0;
 

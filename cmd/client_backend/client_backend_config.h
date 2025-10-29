@@ -1,10 +1,16 @@
-#ifndef RELAY_CONFIG_H
-#define RELAY_CONFIG_H
+/*
+    Network Next. Copyright 2017 - 2025 Network Next, Inc.  
+    Licensed under the Network Next Source Available License 1.0
+*/
 
-#include "relay.h"
+#ifndef CLIENT_BACKEND_CONFIG_H
+#define CLIENT_BACKEND_CONFIG_H
+
+#include "client_backend.h"
 
 struct config_t
 {
+    /*
     char relay_name[256];
     uint16_t relay_port;
     uint32_t relay_public_address;
@@ -16,8 +22,9 @@ struct config_t
     uint8_t gateway_ethernet_address[RELAY_ETHERNET_ADDRESS_BYTES];
     uint8_t use_gateway_ethernet_address;
     char relay_backend_url[256];
+    */
 };
 
 int read_config( struct config_t * config );
 
-#endif // #ifndef RELAY_CONFIG_H
+#endif // #ifndef CLIENT_BACKEND_CONFIG_H

@@ -1,5 +1,6 @@
 /*
-    Network Next XDP Relay
+    Network Next. Copyright 2017 - 2025 Network Next, Inc.  
+    Licensed under the Network Next Source Available License 1.0
 */
 
 #include "client_backend_main.h"
@@ -79,14 +80,14 @@ int main_init( struct main_t * main, struct config_t * config, struct bpf_t * bp
     memcpy( main->relay_public_key, config->relay_public_key, sizeof(config->relay_public_key) );
     memcpy( main->relay_private_key, config->relay_private_key, sizeof(config->relay_private_key) );
     memcpy( main->relay_backend_public_key, config->relay_backend_public_key, sizeof(config->relay_backend_public_key) );
-#ifdef COMPILE_WITH_BPF
+#if COMPILE_WITH_BPF
     main->stats_fd = bpf->stats_fd;
     main->state_fd = bpf->state_fd;
     main->session_map_fd = bpf->session_map_fd;
     main->whitelist_map_fd = bpf->whitelist_map_fd;
-#endif // #idef COMPILE_WITH_BPF
+#endif // #if COMPILE_WITH_BPF
 
-#ifdef COMPILE_WITH_BPF
+#if COMPILE_WITH_BPF
     
     // set relay config
 
@@ -110,7 +111,7 @@ int main_init( struct main_t * main, struct config_t * config, struct bpf_t * bp
         return RELAY_ERROR;
     }
 
-#endif // #ifdef COMPILE_WITH_BPF
+#endif // #if COMPILE_WITH_BPF
 
 #endif
 
@@ -350,7 +351,7 @@ int main_update( struct main_t * main )
     uint64_t counters[RELAY_NUM_COUNTERS];
     memset( &counters, 0, sizeof(counters) );
 
-#ifdef COMPILE_WITH_BPF
+#if COMPILE_WITH_BPF
 
     unsigned int num_cpus = libbpf_num_possible_cpus();
 
@@ -376,7 +377,7 @@ int main_update( struct main_t * main )
     counters[RELAY_COUNTER_ENVELOPE_KBPS_UP] = stats.envelope_kbps_up;
     counters[RELAY_COUNTER_ENVELOPE_KBPS_DOWN] = stats.envelope_kbps_down;
 
-#endif // #ifdef COMPILE_WIH_BPF
+#endif // #if COMPILE_WIH_BPF
 
     // pump stats messages from ping thread
 
@@ -704,7 +705,7 @@ int main_update( struct main_t * main )
     uint8_t ping_key[RELAY_PING_KEY_BYTES];
     relay_read_bytes( &q, ping_key, RELAY_PING_KEY_BYTES );
 
-#ifdef COMPILE_WITH_BPF
+#if COMPILE_WITH_BPF
 
     // update bpf relay state
 
@@ -725,7 +726,7 @@ int main_update( struct main_t * main )
         }
     }
 
-#endif // #ifdef COMPILE_WITH_BPF
+#endif // #if COMPILE_WITH_BPF
     
     // stop if the relay queue is full, we can delta relays later and miss nothing
 

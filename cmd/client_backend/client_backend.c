@@ -1,7 +1,6 @@
 /*
-    Network Next Client Backend
-
-    Requires Ubuntu 24.04 LTS
+    Network Next. Copyright 2017 - 2025 Network Next, Inc.  
+    Licensed under the Network Next Source Available License 1.0
 */
 
 #include "client_backend.h"
@@ -74,7 +73,7 @@ int main( int argc, char *argv[] )
 
     fflush( stdout );
 
-    if ( bpf_init( &bpf, config.relay_public_address, config.relay_internal_address ) != RELAY_OK )
+    if ( bpf_init( &bpf, config.public_address ) != RELAY_OK )
     {
         cleanup();
         return 1;

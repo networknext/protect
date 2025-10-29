@@ -7,7 +7,6 @@
 #define NEXT_SERVER_H
 
 #include "next_address.h"
-#include "next_serialize.h"
 
 struct next_server_t;
 

@@ -1,10 +1,11 @@
 /*
-    Network Next XDP Relay
+    Network Next. Copyright 2017 - 2025 Network Next, Inc.  
+    Licensed under the Network Next Source Available License 1.0
 */
 
 #include "client_backend_bpf.h"
 
-#ifdef COMPILE_WITH_BPF
+#if COMPILE_WITH_BPF
 
 #include <stdio.h>
 #include <unistd.h>
@@ -16,7 +17,7 @@
 
 #include "client_backend_xdp_source.h"
 
-int bpf_init( struct bpf_t * bpf, uint32_t relay_public_address, uint32_t relay_internal_address )
+int bpf_init( struct bpf_t * bpf, uint32_t public_address )
 {
     // we can only run xdp programs as root
 
@@ -329,7 +330,7 @@ void bpf_shutdown( struct bpf_t * bpf )
     }
 }
 
-#else // #ifdef COMPILE_WITH_BPF
+#else // #if COMPILE_WITH_BPF
 
 int bpf_init( struct bpf_t * bpf, uint32_t relay_public_address )
 {
@@ -341,4 +342,4 @@ void bpf_shutdown( struct bpf_t * bpf )
     // ...
 }
 
-#endif // #ifdef COMPILE_WITH_BPF
+#endif // #if COMPILE_WITH_BPF
