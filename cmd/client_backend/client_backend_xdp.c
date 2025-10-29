@@ -3,8 +3,6 @@
     Licensed under the Network Next Source Available License 1.0
 */
 
-#ifdef __linux__
-
 #include <linux/in.h>
 #include <linux/if_ether.h>
 #include <linux/if_packet.h>
@@ -64,12 +62,6 @@ SEC("client_backend_xdp") int client_backend_xdp_filter( struct xdp_md *ctx )
 }
 
 char _license[] SEC("license") = "GPL";
-
-#else // #ifdef __linux__
-
-#error not linux
-
-#endif // #ifdef __linux__
 
 
 
