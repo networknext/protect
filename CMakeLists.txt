@@ -13,6 +13,7 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 include_directories(
 	"." 
 	"lib"
+	"sdk/sodium"
 )
 
 
