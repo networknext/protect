@@ -21,6 +21,7 @@
 #ifdef __linux__
 #include <bpf/bpf.h>
 #include <bpf/libbpf.h>
+#include <arpa/inet.h>
 #endif // #ifdef __linux__
 
 bool main_init( struct main_t * main, struct config_t * config, struct bpf_t * bpf )
