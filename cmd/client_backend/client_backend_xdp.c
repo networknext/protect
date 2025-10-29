@@ -20,7 +20,6 @@
 
 #include "client_backend_shared.h"
 
-/*
 #if defined(__BYTE_ORDER__) && defined(__ORDER_LITTLE_ENDIAN__) && \
     __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
 #define bpf_ntohl(x)        __builtin_bswap32(x)
@@ -37,12 +36,7 @@
 # error "Endianness detection needs to be set up for your compiler?!"
 #endif
 
-#define INCREMENT_COUNTER(counter_index)  __sync_fetch_and_add( &stats->counters[counter_index], 1 )
-
-#define DECREMENT_COUNTER(counter_index)  __sync_fetch_and_sub( &stats->counters[counter_index], 1 )
-
-#define ADD_COUNTER(counter_index, value) __sync_fetch_and_add( &stats->counters[counter_index], ( value) )
-
+/*
 #define XCHACHA20POLY1305_NONCE_SIZE 24
 
 #define CHACHA20POLY1305_KEY_SIZE 32
@@ -66,8 +60,64 @@ struct {
     __uint( pinning, LIBBPF_PIN_BY_NAME );
 } client_backend_config_map SEC(".maps");
 
+#ifndef DEBUG
+#define DEBUG 0
+#endif // #ifndef DEBUG
+
+#if DEBUG
+#define debug_printf bpf_printk
+#else // #if DEBUG
+#define debug_printf(...) do { } while (0)
+#endif // #if DEBUG
+
 SEC("client_backend_xdp") int client_backend_xdp_filter( struct xdp_md *ctx ) 
 { 
+    void * data = (void*) (long) ctx->data; 
+
+    void * data_end = (void*) (long) ctx->data_end; 
+
+    struct ethhdr * eth = data;
+
+    if ( (void*)eth + sizeof(struct ethhdr) <= data_end )
+    {
+        if ( eth->h_proto == __constant_htons(ETH_P_IP) ) // IPV4
+        {
+            struct iphdr * ip = data + sizeof(struct ethhdr);
+
+            if ( (void*)ip + sizeof(struct iphdr) > data_end )
+            {
+                debug_printf( "smaller than ipv4 header" );
+                return XDP_DROP;
+            }
+
+            if ( ip->protocol == IPPROTO_UDP ) // UDP only
+            {
+                struct udphdr * udp = (void*) ip + sizeof(struct iphdr);
+
+                if ( (void*)udp + sizeof(struct udphdr) <= data_end )
+                {
+                    if ( udp->dest == config->port && ip->daddr == config->public_address && ip->ihl == 5 )
+                    {
+                        int key = 0;
+                        struct client_backend_config * config = (struct client_backend_config*) bpf_map_lookup_elem( &config_map, &key );
+                        if ( config == NULL )
+                            return XDP_PASS;
+
+                        __u8 * packet_data = (unsigned char*) (void*)udp + sizeof(struct udphdr);
+
+                        if ( (void*)packet_data + 100 != data_end )
+                        {
+                            debug_printf( "udp packet is not 100 bytes" );
+                            return XDP_DROP;
+                        }
+
+                        // todo: reflect packet back to sender
+                    }
+                }
+            }
+        }
+    }
+
     return XDP_PASS;
 }
 
