@@ -10,13 +10,14 @@
 
 struct main_t
 {
-    void * curl;
+    // void * curl;
+
     uint64_t start_time;
-    uint64_t current_timestamp;
     uint32_t public_address;
     uint16_t port;
     bool initialized;
     bool shutting_down;
+
     /*
     int stats_fd;
     int state_fd;

@@ -10,21 +10,19 @@
 
 #ifdef __linux__
 #include <linux/types.h>
+#else // #ifdef __linux__
+#define __u32 uint32_t
+#define __u16 uint16_t
+#define __u8 uint8_t
 #endif // #ifdef __linux__
 
-#if 0
-
-struct relay_config
+struct config
 {
-    __u32 dedicated;
-    __u32 relay_public_address;                                             // big endian
-    __u32 relay_internal_address;                                           // big endian
-    __u16 relay_port;                                                       // big endian
-    __u8 relay_secret_key[RELAY_SECRET_KEY_BYTES];
-    __u8 relay_backend_public_key[RELAY_BACKEND_PUBLIC_KEY_BYTES];
-    __u8 gateway_ethernet_address[RELAY_ETHERNET_ADDRESS_BYTES];
-    __u8 use_gateway_ethernet_address;
+    __u32 public_address;                 // big endian
+    __u16 port;                           // big endian
 };
+
+#if 0
 
 struct relay_state
 {

@@ -29,7 +29,7 @@ bool bpf_init( struct bpf_t * bpf, uint32_t public_address )
         return true;
     }
 
-    // find the network interface that matches the relay public address *or* relay private address
+    // find the network interface that matches the public address
 
     char network_interface_name[1024];
     memset( network_interface_name, 0, sizeof(network_interface_name) );
@@ -40,7 +40,7 @@ bool bpf_init( struct bpf_t * bpf, uint32_t public_address )
         if ( getifaddrs( &addrs ) != 0 )
         {
             printf( "\nerror: getifaddrs failed\n\n" );
-            return RELAY_ERROR;
+            return false;
         }
 
         for ( struct ifaddrs * iap = addrs; iap != NULL; iap = iap->ifa_next ) 
@@ -48,7 +48,7 @@ bool bpf_init( struct bpf_t * bpf, uint32_t public_address )
             if ( iap->ifa_addr && ( iap->ifa_flags & IFF_UP ) && iap->ifa_addr->sa_family == AF_INET )
             {
                 struct sockaddr_in * sa = (struct sockaddr_in*) iap->ifa_addr;
-                if ( ntohl( sa->sin_addr.s_addr ) == relay_public_address || ntohl( sa->sin_addr.s_addr ) == relay_internal_address )
+                if ( ntohl( sa->sin_addr.s_addr ) == public_address )
                 {
                     strncpy( network_interface_name, iap->ifa_name, sizeof(network_interface_name) );
                     printf( "found network interface: '%s'\n", network_interface_name );
@@ -56,7 +56,7 @@ bool bpf_init( struct bpf_t * bpf, uint32_t public_address )
                     if ( !bpf->interface_index ) 
                     {
                         printf( "\nerror: if_nametoindex failed\n\n" );
-                        return RELAY_ERROR;
+                        return false;
                     }
                     found = true;
                     break;
@@ -68,8 +68,8 @@ bool bpf_init( struct bpf_t * bpf, uint32_t public_address )
 
         if ( !found )
         {
-            printf( "\nerror: could not find any network interface matching relay public address" );
-            return RELAY_ERROR;
+            printf( "\nerror: could not find any network interface matching public address" );
+            return false;
         }
     }
 
@@ -183,30 +183,30 @@ bool bpf_init( struct bpf_t * bpf, uint32_t public_address )
 
     // delete all bpf maps we use so stale data doesn't stick around
     {
-        const char * command = "rm -f /sys/fs/bpf/config_map && rm -f /sys/fs/bpf/state_map && rm -f /sys/fs/bpf/stats_map && rm -f /sys/fs/bpf/relay_map && rm -f /sys/fs/bpf/session_map && rm -rf /sys/fs/bpf/whitelist_map";
+        const char * command = "rm -f /sys/fs/bpf/client_backend/config_map";
         FILE * file = popen( command, "r" );
         char buffer[1024];
         while ( fgets( buffer, sizeof(buffer), file ) != NULL ) {}
         pclose( file );
     }
 
-    // write out source tar.gz for relay_xdp.o
+    // write out source tar.gz for client_backend_xdp.o
     {
-        FILE * file = fopen( "relay_xdp_source.tar.gz", "wb" );
+        FILE * file = fopen( "client_backend_xdp_source.tar.gz", "wb" );
         if ( !file )
         {
-            printf( "\nerror: could not open relay_xdp_source.tar.gz for writing" );
-            return RELAY_ERROR;
+            printf( "\nerror: could not open client_backend_xdp_source.tar.gz for writing" );
+            return false;
         }
 
-        fwrite( relay_xdp_source_tar_gz, sizeof(relay_xdp_source_tar_gz), 1, file );
+        fwrite( client_backend_xdp_source_tar_gz, sizeof(client_backend_xdp_source_tar_gz), 1, file );
 
         fclose( file );
     }
 
-    // unzip source build relay_xdp.o from source with make
+    // unzip source build client_backend_xdp.o from source with make
     {
-        const char * command = "rm -f Makefile && rm -f *.c && rm -f *.h && rm -f *.o && rm -f Makefile && tar -zxf relay_xdp_source.tar.gz && make relay_xdp.o";
+        const char * command = "rm -f Makefile && rm -f *.c && rm -f *.h && rm -f *.o && rm -f Makefile && tar -zxf client_backend_xdp_source.tar.gz && make client_backend_xdp.o";
         FILE * file = popen( command, "r" );
         char buffer[1024];
         while ( fgets( buffer, sizeof(buffer), file ) != NULL ) {}
@@ -222,24 +222,24 @@ bool bpf_init( struct bpf_t * bpf, uint32_t public_address )
         pclose( file );
     }
 
-    // load the relay_xdp program and attach it to the network interface
+    // load the client_backend_xdp program and attach it to the network interface
 
-    printf( "loading relay_xdp...\n" );
+    printf( "loading client_backend_xdp...\n" );
 
     fflush( stdout );
 
-    bpf->program = xdp_program__open_file( "relay_xdp.o", "relay_xdp", NULL );
+    bpf->program = xdp_program__open_file( "client_backend_xdp.o", "client_backend_xdp", NULL );
     if ( libxdp_get_error( bpf->program ) ) 
     {
-        printf( "\nerror: could not load relay_xdp program\n\n");
-        return RELAY_ERROR;
+        printf( "\nerror: could not load client_backend_xdp program\n\n");
+        return false;
     }
 
-    printf( "relay_xdp loaded successfully.\n" );
+    printf( "client_backend_xdp loaded successfully.\n" );
 
     fflush( stdout );
 
-    printf( "attaching relay_xdp to network interface\n" );
+    printf( "attaching client_backend_xdp to network interface\n" );
 
     fflush( stdout );
 
@@ -258,53 +258,18 @@ bool bpf_init( struct bpf_t * bpf, uint32_t public_address )
         }
         else
         {
-            printf( "\nerror: failed to attach relay_xdp program to interface\n\n" );
-            return RELAY_ERROR;
+            printf( "\nerror: failed to attach client_backend_xdp program to interface\n\n" );
+            return false;
         }
     }
 
-    // get file descriptors for maps so we can communicate with the relay_xdp program running in kernel space
+    // get file descriptors for maps so we can communicate with the client_backend_xdp program running in kernel space
 
-    bpf->config_fd = bpf_obj_get( "/sys/fs/bpf/config_map" );
+    bpf->config_fd = bpf_obj_get( "/sys/fs/bpf/client_backend/config_map" );
     if ( bpf->config_fd <= 0 )
     {
-        printf( "\nerror: could not get relay config: %s\n\n", strerror(errno) );
-        return RELAY_ERROR;
-    }
-
-    bpf->state_fd = bpf_obj_get( "/sys/fs/bpf/state_map" );
-    if ( bpf->state_fd <= 0 )
-    {
-        printf( "\nerror: could not get relay state: %s\n\n", strerror(errno) );
-        return RELAY_ERROR;
-    }
-
-    bpf->stats_fd = bpf_obj_get( "/sys/fs/bpf/stats_map" );
-    if ( bpf->stats_fd <= 0 )
-    {
-        printf( "\nerror: could not get relay stats: %s\n\n", strerror(errno) );
-        return RELAY_ERROR;
-    }
-
-    bpf->relay_map_fd = bpf_obj_get( "/sys/fs/bpf/relay_map" );
-    if ( bpf->relay_map_fd <= 0 )
-    {
-        printf( "\nerror: could not get relay map: %s\n\n", strerror(errno) );
-        return RELAY_ERROR;
-    }
-
-    bpf->session_map_fd = bpf_obj_get( "/sys/fs/bpf/session_map" );
-    if ( bpf->session_map_fd <= 0 )
-    {
-        printf( "\nerror: could not get session map: %s\n\n", strerror(errno) );
-        return RELAY_ERROR;
-    }
-
-    bpf->whitelist_map_fd = bpf_obj_get( "/sys/fs/bpf/whitelist_map" );
-    if ( bpf->whitelist_map_fd <= 0 )
-    {
-        printf( "\nerror: could not get whitelist map: %s\n\n", strerror(errno) );
-        return RELAY_ERROR;
+        printf( "\nerror: could not get client backend config: %s\n\n", strerror(errno) );
+        return false;
     }
 
 #endif // #ifdef __linux__

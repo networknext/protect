@@ -21,14 +21,7 @@ struct bpf_t
     struct xdp_program * program;
     bool attached_native;
     bool attached_skb;
-    /*
     int config_fd;
-    int state_fd;
-    int stats_fd;
-    int relay_map_fd;
-    int session_map_fd;
-    int whitelist_map_fd;
-    */
 #endif // #ifdef __linux__
 };
 
