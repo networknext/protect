@@ -2,9 +2,9 @@
     Network Next XDP Relay (userspace)
 */
 
-#include "relay_config.h"
-#include "relay_platform.h"
-#include "relay_base64.h"
+#include "client_backend_config.h"
+#include "client_backend_platform.h"
+#include "client_backend_base64.h"
 
 #include <linux/if_ether.h>
 
@@ -15,6 +15,8 @@
 
 int read_config( struct config_t * config )
 {
+#if 0
+
     // -----------------------------------------------------------------------------------------------------------------------------
 
     const char * relay_name = getenv( "RELAY_NAME" );
@@ -197,6 +199,8 @@ int read_config( struct config_t * config )
     }
 
     // -----------------------------------------------------------------------------------------------------------------------------
+
+#endif
 
     return RELAY_OK;
 }

@@ -2,7 +2,7 @@
     Network Next XDP Relay
 */
 
-#include "relay_base64.h"
+#include "client_backend_base64.h"
 #include <string.h>
 
 static const int base64_table_decode[256] =
@@ -16,7 +16,7 @@ static const int base64_table_decode[256] =
     41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51,
 };
 
-int relay_base64_decode_data( const char * input, uint8_t * output, size_t output_size )
+int client_backend_base64_decode_data( const char * input, uint8_t * output, size_t output_size )
 {
     assert( input );
     assert( output );
@@ -60,13 +60,13 @@ int relay_base64_decode_data( const char * input, uint8_t * output, size_t outpu
     return (int) output_length;
 }
 
-int relay_base64_decode_string( const char * input, char * output, size_t output_size )
+int client_backend_base64_decode_string( const char * input, char * output, size_t output_size )
 {
     assert( input );
     assert( output );
     assert( output_size > 0 );
 
-    int output_length = relay_base64_decode_data( input, (uint8_t *)( output ), output_size - 1 );
+    int output_length = client_backend_base64_decode_data( input, (uint8_t *)( output ), output_size - 1 );
     if ( output_length < 0 )
     {
         return 0;

@@ -2,7 +2,7 @@
     Network Next XDP Relay
 */
 
-#include "relay_bpf.h"
+#include "client_backend_bpf.h"
 
 #ifdef COMPILE_WITH_BPF
 
@@ -14,7 +14,7 @@
 #include <errno.h>
 #include <stdlib.h>
 
-#include "relay_xdp_source.h"
+#include "client_backend_xdp_source.h"
 
 int bpf_init( struct bpf_t * bpf, uint32_t relay_public_address, uint32_t relay_internal_address )
 {
@@ -25,6 +25,8 @@ int bpf_init( struct bpf_t * bpf, uint32_t relay_public_address, uint32_t relay_
         printf( "\nerror: this program must be run as root\n\n" );
         return RELAY_ERROR;
     }
+
+#if 0
 
     // find the network interface that matches the relay public address *or* relay private address
 
@@ -303,6 +305,8 @@ int bpf_init( struct bpf_t * bpf, uint32_t relay_public_address, uint32_t relay_
         printf( "\nerror: could not get whitelist map: %s\n\n", strerror(errno) );
         return RELAY_ERROR;
     }
+
+#endif
 
     return RELAY_OK;
 }

@@ -2,13 +2,12 @@
     Network Next XDP Relay
 */
 
-#include "relay_main.h"
-#include "relay_queue.h"
-#include "relay_encoding.h"
-#include "relay_platform.h"
-#include "relay_config.h"
-#include "relay_shared.h"
-#include "relay_bpf.h"
+#include "client_backend_main.h"
+#include "client_backend_encoding.h"
+#include "client_backend_platform.h"
+#include "client_backend_config.h"
+#include "client_backend_shared.h"
+#include "client_backend_bpf.h"
 
 #include <curl/curl.h>
 #include <sodium.h>
@@ -21,6 +20,7 @@
 
 int main_init( struct main_t * main, struct config_t * config, struct bpf_t * bpf )
 {
+#if 0
     // initialize curl so we can talk with the relay backend
 
     main->curl = curl_easy_init();
@@ -112,6 +112,8 @@ int main_init( struct main_t * main, struct config_t * config, struct bpf_t * bp
 
 #endif // #ifdef COMPILE_WITH_BPF
 
+#endif
+
     return RELAY_OK;
 }
 
@@ -125,6 +127,8 @@ int main_run( struct main_t * main )
     printf( "Starting main thread\n" );
 
     fflush( stdout );
+
+#if 0
 
     bool aborted = false;
 
@@ -830,6 +834,8 @@ int main_update( struct main_t * main )
     memcpy( &main->relay_ping_set, &relay_ping_set, sizeof(struct relay_set) );
     // todo
     // memcpy( &main->relay_ping_hash, &relay_ping_hash, sizeof(struct relay_hash) );
+
+#endif
 
     return RELAY_OK;
 }

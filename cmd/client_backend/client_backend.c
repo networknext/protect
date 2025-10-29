@@ -1,16 +1,14 @@
 /*
     Network Next Client Backend
 
-    Requires Ubuntu 24.04 LTS with XDP
+    Requires Ubuntu 24.04 LTS
 */
 
-#include "relay.h"
-#include "relay_platform.h"
-#include "relay_main.h"
-#include "relay_ping.h"
-#include "relay_bpf.h"
-#include "relay_config.h"
-#include "relay_debug.h"
+#include "client_backend.h"
+#include "client_backend_platform.h"
+#include "client_backend_main.h"
+#include "client_backend_bpf.h"
+#include "client_backend_config.h"
 
 #include <memory.h>
 #include <stdio.h>
@@ -19,15 +17,10 @@
 
 static struct config_t config;
 static struct bpf_t bpf;
-#if RELAY_DEBUG
-static struct debug_t debug;
-#else // #if RELAY_DEBUG
 static struct main_t main_data;
-static struct ping_t ping;
-#endif // #if RELAY_DEBUG
 
 volatile bool quit;
-volatile bool relay_clean_shutdown = false;
+volatile bool clean_shutdown = false;
 
 void interrupt_handler( int signal )
 {
@@ -37,7 +30,7 @@ void interrupt_handler( int signal )
 void clean_shutdown_handler( int signal )
 {
     (void) signal;
-    relay_clean_shutdown = true;
+    clean_shutdown = true;
     quit = true;
 }
 
@@ -53,15 +46,11 @@ static void cleanup()
     fflush( stdout );
 }
 
-#ifndef RELAY_VERSION
-#define RELAY_VERSION "relay"
-#endif // #ifndef RELAY_VERSION
-
 int main( int argc, char *argv[] )
 {
-    relay_platform_init();
+    client_backend_platform_init();
 
-    printf( "Network Next Relay (%s)\n", RELAY_VERSION );
+    printf( "Network Next Client Backend\n" );
 
     fflush( stdout );
 
@@ -93,27 +82,7 @@ int main( int argc, char *argv[] )
 
     fflush( stdout );
 
-#if RELAY_DEBUG
-
-    // debug relay
-
-    printf( "Starting debug relay\n" );
-
-    fflush( stdout );
-
-    if ( debug_init( &debug, &config, &bpf ) != RELAY_OK )
-    {
-        cleanup();
-        return 1;
-    }
-
-    fflush( stdout );
-
-    int result = debug_run( &debug );
-
-#else // #if RELAY_DEBUG
-
-    printf( "Starting relay\n" );
+    printf( "Starting backend\n" );
 
     fflush( stdout );
 
@@ -123,23 +92,7 @@ int main( int argc, char *argv[] )
         return 1;
     }
 
-    if ( ping_init( &ping, &config, &main_data, &bpf ) != RELAY_OK )
-    {
-        cleanup();
-        return 1;
-    }
-
-    if ( ping_start_thread( &ping ) != RELAY_OK )
-    {
-        cleanup();
-        return 1;
-    }
-
     int result = main_run( &main_data );
-
-    ping_join_thread( &ping );
-
-#endif // #if RELAY_DEBUG
 
     cleanup();
 

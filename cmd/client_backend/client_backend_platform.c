@@ -2,7 +2,7 @@
     Network Next XDP Relay
 */
 
-#include "relay_platform.h"
+#include "client_backend_platform.h"
 
 #include <time.h>
 #include <sodium.h>
@@ -16,7 +16,7 @@
 
 static double time_start;
 
-int relay_platform_init()
+int client_backend_platform_init()
 {
     struct timespec ts;
     clock_gettime( CLOCK_MONOTONIC_RAW, &ts );
@@ -26,7 +26,7 @@ int relay_platform_init()
     return RELAY_OK;
 }
 
-double relay_platform_time()
+double client_backend_platform_time()
 {
     struct timespec ts;
     clock_gettime( CLOCK_MONOTONIC_RAW, &ts );
@@ -34,21 +34,21 @@ double relay_platform_time()
     return current - time_start;
 }
 
-void relay_platform_sleep( double time )
+void client_backend_platform_sleep( double time )
 {
     usleep( (int) ( time * 1000000 ) );
 }
 
 // -----------------------------------------------------------------------------------------------------------------------------------------------
 
-void relay_platform_random_bytes( uint8_t * buffer, int bytes )
+void client_backend_platform_random_bytes( uint8_t * buffer, int bytes )
 {
     randombytes_buf( buffer, bytes );
 }
 
 // -----------------------------------------------------------------------------------------------------------------------------------------------
 
-int relay_platform_parse_address( char * address_string, uint32_t * address, uint16_t * port )
+int client_backend_platform_parse_address( char * address_string, uint32_t * address, uint16_t * port )
 {
     assert( address_string );
     assert( address );
@@ -82,9 +82,9 @@ int relay_platform_parse_address( char * address_string, uint32_t * address, uin
 
 // -----------------------------------------------------------------------------------------------------------------------------------------------
 
-struct relay_platform_socket_t * relay_platform_socket_create( uint32_t address, uint16_t port, int socket_type, float timeout_seconds, int send_buffer_size, int receive_buffer_size )
+struct client_backend_platform_socket_t * client_backend_platform_socket_create( uint32_t address, uint16_t port, int socket_type, float timeout_seconds, int send_buffer_size, int receive_buffer_size )
 {
-    struct relay_platform_socket_t * s = (struct relay_platform_socket_t*) malloc( sizeof( struct relay_platform_socket_t ) );
+    struct client_backend_platform_socket_t * s = (struct client_backend_platform_socket_t*) malloc( sizeof( struct client_backend_platform_socket_t ) );
 
     assert( s );
 
@@ -105,14 +105,14 @@ struct relay_platform_socket_t * relay_platform_socket_create( uint32_t address,
     if ( setsockopt( s->handle, SOL_SOCKET, SO_SNDBUF, (char*)( &send_buffer_size ), sizeof( int ) ) != 0 )
     {
         printf( "failed to set socket send buffer size to %d\n", send_buffer_size );
-        relay_platform_socket_destroy( s );
+        client_backend_platform_socket_destroy( s );
         return NULL;
     }
 
     if ( setsockopt( s->handle, SOL_SOCKET, SO_RCVBUF, (char*)( &receive_buffer_size ), sizeof( int ) ) != 0 )
     {
         printf( "failed to set socket receive buffer size to %d\n", receive_buffer_size );
-        relay_platform_socket_destroy( s );
+        client_backend_platform_socket_destroy( s );
         return NULL;
     }
 
@@ -126,7 +126,7 @@ struct relay_platform_socket_t * relay_platform_socket_create( uint32_t address,
     if ( bind( s->handle, (struct sockaddr*) &socket_address, sizeof( socket_address ) ) < 0 )
     {
         printf( "failed to bind socket\n" );
-        relay_platform_socket_destroy( s );
+        client_backend_platform_socket_destroy( s );
         return NULL;
     }
 
@@ -143,7 +143,7 @@ struct relay_platform_socket_t * relay_platform_socket_create( uint32_t address,
         if ( fcntl( s->handle, F_SETFL, O_NONBLOCK, 1 ) == -1 )
         {
             printf( "failed to set socket to non-blocking\n" );
-            relay_platform_socket_destroy( s );
+            client_backend_platform_socket_destroy( s );
             return NULL;
         }
     }
@@ -156,7 +156,7 @@ struct relay_platform_socket_t * relay_platform_socket_create( uint32_t address,
         if ( setsockopt( s->handle, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof( tv ) ) < 0 )
         {
             printf( "failed to set socket receive timeout\n" );
-            relay_platform_socket_destroy( s );
+            client_backend_platform_socket_destroy( s );
             return NULL;
         }
     }
@@ -168,7 +168,7 @@ struct relay_platform_socket_t * relay_platform_socket_create( uint32_t address,
     return s;
 }
 
-void relay_platform_socket_destroy( struct relay_platform_socket_t * socket )
+void client_backend_platform_socket_destroy( struct client_backend_platform_socket_t * socket )
 {
     assert( socket );
     if ( socket->handle != 0 )
@@ -178,7 +178,7 @@ void relay_platform_socket_destroy( struct relay_platform_socket_t * socket )
     free( socket );
 }
 
-void relay_platform_socket_send_packet( struct relay_platform_socket_t * socket, uint32_t to_address, uint16_t to_port, const void * packet_data, int packet_bytes )
+void client_backend_platform_socket_send_packet( struct client_backend_platform_socket_t * socket, uint32_t to_address, uint16_t to_port, const void * packet_data, int packet_bytes )
 {
     assert( socket );
     assert( packet_data );
@@ -193,7 +193,7 @@ void relay_platform_socket_send_packet( struct relay_platform_socket_t * socket,
     sendto( socket->handle, (const char*)( packet_data ), packet_bytes, 0, (struct sockaddr*)( &socket_address ), sizeof(struct sockaddr_in) );
 }
 
-int relay_platform_socket_receive_packet( struct relay_platform_socket_t * socket, uint32_t * from_address, uint16_t * from_port, void * packet_data, int max_packet_size )
+int client_backend_platform_socket_receive_packet( struct client_backend_platform_socket_t * socket, uint32_t * from_address, uint16_t * from_port, void * packet_data, int max_packet_size )
 {
     assert( socket );
     assert( from_address );
@@ -222,9 +222,9 @@ int relay_platform_socket_receive_packet( struct relay_platform_socket_t * socke
 
 // -----------------------------------------------------------------------------------------------------------------------------------------------
 
-struct relay_platform_thread_t * relay_platform_thread_create( relay_platform_thread_func_t * thread_function, void * arg )
+struct client_backend_platform_thread_t * client_backend_platform_thread_create( client_backend_platform_thread_func_t * thread_function, void * arg )
 {
-    struct relay_platform_thread_t * thread = (struct relay_platform_thread_t*) malloc( sizeof( struct relay_platform_thread_t) );
+    struct client_backend_platform_thread_t * thread = (struct client_backend_platform_thread_t*) malloc( sizeof( struct client_backend_platform_thread_t) );
 
     assert( thread );
 
@@ -237,13 +237,13 @@ struct relay_platform_thread_t * relay_platform_thread_create( relay_platform_th
     return thread;
 }
 
-void relay_platform_thread_join( struct relay_platform_thread_t * thread )
+void client_backend_platform_thread_join( struct client_backend_platform_thread_t * thread )
 {
     assert( thread );
     pthread_join( thread->handle, NULL );
 }
 
-void relay_platform_thread_destroy( struct relay_platform_thread_t * thread )
+void client_backend_platform_thread_destroy( struct client_backend_platform_thread_t * thread )
 {
     assert( thread );
     free( thread );
@@ -251,9 +251,9 @@ void relay_platform_thread_destroy( struct relay_platform_thread_t * thread )
 
 // -----------------------------------------------------------------------------------------------------------------------------------------------
 
-struct relay_platform_mutex_t * relay_platform_mutex_create()
+struct client_backend_platform_mutex_t * client_backend_platform_mutex_create()
 {
-    struct relay_platform_mutex_t * mutex = (struct relay_platform_mutex_t*) malloc( sizeof(struct relay_platform_mutex_t) ); assert( mutex );
+    struct client_backend_platform_mutex_t * mutex = (struct client_backend_platform_mutex_t*) malloc( sizeof(struct client_backend_platform_mutex_t) ); assert( mutex );
 
     assert( mutex );
 
@@ -272,19 +272,19 @@ struct relay_platform_mutex_t * relay_platform_mutex_create()
     return mutex;
 }
 
-void relay_platform_mutex_acquire( struct relay_platform_mutex_t * mutex )
+void client_backend_platform_mutex_acquire( struct client_backend_platform_mutex_t * mutex )
 {
     assert( mutex );
     pthread_mutex_lock( &mutex->handle );
 }
 
-void relay_platform_mutex_release( struct relay_platform_mutex_t * mutex )
+void client_backend_platform_mutex_release( struct client_backend_platform_mutex_t * mutex )
 {
     assert( mutex );
     pthread_mutex_unlock( &mutex->handle );
 }
 
-void relay_platform_mutex_destroy( struct relay_platform_mutex_t * mutex )
+void client_backend_platform_mutex_destroy( struct client_backend_platform_mutex_t * mutex )
 {
     assert( mutex );
     pthread_mutex_destroy( &mutex->handle );

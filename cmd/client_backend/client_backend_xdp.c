@@ -20,9 +20,9 @@
 #include <linux/string.h>
 #include <bpf/bpf_helpers.h>
 
-#define RELAY_ADVANCED_PACKET_FILTER 0
+#define CLIENT_BACKEND_ADVANCED_PACKET_FILTER 0
 
-#include "relay_shared.h"
+#include "client_backend_shared.h"
 
 #if defined(__BYTE_ORDER__) && defined(__ORDER_LITTLE_ENDIAN__) && \
     __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
@@ -40,10 +40,47 @@
 # error "Endianness detection needs to be set up for your compiler?!"
 #endif
 
+char _license[] SEC("license") = "GPL";
+
+#define INCREMENT_COUNTER(counter_index)  __sync_fetch_and_add( &stats->counters[counter_index], 1 )
+
+#define DECREMENT_COUNTER(counter_index)  __sync_fetch_and_sub( &stats->counters[counter_index], 1 )
+
+#define ADD_COUNTER(counter_index, value) __sync_fetch_and_add( &stats->counters[counter_index], ( value) )
+
+#define XCHACHA20POLY1305_NONCE_SIZE 24
+
+#define CHACHA20POLY1305_KEY_SIZE 32
+
+struct chacha20poly1305_crypto
+{
+    __u8 nonce[XCHACHA20POLY1305_NONCE_SIZE];
+    __u8 key[CHACHA20POLY1305_KEY_SIZE];
+};
+
+int bpf_next_sha256( void * data, int data__sz, void * output, int output__sz ) __ksym;
+
+int bpf_next_xchacha20poly1305_decrypt( void * data, int data__sz, struct chacha20poly1305_crypto * crypto ) __ksym;
+
+SEC("client_backend_xdp") int client_backend_xdp_filter( struct xdp_md *ctx ) 
+{ 
+    return XDP_PASS;
+}
+
+
+
+
+
+
+
+
+
+#if 0
+
 struct {
     __uint( type, BPF_MAP_TYPE_ARRAY );
     __type( key, __u32 );
-    __type( value, struct relay_config );
+    __type( value, struct client_backend_config );
     __uint( max_entries, 1 );
     __uint( pinning, LIBBPF_PIN_BY_NAME );
 } config_map SEC(".maps");
@@ -51,7 +88,7 @@ struct {
 struct {
     __uint( type, BPF_MAP_TYPE_ARRAY );
     __type( key, __u32 );
-    __type( value, struct relay_state );
+    __type( value, struct client_backend_state );
     __uint( max_entries, 1 );
     __uint( pinning, LIBBPF_PIN_BY_NAME );
 } state_map SEC(".maps");
@@ -59,7 +96,7 @@ struct {
 struct {
     __uint( type, BPF_MAP_TYPE_PERCPU_ARRAY );
     __type( key, __u32 );
-    __type( value, struct relay_stats );
+    __type( value, struct client_backend_stats );
     __uint( max_entries, 1 );
     __uint( pinning, LIBBPF_PIN_BY_NAME );
 } stats_map SEC(".maps");
@@ -2828,3 +2865,5 @@ SEC("relay_xdp") int relay_xdp_filter( struct xdp_md *ctx )
 }
 
 char _license[] SEC("license") = "GPL";
+
+#endif

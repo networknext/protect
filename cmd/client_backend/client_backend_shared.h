@@ -1,12 +1,14 @@
 
-// Relay shared definitions
+// Shared definitions
 
-#ifndef RELAY_SHARED_H
-#define RELAY_SHARED_H
+#ifndef CLIENT_BACKEND_SHARED_H
+#define CLIENT_BACKEND_SHARED_H
 
-#include "relay_constants.h"
+#include "client_backend_constants.h"
 
 #include <linux/types.h>
+
+#if 0
 
 struct relay_config
 {
@@ -134,4 +136,6 @@ struct session_key
     __u64 session_version;                                                  // IMPORTANT: must be __u64 or weird stuff happens
 };
 
-#endif // #ifndef RELAY_SHARED_H
+#endif // #if 0
+
+#endif // #ifndef CLIENT_BACKEND_SHARED_H
