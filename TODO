@@ -31,63 +31,67 @@ DONE
 
 TODO
 
-    Update the xdp program so it supports reflect packet
-
     Modify the XDP program to reflect back any UDP packet received on the public address and port
 
     -----
-
-    Verify that I can receive the packets
 
     Reflect the 100 byte packet back to the client
 
     Verify that the client sees the 100 byte packet
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    -------------
+    -----
 
     Setup so the next_client.cpp wraps packets with the prefix header for packet filtering
 
-    Implement the client_backend so it has packet filter stuff (advanced and basic), and it listens on a specific UDP port only.
+    Implement packet filter in next_client.cpp
 
-    Get to the point where the client sends packets to the client_backend and we see logs that we have actually received them from XDP
+    -----
+
+    Extend the client backend XDP program so it checks packet filter before processing any UDP packet on the specified port
+
+    -----
+
+    Verify that packet filter works, and we still get the 100 byte packet back on the client
+
+    -----
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     -------------
 
