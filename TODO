@@ -37,59 +37,15 @@ DONE
 
     Bring across the code for reflect packet that updates the header
 
-TODO
-
-    Extend backend so it checks advanced packet filter (with magic zero)
-
-    -----
-
     Setup so next_client.cpp wraps packets with the prefix header for packet filtering
 
     Implement packet filter in next_client.cpp
 
-    -----
+    Extend backend so it checks advanced packet filter (with magic zero)
 
-    Verify that packet filter works, and we still get the 100 byte packet back on the client
+    Verify that packet filter works, and we still get the 118 byte packet back on the client
 
-    -----
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+TODO
 
     -------------
 
