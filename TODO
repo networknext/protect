@@ -29,25 +29,21 @@ DONE
 
     Get the client backend built and running and verify that it loads the xdp program correctly
 
-TODO
-
     Modify the XDP program to reflect back any UDP packet received on the public address and port
 
-    -----
+TODO
 
-    Reflect the 100 byte packet back to the client
-
-    Verify that the client sees the 100 byte packet
+    Verify that the client sees the 100 byte reflected packet
 
     -----
 
-    Setup so the next_client.cpp wraps packets with the prefix header for packet filtering
+    Setup so next_client.cpp wraps packets with the prefix header for packet filtering
 
     Implement packet filter in next_client.cpp
 
     -----
 
-    Extend the client backend XDP program so it checks packet filter before processing any UDP packet on the specified port
+    Extend the client backend XDP program so it checks *basic* packet filter before processing any UDP packet on the specified port
 
     -----
 
