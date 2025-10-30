@@ -31,9 +31,11 @@ DONE
 
     Modify the XDP program to reflect back any UDP packet received on the public address and port
 
+    Verify that the client sees the 100 byte reflected packet
+
 TODO
 
-    Verify that the client sees the 100 byte reflected packet
+    Debug what's wrong with the config. The wrong public address and port are set on it (?!)
 
     -----
 
