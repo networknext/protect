@@ -158,6 +158,8 @@ SEC("client_backend_xdp") int client_backend_xdp_filter( struct xdp_md *ctx )
 
                     debug_printf( "config public address = %x:%d", config->public_address, config->port );
 
+                    // 8818ecb8:21974 ?!
+
                     if ( ip->daddr == 0x7cb7a8c0 && udp->dest == 16540 )
                     {
                         __u8 * packet_data = (unsigned char*) (void*)udp + sizeof(struct udphdr);
