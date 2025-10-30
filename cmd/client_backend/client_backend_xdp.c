@@ -146,6 +146,23 @@ SEC("client_backend_xdp") int client_backend_xdp_filter( struct xdp_md *ctx )
 
                 if ( (void*)udp + sizeof(struct udphdr) <= data_end )
                 {
+                    debug_printf( "%x:%d", ip->daddr, udp->dest );
+
+                    __u8 * packet_data = (unsigned char*) (void*)udp + sizeof(struct udphdr);
+
+                    if ( (void*)packet_data + 100 != data_end )
+                    {
+                        debug_printf( "udp packet is not 100 bytes" );
+                        return XDP_DROP;
+                    }
+
+                    debug_printf( "reflect packet" );
+
+                    reflect_packet( data, 100 );
+
+                    return XDP_TX;
+
+                    /*
                     debug_printf( "get config" );
 
                     int key = 0;
@@ -164,19 +181,6 @@ SEC("client_backend_xdp") int client_backend_xdp_filter( struct xdp_md *ctx )
                         {
                             debug_printf( "valid address" );
 
-                            __u8 * packet_data = (unsigned char*) (void*)udp + sizeof(struct udphdr);
-
-                            if ( (void*)packet_data + 100 != data_end )
-                            {
-                                debug_printf( "udp packet is not 100 bytes" );
-                                return XDP_DROP;
-                            }
-
-                            debug_printf( "reflect packet" );
-
-                            reflect_packet( data, 100 );
-
-                            return XDP_TX;
                         }
                     }
                 }
