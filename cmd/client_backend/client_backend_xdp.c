@@ -1,6 +1,13 @@
 /*
     Network Next. Copyright 2017 - 2025 Network Next, Inc.  
     Licensed under the Network Next Source Available License 1.0
+
+    USAGE:
+
+        clang -Ilibbpf/src -g -O2 -target bpf -c client_backend_xdp.c -o client_backend_xdp.o
+        sudo ip link set dev enp4s0 xdp obj client_backend_xdp.o sec client_backend_xdp
+        sudo cat /sys/kernel/debug/tracing/trace_pipe
+        sudo ip link set dev enp4s0 xdp off
 */
 
 #ifdef __linux__
@@ -60,9 +67,7 @@ struct {
     __uint( pinning, LIBBPF_PIN_BY_NAME );
 } client_backend_config_map SEC(".maps");
 
-#ifndef DEBUG
-#define DEBUG 0
-#endif // #ifndef DEBUG
+#define DEBUG 1
 
 #if DEBUG
 #define debug_printf bpf_printk
