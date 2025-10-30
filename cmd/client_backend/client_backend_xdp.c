@@ -156,23 +156,28 @@ SEC("client_backend_xdp") int client_backend_xdp_filter( struct xdp_md *ctx )
                         return XDP_PASS;
                     }
 
-                    if ( udp->dest == config->port && ip->daddr == config->public_address && ip->ihl == 5 )
+                    if ( udp->dest == config->port )//&& ip->daddr == config->public_address ) // && ip->ihl == 5 )
                     {
-                        debug_printf( "valid address and port" );
+                        debug_printf( "valid port" );
 
-                        __u8 * packet_data = (unsigned char*) (void*)udp + sizeof(struct udphdr);
-
-                        if ( (void*)packet_data + 100 != data_end )
+                        if ( ip->daddr == config->public_address )
                         {
-                            debug_printf( "udp packet is not 100 bytes" );
-                            return XDP_DROP;
+                            debug_printf( "valid address" );
+
+                            __u8 * packet_data = (unsigned char*) (void*)udp + sizeof(struct udphdr);
+
+                            if ( (void*)packet_data + 100 != data_end )
+                            {
+                                debug_printf( "udp packet is not 100 bytes" );
+                                return XDP_DROP;
+                            }
+
+                            debug_printf( "reflect packet" );
+
+                            reflect_packet( data, 100 );
+
+                            return XDP_TX;
                         }
-
-                        debug_printf( "reflect packet" );
-
-                        reflect_packet( data, 100 );
-
-                        return XDP_TX;
                     }
                 }
             }
