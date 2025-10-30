@@ -540,8 +540,6 @@ SEC("client_backend_xdp") int client_backend_xdp_filter( struct xdp_md *ctx )
 
                         debug_printf( "reflect packet" );
 
-                        __u8 magic[8] = {0,0,0,0,0,0,0,0};
-
                         reflect_packet( data, 118, magic );
 
                         return XDP_TX;
