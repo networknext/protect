@@ -1,56 +1,6 @@
-.env
-.DS_Store
 dist
-.idea
-.vscode
-cover.out
-*.swp
-*.o
-*.d
-.ycm_extra_conf.py
-.env
-*.rdb
-*.csv
-
-# next tool output
-cost.bin
-optimize.bin
-database.bin*
-
-# happy path output
-logs
-
-# test files
-*.mmdb
-
-# terraform
-.terraform
-.terraform.*
-terraform.tfstate
-terraform.tfstate.*
-
-# cache
-cache/*
-
-# portal
-node_modules
-yarn.lock
-
-# redis cluster
-appendonlydir
-nodes.conf
-*.rdb
-
-# fun times
-.a
-sdk/build/ps4/client
-sdk/build/ps4/test
-Gaming.Xbox.*
-
-# example dir
-example
-
-# unreal sdk source
-unreal/NetworkNext/Source/Private/include
-unreal/NetworkNext/Source/Private/source
-unreal/NetworkNext/Source/Private/sodium
+.DS_Store
+CMakeFiles
+CMakeCache.txt
+*.cmake
+*.a
