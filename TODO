@@ -35,17 +35,15 @@ DONE
 
 TODO
 
-    Debug what's wrong with the config. The wrong public address and port are set on it (?!)
+    Extend the client backend XDP program so it checks packet filter before processing any UDP packet on the specified port
+
+    Bring across the code for reflect packet that updates the header
 
     -----
 
     Setup so next_client.cpp wraps packets with the prefix header for packet filtering
 
     Implement packet filter in next_client.cpp
-
-    -----
-
-    Extend the client backend XDP program so it checks *basic* packet filter before processing any UDP packet on the specified port
 
     -----
 

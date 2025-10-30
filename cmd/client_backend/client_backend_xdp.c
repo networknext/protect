@@ -75,7 +75,7 @@ struct {
 #define debug_printf(...) do { } while (0)
 #endif // #if DEBUG
 
-static void reflect_packet( void * data, int payload_bytes )
+static void reflect_packet( void * data, int payload_bytes, __u8 * magic )
 {
     struct ethhdr * eth = data;
     struct iphdr  * ip  = data + sizeof( struct ethhdr );
@@ -116,6 +116,162 @@ static void reflect_packet( void * data, int payload_bytes )
 
     __u32 from = ip->saddr;
     __u32 to   = ip->daddr;
+
+    unsigned short sum = 0;
+
+    sum += ( from >> 24 );
+    sum += ( from >> 16 ) & 0xFF;
+    sum += ( from >> 8  ) & 0xFF;
+    sum += ( from       ) & 0xFF;
+
+    sum += ( to >> 24 );
+    sum += ( to >> 16 ) & 0xFF;
+    sum += ( to >> 8  ) & 0xFF;
+    sum += ( to       ) & 0xFF;
+
+    sum += ( payload_bytes >> 8 );
+    sum += ( payload_bytes      ) & 0xFF;
+
+    char * sum_data = (char*) &sum;
+
+    __u8 sum_0 = ( sum      ) & 0xFF;
+    __u8 sum_1 = ( sum >> 8 );
+
+    __u8 pittle[2];
+    pittle[0] = 1 | ( sum_0 ^ sum_1 ^ 193 );
+    pittle[1] = 1 | ( ( 255 - pittle[0] ) ^ 113 );
+
+    packet_data[1] = pittle[0];
+    packet_data[2] = pittle[1];
+
+    __u64 hash = 0xCBF29CE484222325;
+
+    hash ^= magic[0];
+    hash *= 0x00000100000001B3;
+
+    hash ^= magic[1];
+    hash *= 0x00000100000001B3;
+
+    hash ^= magic[2];
+    hash *= 0x00000100000001B3;
+
+    hash ^= magic[3];
+    hash *= 0x00000100000001B3;
+
+    hash ^= magic[4];
+    hash *= 0x00000100000001B3;
+
+    hash ^= magic[5];
+    hash *= 0x00000100000001B3;
+
+    hash ^= magic[6];
+    hash *= 0x00000100000001B3;
+
+    hash ^= magic[7];
+    hash *= 0x00000100000001B3;
+
+    hash ^= ( from       ) & 0xFF;
+    hash *= 0x00000100000001B3;
+
+    hash ^= ( from >> 8  ) & 0xFF;
+    hash *= 0x00000100000001B3;
+
+    hash ^= ( from >> 16 ) & 0xFF;
+    hash *= 0x00000100000001B3;
+
+    hash ^= ( from >> 24 );
+    hash *= 0x00000100000001B3;
+
+    hash ^= ( to       ) & 0xFF;
+    hash *= 0x00000100000001B3;
+
+    hash ^= ( to >> 8  ) & 0xFF;
+    hash *= 0x00000100000001B3;
+
+    hash ^= ( to >> 16 ) & 0xFF;
+    hash *= 0x00000100000001B3;
+
+    hash ^= ( to >> 24 );
+    hash *= 0x00000100000001B3;
+
+    hash ^= ( payload_bytes      ) & 0xFF;
+    hash *= 0x00000100000001B3;
+
+    hash ^= ( payload_bytes >> 8 );
+    hash *= 0x00000100000001B3;
+
+    __u8 hash_0 = ( hash       ) & 0xFF;
+    __u8 hash_1 = ( hash >> 8  ) & 0xFF;
+    __u8 hash_2 = ( hash >> 16 ) & 0xFF;
+    __u8 hash_3 = ( hash >> 24 ) & 0xFF;
+    __u8 hash_4 = ( hash >> 32 ) & 0xFF;
+    __u8 hash_5 = ( hash >> 40 ) & 0xFF;
+    __u8 hash_6 = ( hash >> 48 ) & 0xFF;
+    __u8 hash_7 = ( hash >> 56 );
+
+    __u8 chonkle[15];
+
+    chonkle[0] = ( ( hash_6 & 0xC0 ) >> 6 ) + 42;
+    chonkle[1] = ( hash_3 & 0x1F ) + 200;
+    chonkle[2] = ( ( hash_2 & 0xFC ) >> 2 ) + 5;
+    chonkle[3] = hash_0;
+    chonkle[4] = ( hash_2 & 0x03 ) + 78;
+    chonkle[5] = ( hash_4 & 0x7F ) + 96;
+    chonkle[6] = ( ( hash_1 & 0xFC ) >> 2 ) + 100;
+    if ( ( hash_7 & 1 ) == 0 ) 
+    {
+        chonkle[7] = 79;
+    } 
+    else 
+    {
+        chonkle[7] = 7;
+    }
+    if ( ( hash_4 & 0x80 ) == 0 )
+    {
+        chonkle[8] = 37;
+    } 
+    else 
+    {
+        chonkle[8] = 83;
+    }
+    chonkle[9] = ( hash_5 & 0x07 ) + 124;
+    chonkle[10] = ( ( hash_1 & 0xE0 ) >> 5 ) + 175;
+    chonkle[11] = ( hash_6 & 0x3F ) + 33;
+    __u8 value = ( hash_1 & 0x03 );
+    if ( value == 0 )
+    {
+        chonkle[12] = 97;
+    } 
+    else if ( value == 1 )
+    {
+        chonkle[12] = 5;
+    } 
+    else if ( value == 2 )
+    {
+        chonkle[12] = 43;
+    } 
+    else 
+    {
+        chonkle[12] = 13;
+    }
+    chonkle[13] = ( ( hash_5 & 0xF8 ) >> 3 ) + 210;
+    chonkle[14] = ( ( hash_7 & 0xFE ) >> 1 ) + 17;
+
+    packet_data[3]  = chonkle[0];
+    packet_data[4]  = chonkle[1];
+    packet_data[5]  = chonkle[2];
+    packet_data[6]  = chonkle[3];
+    packet_data[7]  = chonkle[4];
+    packet_data[8]  = chonkle[5];
+    packet_data[9]  = chonkle[6];
+    packet_data[10] = chonkle[7];
+    packet_data[11] = chonkle[8];
+    packet_data[12] = chonkle[9];
+    packet_data[13] = chonkle[10];
+    packet_data[14] = chonkle[11];
+    packet_data[15] = chonkle[12];
+    packet_data[16] = chonkle[13];
+    packet_data[17] = chonkle[14];
 }
 
 SEC("client_backend_xdp") int client_backend_xdp_filter( struct xdp_md *ctx ) 
@@ -156,15 +312,62 @@ SEC("client_backend_xdp") int client_backend_xdp_filter( struct xdp_md *ctx )
                     {
                         __u8 * packet_data = (unsigned char*) (void*)udp + sizeof(struct udphdr);
 
-                        if ( (void*)packet_data + 100 != data_end )
+                        // Drop packets that are too small to be valid
+
+                        if ( (void*)packet_data + 18 > data_end )
                         {
-                            debug_printf( "udp packet is not 100 bytes" );
+                            return XDP_DROP;
+                        }
+
+                        // Drop packets that are too large to be valid
+
+                        int packet_bytes = data_end - (void*)udp - sizeof(struct udphdr);
+
+                        if ( packet_bytes > 1400 )
+                        {
+                            relay_printf( "packet is too large" );
+                            INCREMENT_COUNTER( RELAY_COUNTER_PACKET_TOO_LARGE );
+                            INCREMENT_COUNTER( RELAY_COUNTER_DROPPED_PACKETS );
+                            ADD_COUNTER( RELAY_COUNTER_DROPPED_BYTES, data_end - data );
+                            return XDP_DROP;
+                        }
+
+                        // Basic packet filter
+
+                        if ( packet_data[0] < 0x01 || packet_data[0] > 0x0E                                                           ||
+                             packet_data[2] != ( 1 | ( ( 255 - packet_data[1] ) ^ 113 ) )                                             ||
+                             packet_data[3] < 0x2A || packet_data[3] > 0x2D                                                           ||
+                             packet_data[4] < 0xC8 || packet_data[4] > 0xE7                                                           ||
+                             packet_data[5] < 0x05 || packet_data[5] > 0x44                                                           ||
+                             packet_data[7] < 0x4E || packet_data[7] > 0x51                                                           ||
+                             packet_data[8] < 0x60 || packet_data[8] > 0xDF                                                           ||
+                             packet_data[9] < 0x64 || packet_data[9] > 0xE3                                                           ||
+                             packet_data[10] != 0x07 && packet_data[10] != 0x4F                                                       ||
+                             packet_data[11] != 0x25 && packet_data[11] != 0x53                                                       ||
+                             packet_data[12] < 0x7C || packet_data[12] > 0x83                                                         ||
+                             packet_data[13] < 0xAF || packet_data[13] > 0xB6                                                         ||
+                             packet_data[14] < 0x21 || packet_data[14] > 0x60                                                         ||
+                             packet_data[15] != 0x61 && packet_data[15] != 0x05 && packet_data[15] != 0x2B && packet_data[15] != 0x0D ||
+                             packet_data[16] < 0xD2 || packet_data[16] > 0xF1                                                         ||
+                             packet_data[17] < 0x11 || packet_data[17] > 0x90 )
+                        {
+                            debug_printf( "basic packet filter dropped packet" );
+                            return XDP_DROP;
+                        }
+
+                        // todo: temporary reflect 18 byte header + 100 byte payload below
+
+                        if ( (void*)packet_data + 118 != data_end )
+                        {
+                            debug_printf( "udp packet is not 118 bytes" );
                             return XDP_DROP;
                         }
 
                         debug_printf( "reflect packet" );
 
-                        reflect_packet( data, 100 );
+                        __u8 magic[8] = {0,0,0,0,0,0,0,0};
+
+                        reflect_packet( data, 118, magic );
 
                         return XDP_TX;
                     }
