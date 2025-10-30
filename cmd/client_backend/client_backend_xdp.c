@@ -332,8 +332,7 @@ SEC("client_backend_xdp") int client_backend_xdp_filter( struct xdp_md *ctx )
 
                         // Basic packet filter
 
-                        if ( packet_data[0] == 0 || packet_data[0] > 0x0E                                                             ||
-                             packet_data[2] != ( 1 | ( ( 255 - packet_data[1] ) ^ 113 ) )                                             ||
+                        if ( packet_data[2] != ( 1 | ( ( 255 - packet_data[1] ) ^ 113 ) )                                             ||
                              packet_data[3] < 0x2A || packet_data[3] > 0x2D                                                           ||
                              packet_data[4] < 0xC8 || packet_data[4] > 0xE7                                                           ||
                              packet_data[5] < 0x05 || packet_data[5] > 0x44                                                           ||

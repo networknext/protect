@@ -157,6 +157,8 @@ void next_client_send_packet( next_client_t * client, const uint8_t * packet_dat
         next_generate_pittle( a, from_address_data, to_address_data, test_packet_length );
         next_generate_chonkle( b, magic, from_address_data, to_address_data, test_packet_length );
 
+        test_packet_data[0] = 0;
+
         next_platform_socket_send_packet( client->socket, &to_address, test_packet_data, test_packet_length );
     }
 
