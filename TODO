@@ -55,9 +55,62 @@ DONE
         Therefore, the concept of "getting a private key for ChaCha AEAD given a keypair" does not directly apply in the context of crypto_aead_chacha20poly1305_* functions in libsodium. These functions use a symmetric key that you would generate and share securely, not a key derived from an asymmetric keypair.
         If the intention is to use authenticated encryption with public-key cryptography, libsodium provides the crypto_box functions, which utilize the Curve25519 key exchange for deriving a shared secret and then use that shared secret for authenticated encryption (often with XSalsa20-Poly1305, a related construction). In this scenario, you would generate a Curve25519 public/private keypair using crypto_box_keypair, and the private key from that keypair would be used in conjunction with the recipient's public key to establish a shared secret for encryption.
 
+    Get clarity on crypto requirements for connect token and suitability for use inside XDP before going any further.
+
+    Looks like I need to do signing with Ed25519 in sodium, this is keypair based, and the linux kernel also has support for Ed25519 so this should work.
+
+    Interesting:
+
+        https://crypto.stackexchange.com/questions/37896/using-a-single-ed25519-key-for-encryption-and-signature
+
 TODO
 
-    Get clarity on crypto requirements for connect token and suitability for use inside XDP before going any further.
+    Need to get an implementations for ED25519 signing in the linux kernel and verify that it is compatible with signed messages from libsodium crypto_sign
+
+    Once this is done each buyer can have a keypair, and I can sign the connect token with the buyer private key, and verify it with the buyer public key on the client backend
+
+    After this point we can switch over to secret key stuff using XChaCha20, which is already supported.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     -------------
 
