@@ -7,10 +7,17 @@
 
 #include <string.h>
 
+// todo
+#include <stdio.h>
+
 static const unsigned char base64_table_encode[65] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
 int next_base64_encode_data( const uint8_t * input, size_t input_length, char * output, size_t output_size )
-{
+{   
+    // todo
+    printf( "input length = %d\n", (int) input_length );
+    printf( "output size = %d\n", (int) output_size );
+
     next_assert( input );
     next_assert( output );
     next_assert( output_size > 0 );

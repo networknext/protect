@@ -63,7 +63,30 @@ DONE
 
         https://crypto.stackexchange.com/questions/37896/using-a-single-ed25519-key-for-encryption-and-signature
 
+    Actually define the connect token struct
+
 TODO
+
+    Implement the functions to write connect token to a base64 string
+
+    Implement the function to read and verify the connect token from a base64 string
+
+    Now the client can decode the connect token and it knows all the stuff it needs to init with a client backend
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    ----------
 
     Need to get an implementations for ED25519 signing in the linux kernel and verify that it is compatible with signed messages from libsodium crypto_sign
 
@@ -116,11 +139,6 @@ TODO
 
     -------------
 
-    Implement code for writing this connect token to a base64 string
-
-    Implement code to read the connect token from a base64 string
-
-    Mock up the client.cpp so it passes in a valid connect token as a string
 
     -------------
 

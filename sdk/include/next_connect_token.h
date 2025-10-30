@@ -8,7 +8,7 @@
 
 #include "next.h"
 
-#define NEXT_MAX_CONNECT_TOKEN_BYTES 350
+#define NEXT_MAX_CONNECT_TOKEN_BYTES 500
 
 #define MAX_CONNECT_TOKEN_BACKENDS 32
 
@@ -28,7 +28,7 @@ struct next_connect_token_t
 };
 #pragma pack(pop)
 
-bool next_write_connect_token( const next_connect_token_t * token, char * output, const uint8_t * private_key );
+bool next_write_connect_token( next_connect_token_t * token, char * output, const uint8_t * private_key );
 
 bool next_read_connect_token( next_connect_token_t * token, const char * input, const uint8_t * public_key );
 

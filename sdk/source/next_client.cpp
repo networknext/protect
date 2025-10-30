@@ -12,6 +12,9 @@
 
 #include <memory.h>
 
+// todo
+#include <stdio.h>
+
 struct next_client_t
 {
     void * context;
@@ -28,8 +31,12 @@ extern next_internal_config_t next_global_config;
 
 next_client_t * next_client_create( void * context, const char * connect_token, void (*packet_received_callback)( next_client_t * client, void * context, const uint8_t * packet_data, int packet_bytes ) )
 {
+    next_assert( connect_token );
+    next_assert( packet_received_callback );
+
     // todo
     (void) connect_token;
+    printf( "connect token: '%s'\n", connect_token );
 
     next_assert( packet_received_callback );
 

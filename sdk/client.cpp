@@ -49,6 +49,7 @@ int main()
     }
 
     char connect_token_string[NEXT_MAX_CONNECT_TOKEN_BYTES];
+    memset( connect_token_string, 0, sizeof(connect_token_string) );
     {
         next_connect_token_t token;
         memset( &token, 0, sizeof(token) );
