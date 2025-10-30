@@ -45,9 +45,21 @@ DONE
 
     Verify that packet filter works, and we still get the 118 byte packet back on the client
 
+    Define the connect token struct
+
+    Work out what encryption and signing needs to be used: bpf_next_xchacha20poly1305_decrypt
+
+    Looks like I might need a different construction:
+
+        Libsodium's ChaCha20-Poly1305 AEAD functions are designed for secret-key cryptography, not public-key cryptography. This means they operate with a single, shared secret key for both encryption and decryption, not a public/private keypair.
+        Therefore, the concept of "getting a private key for ChaCha AEAD given a keypair" does not directly apply in the context of crypto_aead_chacha20poly1305_* functions in libsodium. These functions use a symmetric key that you would generate and share securely, not a key derived from an asymmetric keypair.
+        If the intention is to use authenticated encryption with public-key cryptography, libsodium provides the crypto_box functions, which utilize the Curve25519 key exchange for deriving a shared secret and then use that shared secret for authenticated encryption (often with XSalsa20-Poly1305, a related construction). In this scenario, you would generate a Curve25519 public/private keypair using crypto_box_keypair, and the private key from that keypair would be used in conjunction with the recipient's public key to establish a shared secret for encryption.
+
 TODO
 
-    Define the connect token struct
+    Get clarity on crypto requirements for connect token and suitability for use inside XDP before going any further.
+
+    -------------
 
     Implement code for writing this connect token to a base64 string
 
