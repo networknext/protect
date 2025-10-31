@@ -98,9 +98,9 @@ func help() {
 }
 
 func client_backend() {
-	bash("cd dist && sudo CLIENT_BACKEND_PUBLIC_ADDRESS=192.168.183.124:40000 ./client_backend")
+	bash("cd dist && sudo CLIENT_BACKEND_PUBLIC_ADDRESS=45.250.253.243:40000 ./client_backend")
 }
 
 func client() {
-	bash("cd sdk && premake5 gmake && make -j && ./bin/client")
+	bash("./sdk/bin/client")
 }
