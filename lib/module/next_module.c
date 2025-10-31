@@ -51,6 +51,7 @@ __bpf_kfunc int bpf_next_xchacha20poly1305_decrypt( void * data, int data__sz, s
 
 // ----------------------------------------------------------------------------------------------------------------------
 
+/*
 static bool __chacha20poly1305_decrypt( u8 * dst, const u8 * src, const size_t src_len, const u8 * ad, const size_t ad_len, u32 * chacha_state )
 {
     const u8 *pad0 = page_address(ZERO_PAGE(0));
@@ -133,6 +134,7 @@ static bool xchacha20poly1305_decrypt( u8 * dst, const u8 * src, const size_t sr
     xchacha_init( chacha_state, key, nonce );
     return __chacha20poly1305_decrypt( dst, src, src_len, ad, ad_len, chacha_state );
 }
+*/
 
 // ----------------------------------------------------------------------------------------------------------------------
 
