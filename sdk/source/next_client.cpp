@@ -55,12 +55,15 @@ next_client_t * next_client_create( void * context, const char * connect_token, 
     memset( &bind_address, 0, sizeof(bind_address) );
     bind_address.type = NEXT_ADDRESS_IPV4;
 
+    // todo: disable as test
+    /*
     // IMPORTANT: for many platforms it's best practice to bind to ipv6 and go dual stack on the client
     if ( next_platform_client_dual_stack() )
     {
         next_printf( NEXT_LOG_LEVEL_INFO, "client socket is dual stack ipv4 and ipv6" );
         bind_address.type = NEXT_ADDRESS_IPV6;
     }
+    */
 
     // IMPORTANT: some platforms (GDK) have a preferred port that we must use to access packet tagging
     // If the bind address has set port of 0, substitute the preferred client port here

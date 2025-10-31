@@ -86,6 +86,8 @@ func main() {
 
 	if command == "client" {
 		client()
+	} else if command == "server" {
+		server()
 	} else if command == "client-backend" {
 		client_backend()
 	} else {
@@ -102,5 +104,9 @@ func client_backend() {
 }
 
 func client() {
-	bash("./sdk/bin/client")
+	bash("./dist/client")
+}
+
+func server() {
+	bash("./dist/server")
 }

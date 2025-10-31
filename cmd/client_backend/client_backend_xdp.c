@@ -280,12 +280,6 @@ SEC("client_backend_xdp") int client_backend_xdp_filter( struct xdp_md *ctx )
                 return XDP_DROP;
             }
 
-            // todo
-            if ( ip->ihl != 5 )
-            {
-                debug_printf( "ip header != 20 bytes?!" );
-            }
-
             if ( ip->ihl == 5 && ip->protocol == IPPROTO_UDP ) // UDP only
             {
                 struct udphdr * udp = (void*) ip + sizeof(struct iphdr);
