@@ -281,7 +281,7 @@ SEC("client_backend_xdp") int client_backend_xdp_filter( struct xdp_md *ctx )
             }
 
             // todo
-            if ( ip->ihl == 5 )
+            if ( ip->ihl != 5 )
             {
                 debug_printf( "ip header != 20 bytes?!" );
             }
