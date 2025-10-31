@@ -254,12 +254,15 @@ static int __init next_init( void )
         return -1;
     }
 
+    // todo: fails here
+    /*
     ed25519 = crypto_alloc_akcipher( "ed25519", 0, 0 );
     if ( IS_ERR( ed25519 ) ) 
     {
         pr_err( "can't create ed25519 cipher\n" );
         return PTR_ERR( ed25519 );
     }
+    */
 
     int result = register_btf_kfunc_id_set( BPF_PROG_TYPE_XDP, &bpf_task_kfunc_set );
     if ( result != 0 )
