@@ -51,8 +51,6 @@ __bpf_kfunc int bpf_next_xchacha20poly1305_decrypt( void * data, int data__sz, s
 
 // ----------------------------------------------------------------------------------------------------------------------
 
-#define CHACHA_KEY_WORDS ( CHACHA_KEY_SIZE / sizeof(u32) )
-
 static bool __chacha20poly1305_decrypt( u8 * dst, const u8 * src, const size_t src_len, const u8 * ad, const size_t ad_len, u32 * chacha_state )
 {
     const u8 *pad0 = page_address(ZERO_PAGE(0));
@@ -154,11 +152,14 @@ struct crypto_akcipher * ed25519;
 
 static int ed25519_verify( const __u8 * data, __u32 data_len, const __u8 * signature, const __u8 * public_key )
 {
+    // todo
+    /*
     SYNC_SKCIPHER_REQUEST_ON_STACK( req, ed25519 );
     struct crypto_akcipher * tfm = crypto_akcipher_reqtfm( req );
     // ...
     (void) tfm;
     akcipher_request_free( req );
+    */
     return 1;
 }
 
@@ -170,9 +171,9 @@ __bpf_kfunc int bpf_next_sha256( void * data, int data__sz, void * output, int o
     return 0;
 }
 
-__bpf_kfunc int bpf_next_ed25519( void * data, int data__sz, void * output, int output__sz )
+__bpf_kfunc int bpf_next_ed25519( void * data, int data__sz, void * output, int output__sz, void * public_key, int public_key__sz )
 {
-    ed25519_verify( data, data__sz, output );
+    ed25519_verify( data, data__sz, output, public_key );
     return 0;
 }
 
