@@ -181,7 +181,9 @@ __bpf_kfunc int bpf_next_ed25519( void * data, int data__sz, void * output, int 
 
 __bpf_kfunc int bpf_next_xchacha20poly1305_decrypt( void * data, int data__sz, struct chacha20poly1305_crypto * crypto )
 {
-    return xchacha20poly1305_decrypt( data, data, data__sz, NULL, 0, crypto->nonce, crypto->key ) == true;
+    // todo: disabled for the moment
+    // return xchacha20poly1305_decrypt( data, data, data__sz, NULL, 0, crypto->nonce, crypto->key ) == true;
+    return 0;
 }
 
 BTF_SET8_START( bpf_task_set )
