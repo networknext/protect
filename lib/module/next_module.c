@@ -25,6 +25,7 @@
 #include <crypto/poly1305.h>
 #include <crypto/chacha.h>
 #include <crypto/algapi.h>
+#include <crypto/akcipher.h>
 #include <linux/scatterlist.h>
 
 MODULE_VERSION( "1.0.0" );
@@ -43,6 +44,8 @@ struct chacha20poly1305_crypto
 };
 
 __bpf_kfunc int bpf_next_sha256( void * data, int data__sz, void * output, int output__sz );
+
+__bpf_kfunc int bpf_next_ed25519( void * data, int data__sz, void * output, int output__sz );
 
 __bpf_kfunc int bpf_next_xchacha20poly1305_decrypt( void * data, int data__sz, struct chacha20poly1305_crypto * crypto );
 
@@ -147,9 +150,24 @@ static int sha256_hash( const __u8 * data, __u32 data_len, __u8 * out_digest )
 
 // ----------------------------------------------------------------------------------------------------------------------
 
+struct crypto_akcipher * ed25519;
+
+static int ed25519_verify( const __u8 * data, __u32 data_len, const __u8 * signature, const __u8 * public_key )
+{
+    return 1;
+}
+
+// ----------------------------------------------------------------------------------------------------------------------
+
 __bpf_kfunc int bpf_next_sha256( void * data, int data__sz, void * output, int output__sz )
 {
     sha256_hash( data, data__sz, output );
+    return 0;
+}
+
+__bpf_kfunc int bpf_next_ed25519( void * data, int data__sz, void * output, int output__sz )
+{
+    ed25519_hash( data, data__sz, output );
     return 0;
 }
 
@@ -160,6 +178,7 @@ __bpf_kfunc int bpf_next_xchacha20poly1305_decrypt( void * data, int data__sz, s
 
 BTF_SET8_START( bpf_task_set )
 BTF_ID_FLAGS( func, bpf_next_sha256 )
+BTF_ID_FLAGS( func, bpf_next_ed25519 )
 BTF_ID_FLAGS( func, bpf_next_xchacha20poly1305_decrypt )
 BTF_SET8_END( bpf_task_set )
 
@@ -218,6 +237,13 @@ static int __init next_init( void )
     {
         pr_err( "sha256 is broken\n" );
         return -1;
+    }
+
+    ed25519 = crypto_alloc_akcipher( "ed25519", 0, 0 );
+    if ( IS_ERR( ed25519 ) ) 
+    {
+        pr_err( "can't create ed25519 cipher\n" );
+        return PTR_ERR( ed25519 );
     }
 
     int result = register_btf_kfunc_id_set( BPF_PROG_TYPE_XDP, &bpf_task_kfunc_set );
