@@ -18,25 +18,14 @@ blocks:
     task:
       jobs:
 
-        - name: "Sodium"
+        - name: "Build"
           commands:
-            - wget https://download.libsodium.org/libsodium/releases/libsodium-1.0.18.tar.gz
-            - tar -zxf libsodium*
-            - cd libsodium-1.0.18
-            - ./configure
-            - make -j
-            - sudo make install
-            - ls -al /usr/local/lib
-            - artifact push workflow /usr/local/lib/libsodium.so --force
-            
-        - name: "SDK"
-          commands:
-            - sudo DEBIAN_FRONTEND=noninteractive apt-get install -y libsodium-dev wget
             - checkout
-            - cd sdk
-            - wget https://github.com/premake/premake-core/releases/download/v5.0.0-beta7/premake-5.0.0-beta7-linux.tar.gz
-            - tar -zxf premake-5.0.0-beta7-linux.tar.gz
-            - ./premake5 gmake
+            - uname -r
+            - sudo DEBIAN_FRONTEND=noninteractive apt update -y
+            - sudo DEBIAN_FRONTEND=noninteractive apt install -y cmake build-essential libsodium-dev libcurl4-openssl-dev clang linux-headers-generic linux-headers-`uname -r` linux-tools-`uname -r` libc6-dev-i386 gcc-12 dwarves libelf-dev pkg-config m4 libpcap-dev net-tools libbpf-dev libxdp-dev xdp-tools
+            - sudo cp /sys/kernel/btf/vmlinux /usr/lib/modules/`uname -r`/build/
+            - cmake .
             - make -j
 
         - name: "Relay"
@@ -63,13 +52,3 @@ blocks:
             - sudo cp /sys/kernel/btf/vmlinux /usr/lib/modules/`uname -r`/build/
             - cd lib/module
             - make
-
-        - name: "CMake"
-          commands:
-            - checkout
-            - uname -r
-            - sudo DEBIAN_FRONTEND=noninteractive apt update -y
-            - sudo DEBIAN_FRONTEND=noninteractive apt install -y cmake build-essential libsodium-dev libcurl4-openssl-dev clang linux-headers-generic linux-headers-`uname -r` linux-tools-`uname -r` libc6-dev-i386 gcc-12 dwarves libelf-dev pkg-config m4 libpcap-dev net-tools libbpf-dev libxdp-dev xdp-tools
-            - sudo cp /sys/kernel/btf/vmlinux /usr/lib/modules/`uname -r`/build/
-            - cmake .
-            - make -j
