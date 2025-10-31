@@ -93,6 +93,27 @@ else()
 endif()
 
 
+
+# server
+
+project(server)
+
+enable_language(CXX)
+
+add_executable(server cmd/server/server.cpp)
+
+add_dependencies(server platform shared hydrogen next)
+
+find_package(Threads REQUIRED)
+
+if (APPLE)
+    target_link_libraries(server platform shared hydrogen next Threads::Threads "-framework CoreFoundation" "-framework SystemConfiguration")
+else()
+    target_link_libraries(server platform shared hydrogen next Threads::Threads)
+endif()
+
+
+
 # client backend
 
 add_custom_command(
@@ -103,7 +124,7 @@ add_custom_command(
     COMMAND bash -c "cp cmd/client_backend/client_backend_xdp.c cmd/client_backend/client_backend_xdp_source"
     COMMAND bash -c "cp cmd/client_backend/client_backend_shared.h cmd/client_backend/client_backend_xdp_source"
     COMMAND bash -c "cp cmd/client_backend/client_backend_constants.h cmd/client_backend/client_backend_xdp_source"
-    COMMAND bash -c "tar -zcvf cmd/client_backend/client_backend_xdp_source.tar.gz -C cmd/client_backend/client_backend_xdp_source ."
+    COMMAND bash -c "tar -zcvf cmd/client_backend/client_backend_xdp_source.tar.gz -C cmd/client_backend/client_backend_xdp_source ." >/dev/null 2>&1
     COMMAND bash -c "rm -rf cmd/client_backend/client_backend_xdp_source"
     COMMAND bash -c "xxd -i cmd/client_backend/client_backend_xdp_source.tar.gz" > cmd/client_backend/client_backend_xdp_source.h
     COMMAND bash -c "rm -f cmd/client_backend/client_backend_xdp_source.tar.gz"
