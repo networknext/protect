@@ -55,9 +55,6 @@ next_client_t * next_client_create( void * context, const char * connect_token, 
     memset( &bind_address, 0, sizeof(bind_address) );
     bind_address.type = NEXT_ADDRESS_IPV4;
 
-    // todo: force port for packet filter tests
-    bind_address.port = 40000;
-
     // IMPORTANT: for many platforms it's best practice to bind to ipv6 and go dual stack on the client
     if ( next_platform_client_dual_stack() )
     {

@@ -1,99 +1,14 @@
-
 DONE
 
-    Sketch out client
+    Switch over to libhydrogen in the SDK
 
-    Sketch out server
+    Verify that I can build hydrogen.c in the kernel module and it links and loads
 
-    Generalize relay module so it's the "network next" kernel module instead. It can be used by server, and by backends.
-
-    Setup terraform on the project and build SDK and relay
-
-    I'd like to build the relay module separately, and actually test building it and installing it works?
-
-    OK all the stuff is building in semaphore.
-
-    Can we switch over from libsodium to libhydrogen on the client, since the client will really not benefit significantly from any advanced assembly shit?
-
-    This way we could avoid using our franken-libsodium in most places, and then link on the server to libsodium for fast routines where it matters (or do it all in XDP?)
-
-    No, because libhydrogen does not support SHA256 hashinrg, and it only supports Gimli hash, which the linux kernel does not support
-
-    Sketch out the client_backend framework as a test of XDP
-
-    Split out helpful libraries and bits from the client_backend and relay into "shared" and "platform" libs
-
-    Setup the next_client.cpp to send 100 byte packets to the client backend as a test while in connecting state
-
-    Setup hulk and ssh in, clone the git repo and build the client backend
-
-    Get the client backend built and running and verify that it loads the xdp program correctly
-
-    Modify the XDP program to reflect back any UDP packet received on the public address and port
-
-    Verify that the client sees the 100 byte reflected packet
-
-    Extend the client backend XDP program so it checks basic packet filter before processing any UDP packet on the specified port
-
-    Bring across the code for reflect packet that updates the header
-
-    Setup so next_client.cpp wraps packets with the prefix header for packet filtering
-
-    Implement packet filter in next_client.cpp
-
-    Extend backend so it checks advanced packet filter (with magic zero)
-
-    Verify that packet filter works, and we still get the 118 byte packet back on the client
-
-    Define the connect token struct
-
-    Work out what encryption and signing needs to be used: bpf_next_xchacha20poly1305_decrypt
-
-    Looks like I might need a different construction:
-
-        Libsodium's ChaCha20-Poly1305 AEAD functions are designed for secret-key cryptography, not public-key cryptography. This means they operate with a single, shared secret key for both encryption and decryption, not a public/private keypair.
-        Therefore, the concept of "getting a private key for ChaCha AEAD given a keypair" does not directly apply in the context of crypto_aead_chacha20poly1305_* functions in libsodium. These functions use a symmetric key that you would generate and share securely, not a key derived from an asymmetric keypair.
-        If the intention is to use authenticated encryption with public-key cryptography, libsodium provides the crypto_box functions, which utilize the Curve25519 key exchange for deriving a shared secret and then use that shared secret for authenticated encryption (often with XSalsa20-Poly1305, a related construction). In this scenario, you would generate a Curve25519 public/private keypair using crypto_box_keypair, and the private key from that keypair would be used in conjunction with the recipient's public key to establish a shared secret for encryption.
-
-    Get clarity on crypto requirements for connect token and suitability for use inside XDP before going any further.
-
-    Looks like I need to do signing with Ed25519 in sodium, this is keypair based, and the linux kernel also has support for Ed25519 so this should work.
-
-    Interesting:
-
-        https://crypto.stackexchange.com/questions/37896/using-a-single-ed25519-key-for-encryption-and-signature
-
-    Actually define the connect token struct
-
-    Implement the functions to write connect token to a base64 string
-
-    Implement the function to read and verify the connect token from a base64 string
-
-    Now the client can decode the connect token and it knows all the stuff it needs to init with a client backend
-
-    Investigate linux kernel support for ed25519 signing. It is here:
-
-        crypto_alloc_akcipher
-
-    Trick seems to be SYNC_SKCIPHER_REQUEST_ON_STACK looking at linux source
-
-    Search through the linux source code for "crypto_alloc_akcipher" and "SYNC_SKCIPHER_REQUEST_ON_STACK(req, tfm);" to see if I can find 
-
-    Need to get an implementations for ED25519 signing in the linux kernel and verify that it is compatible with signed messages from libsodium crypto_sign
-
-    Once this is done each buyer can have a keypair, and I can sign the connect token with the buyer private key, and verify it with the buyer public key on the client backend
-
-    Seems like the AI was hallucinating. There is no ed25519 kcipher in the linux kernel. Fucking AI
-
-    One option is to continue to dumpster dive into the kernel.
-
-    Another is just to fully swap over to libhydrogen, and implement gimli in the kernel module.
-
-    I'm liking the latter much more, since I can be dependency free
+    Setup a test linux server with 10G NIC with latitude.sh
 
 TODO
 
-    Switch over to libhydrogen in the SDK
+    S
 
     ----------
 

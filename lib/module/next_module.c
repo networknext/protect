@@ -22,6 +22,7 @@
 #include <linux/btf.h>
 #include <crypto/hash.h>
 #include <crypto/kpp.h>
+#include "hydrogen.h"
 
 MODULE_VERSION( "1.0.0" );
 MODULE_LICENSE( "GPL" ); 
