@@ -6,6 +6,8 @@
 #ifndef NEXT_HEADER_H
 #define NEXT_HEADER_H
 
+#if 0
+
 #include "next.h"
 #include "next_crypto.h"
 #include "next_read_write.h"
@@ -106,5 +108,7 @@ inline int next_read_header( int packet_type, uint64_t * sequence, uint64_t * se
 
     return NEXT_OK;
 }
+
+#endif // #if 0
 
 #endif // #ifndef NEXT_HEADER_H

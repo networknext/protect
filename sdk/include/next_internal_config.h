@@ -6,6 +6,8 @@
 #ifndef NEXT_INTERNAL_CONFIG_H
 #define NEXT_INTERNAL_CONFIG_H
 
+#if 0
+
 #include "next_crypto.h"
 
 struct next_internal_config_t
@@ -22,5 +24,7 @@ struct next_internal_config_t
     bool disable_network_next;
     bool disable_autodetect;
 };
+
+#endif // #if 0
 
 #endif // #ifndef NEXT_H

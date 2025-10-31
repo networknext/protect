@@ -8,8 +8,9 @@
 
 #include "next.h"
 #include "next_util.h"
-#include "next_crypto.h"
 #include "next_read_write.h"
+
+#if 0
 
 struct next_route_token_t
 {
@@ -91,5 +92,7 @@ inline int next_read_encrypted_route_token( uint8_t ** buffer, next_route_token_
 
     return NEXT_OK;
 }
+
+#endif // #if 0
 
 #endif // #ifndef NEXT_ROUTE_TOKEN_H

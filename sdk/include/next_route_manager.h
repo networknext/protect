@@ -6,6 +6,9 @@
 #ifndef NEXT_ROUTE_MANAGER_H
 #define NEXT_ROUTE_MANAGER_H
 
+// todo
+#if 0
+
 #include "next.h"
 #include "next_address.h"
 
@@ -60,3 +63,5 @@ uint32_t next_route_manager_get_flags( next_route_manager_t * route_manager );
 void next_route_manager_get_next_route_data( next_route_manager_t * route_manager, uint64_t * session_id, uint8_t * session_version, next_address_t * to, uint8_t * private_key );
 
 #endif // #ifndef NEXT_ROUTE_MANAGER_H
+
+#endif // #if 0

@@ -6,6 +6,9 @@
 #ifndef NEXT_CONTINUE_TOKEN_H
 #define NEXT_CONTINUE_TOKEN_H
 
+// todo
+#if 0
+
 #include "next.h"
 #include "next_crypto.h"
 
@@ -65,5 +68,7 @@ inline int next_read_encrypted_continue_token( uint8_t ** buffer, next_continue_
 
     return NEXT_OK;
 }
+
+#endif // #if 0
 
 #endif // #ifndef NEXT_CONTINUE_TOKEN_H

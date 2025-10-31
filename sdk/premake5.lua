@@ -24,54 +24,31 @@ solution "next"
 
 project "next"
 	kind "StaticLib"
-	links { "sodium" }
 	files {
 		"include/next.h",
 		"include/next_*.h",
 		"source/next.cpp",
 		"source/next_*.cpp",
 	}
-	includedirs { "include", "sodium" }
+	includedirs { "include" }
 	filter "system:windows"
 		linkoptions { "/ignore:4221" }
 		disablewarnings { "4324" }
-	filter "system:macosx"
-		linkoptions { "-framework SystemConfiguration -framework CoreFoundation" }
 
-project "sodium"
+project "hydrogen"
 	kind "StaticLib"
-	includedirs { "sodium" }
-	files {
-	"sodium/**.c",
-		"sodium/**.h",
+	files { 
+		"hydrogen/*.c",
+		"hydrogen/*.h",
 	}
-  	filter { "system:not windows", "platforms:*x64 or *avx or *avx2" }
-		files {
-			"sodium/**.S"
-		}
-	filter "platforms:*x86"
-		architecture "x86"
-		defines { "NEXT_X86=1", "NEXT_CRYPTO_LOGS=1" }
-	filter "platforms:*x64"
-		architecture "x86_64"
-		defines { "NEXT_X64=1", "NEXT_CRYPTO_LOGS=1" }
-	filter "platforms:*avx"
-		architecture "x86_64"
-		vectorextensions "AVX"
-		defines { "NEXT_X64=1", "NEXT_AVX=1", "NEXT_CRYPTO_LOGS=1" }
-	filter "platforms:*avx2"
-		architecture "x86_64"
-		vectorextensions "AVX2"
-		defines { "NEXT_X64=1", "NEXT_AVX=1", "NEXT_AVX2=1", "NEXT_CRYPTO_LOGS=1" }
 	filter "system:windows"
-		disablewarnings { "4221", "4244", "4715", "4197", "4146", "4324", "4456", "4100", "4459", "4245" }
-		linkoptions { "/ignore:4221" }
-	filter { "action:gmake" }
-	buildoptions { "-Wno-unused-parameter", "-Wno-unused-function", "-Wno-unknown-pragmas", "-Wno-unused-variable", "-Wno-type-limits" }
+		disablewarnings { "4324" }
+	filter "system:not windows"
+		links { "pthread" }
 
 project "test"
 	kind "ConsoleApp"
-	links { "next", "sodium" }
+	links { "next" }
 	files { "test.cpp" }
 	includedirs { "include" }
 	filter "system:windows"
@@ -83,7 +60,7 @@ project "test"
 
 project "client"
 	kind "ConsoleApp"
-	links { "next", "sodium" }
+	links { "next" }
 	files { "client.cpp" }
 	includedirs { "include" }
 	filter "system:windows"
@@ -95,7 +72,7 @@ project "client"
 
 project "server"
 	kind "ConsoleApp"
-	links { "next", "sodium" }
+	links { "next" }
 	files { "server.cpp" }
 	includedirs { "include" }
 	filter "system:windows"

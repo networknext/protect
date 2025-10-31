@@ -4,7 +4,6 @@
 */
 
 #include "next.h"
-#include "next_crypto.h"
 #include "next_platform.h"
 #include "next_address.h"
 #include "next_read_write.h"
@@ -13,7 +12,6 @@
 #include "next_hash.h"
 #include "next_config.h"
 #include "next_replay_protection.h"
-#include "next_upgrade_token.h"
 #include "next_route_token.h"
 #include "next_header.h"
 #include "next_packet_filter.h"
@@ -229,18 +227,26 @@ uint64_t next_protocol_version()
 
 float next_random_float()
 {
+    /*
     uint32_t uint32_value;
     next_crypto_random_bytes( (uint8_t*)&uint32_value, sizeof(uint32_value) );
     uint64_t uint64_value = uint64_t(uint32_value);
     double double_value = double(uint64_value) / 0xFFFFFFFF;
     return float(double_value);
+    */
+    // todo
+    return 1.0f;
 }
 
 uint64_t next_random_uint64()
 {
+    /*
     uint64_t value;
     next_crypto_random_bytes( (uint8_t*)&value, sizeof(value) );
     return value;
+    */
+    // todo
+    return 0;
 }
 
 // -------------------------------------------------------------
@@ -269,7 +275,10 @@ int next_encrypted_packets[256];
 
 void * next_global_context = NULL;
 
+// todo
+/*
 next_internal_config_t next_global_config;
+*/
 
 void next_default_config( next_config_t * config )
 {
@@ -335,11 +344,14 @@ int next_init( void * context, next_config_t * config_in )
 
     next_printf( NEXT_LOG_LEVEL_INFO, "platform is %s (%s)", platform_string, connection_string );
 
+    // todo
+    /*
     if ( next_crypto_init() == -1 )
     {
         next_printf( NEXT_LOG_LEVEL_ERROR, "failed to initialize sodium" );
         return NEXT_ERROR;
     }
+    */
 
     const char * log_level_override = next_platform_getenv( "NEXT_LOG_LEVEL" );
     if ( log_level_override )
@@ -348,6 +360,10 @@ int next_init( void * context, next_config_t * config_in )
         next_printf( NEXT_LOG_LEVEL_INFO, "log level overridden to %d", log_level );
     }
 
+    // todo
+    (void) config_in;
+
+    /*
     next_internal_config_t config;
 
     memset( &config, 0, sizeof(next_internal_config_t) );
@@ -532,6 +548,7 @@ int next_init( void * context, next_config_t * config_in )
     }
 
     next_global_config = config;
+    */
 
     // todo: design new packets
     /*

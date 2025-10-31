@@ -3,6 +3,8 @@
     Licensed under the Network Next Source Available License 1.0
 */
 
+#if 0
+
 #include "next_route_manager.h"
 #include "next_memory_checks.h"
 #include "next_address.h"
@@ -676,3 +678,5 @@ void next_route_manager_get_next_route_data( next_route_manager_t * route_manage
     *to = route_manager->route_data.current_route_next_address;
     memcpy( private_key, route_manager->route_data.current_route_private_key, NEXT_CRYPTO_BOX_SECRETKEYBYTES );
 }
+
+#endif // #if 0

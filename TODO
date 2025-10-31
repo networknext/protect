@@ -75,8 +75,6 @@ DONE
 
         crypto_alloc_akcipher
 
-TODO
-
     Trick seems to be SYNC_SKCIPHER_REQUEST_ON_STACK looking at linux source
 
     Search through the linux source code for "crypto_alloc_akcipher" and "SYNC_SKCIPHER_REQUEST_ON_STACK(req, tfm);" to see if I can find 
@@ -85,11 +83,23 @@ TODO
 
     Once this is done each buyer can have a keypair, and I can sign the connect token with the buyer private key, and verify it with the buyer public key on the client backend
 
+    Seems like the AI was hallucinating. There is no ed25519 kcipher in the linux kernel. Fucking AI
+
+    One option is to continue to dumpster dive into the kernel.
+
+    Another is just to fully swap over to libhydrogen, and implement gimli in the kernel module.
+
+    I'm liking the latter much more, since I can be dependency free
+
+TODO
+
+    Switch over to libhydrogen in the SDK
+
     ----------
 
     Add a unit test for connect token. Lock it in.
 
-
+    ----------
 
 
 
