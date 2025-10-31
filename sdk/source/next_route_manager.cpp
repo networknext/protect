@@ -3,6 +3,8 @@
     Licensed under the Network Next Source Available License 1.0
 */
 
+int dummy_route_manager = 0;
+
 #if 0
 
 #include "next_route_manager.h"
