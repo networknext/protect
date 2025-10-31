@@ -27,14 +27,12 @@
 
 #include "client_backend_shared.h"
 
-#if defined(__BYTE_ORDER__) && defined(__ORDER_LITTLE_ENDIAN__) && \
-    __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+#if defined(__BYTE_ORDER__) && defined(__ORDER_LITTLE_ENDIAN__) && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
 #define bpf_ntohl(x)        __builtin_bswap32(x)
 #define bpf_htonl(x)        __builtin_bswap32(x)
 #define bpf_ntohs(x)        __builtin_bswap16(x)
 #define bpf_htons(x)        __builtin_bswap16(x)
-#elif defined(__BYTE_ORDER__) && defined(__ORDER_BIG_ENDIAN__) && \
-    __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+#elif defined(__BYTE_ORDER__) && defined(__ORDER_BIG_ENDIAN__) && __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
 #define bpf_ntohl(x)        (x)
 #define bpf_htonl(x)        (x)
 #define bpf_ntohs(x)        (x)
@@ -282,6 +280,12 @@ SEC("client_backend_xdp") int client_backend_xdp_filter( struct xdp_md *ctx )
                 return XDP_DROP;
             }
 
+            // todo
+            if ( ip->ihl == 5 )
+            {
+                debug_printf( "ip header != 20 bytes?!" );
+            }
+
             if ( ip->ihl == 5 && ip->protocol == IPPROTO_UDP ) // UDP only
             {
                 struct udphdr * udp = (void*) ip + sizeof(struct iphdr);
@@ -289,7 +293,7 @@ SEC("client_backend_xdp") int client_backend_xdp_filter( struct xdp_md *ctx )
                 if ( (void*)udp + sizeof(struct udphdr) <= data_end )
                 {
                     // todo
-                    debug_printf( "udp packet" );
+                    debug_printf( "udp packet: %x:%d", ip->daddr, (int)udp->dest );
 
                     int key = 0;
                     struct client_backend_config * config = (struct client_backend_config*) bpf_map_lookup_elem( &client_backend_config_map, &key );
@@ -298,12 +302,6 @@ SEC("client_backend_xdp") int client_backend_xdp_filter( struct xdp_md *ctx )
                         debug_printf( "config is null" );
                         return XDP_PASS;
                     }
-
-                    // todo
-                    debug_printf( "ip->daddr = %x", ip->daddr );
-                    debug_printf( "udp->dest = %d", (int) udp->dest );
-                    debug_printf( "config->public_address = %x", config->public_address );
-                    debug_printf( "config->port = %d", (int) config->port );
 
                     if ( ip->daddr == config->public_address && udp->dest == config->port )
                     {
