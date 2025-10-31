@@ -65,26 +65,15 @@ DONE
 
     Actually define the connect token struct
 
-TODO
-
     Implement the functions to write connect token to a base64 string
 
     Implement the function to read and verify the connect token from a base64 string
 
     Now the client can decode the connect token and it knows all the stuff it needs to init with a client backend
 
+TODO
 
-
-
-
-
-
-
-
-
-
-
-
+    Add a unit test for connect token. Lock it in.
 
     ----------
 
