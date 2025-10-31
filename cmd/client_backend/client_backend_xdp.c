@@ -299,6 +299,10 @@ SEC("client_backend_xdp") int client_backend_xdp_filter( struct xdp_md *ctx )
                         return XDP_PASS;
                     }
 
+                    // todo
+                    debug_printf( "ip->daddr = %x", config->public_address );
+                    debug_printf( "udp->dest = %d", config->port );
+
                     if ( ip->daddr == config->public_address && udp->dest == config->port )
                     {
                         __u8 * packet_data = (unsigned char*) (void*)udp + sizeof(struct udphdr);
