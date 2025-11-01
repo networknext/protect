@@ -8,10 +8,12 @@ DONE
 
     Verify that I get reflected UDP packets back from the client backend running on latitude.sh
 
-TODO
-    
     Update the write_connect_token and read_connect_token so they work with libhydrogen
 
+TODO
+
+    Generate a new keypair with hydrogen, because it's not compatible with sodium keypairs
+    
     -------------
 
     Add a unit test for connect token. Lock it in.
