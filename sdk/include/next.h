@@ -328,6 +328,8 @@ NEXT_EXPORT_FUNC const char * next_user_id_string( uint64_t user_id, char * buff
 
 NEXT_EXPORT_FUNC float next_random_float();
 
+NEXT_EXPORT_FUNC uint32_t next_random_uint32();
+
 NEXT_EXPORT_FUNC uint64_t next_random_uint64();
 
 NEXT_EXPORT_FUNC uint64_t next_protocol_version();

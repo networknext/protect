@@ -20,6 +20,10 @@ TODO
 
     -------------
 
+    Bring back other unit tests that are not related to client/server.
+
+    -------------
+
     Define the client init request and response packets (keep them simple for XDP)
 
     -------------

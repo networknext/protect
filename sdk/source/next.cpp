@@ -229,26 +229,25 @@ uint64_t next_protocol_version()
 
 float next_random_float()
 {
-    /*
     uint32_t uint32_value;
-    next_crypto_random_bytes( (uint8_t*)&uint32_value, sizeof(uint32_value) );
+    hydro_random_buf( (uint8_t*)&uint32_value, sizeof(uint32_value) );
     uint64_t uint64_value = uint64_t(uint32_value);
     double double_value = double(uint64_value) / 0xFFFFFFFF;
     return float(double_value);
-    */
-    // todo
-    return 1.0f;
+}
+
+uint32_t next_random_uint32()
+{
+    uint32_t value;
+    hydro_random_buf( (uint8_t*)&value, sizeof(value) );
+    return value;
 }
 
 uint64_t next_random_uint64()
 {
-    /*
     uint64_t value;
-    next_crypto_random_bytes( (uint8_t*)&value, sizeof(value) );
+    hydro_random_buf( (uint8_t*)&value, sizeof(value) );
     return value;
-    */
-    // todo
-    return 0;
 }
 
 // -------------------------------------------------------------

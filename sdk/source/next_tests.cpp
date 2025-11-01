@@ -24,6 +24,9 @@
 #include "next_jitter_tracker.h"
 #include "next_internal_config.h"
 #include "next_value_tracker.h"
+#include "next_connect_token.h"
+
+#include "hydrogen.h"
 
 #include <math.h>
 #include <stdio.h>
@@ -983,6 +986,38 @@ void test_value_tracker()
     }
 }
 
+void test_connect_token()
+{
+    hydro_sign_keypair keypair;
+    hydro_sign_keygen( &keypair );
+
+    next_connect_token_t input_token;
+    memset( &input_token, 0, sizeof(input_token) );
+    input_token.expire_timestamp = next_random_uint64();
+    input_token.buyer_id = next_random_uint64();
+    input_token.server_id = next_random_uint64();
+    input_token.session_id = next_random_uint64();
+    input_token.user_hash = next_random_uint64();
+    for ( int i = 0; i < MAX_CONNECT_TOKEN_BACKENDS; i++ )
+    {
+        input_token.client_backend_addresses[i] = next_random_uint32();
+        input_token.client_backend_ports[i] = next_random_uint32();
+    }        
+    input_token.pings_per_second = 10;
+    input_token.max_connect_seconds = 30;
+
+    char connect_token_string[NEXT_MAX_CONNECT_TOKEN_BYTES];
+    memset( connect_token_string, 0, sizeof(connect_token_string) );
+    {
+        next_check( next_write_connect_token( &input_token, connect_token_string, keypair.sk ) );
+    }
+
+    next_connect_token_t output_token;
+    next_check( next_read_connect_token( &output_token, connect_token_string, keypair.pk ) );
+
+    next_check( memcmp( &input_token, &output_token, sizeof(next_connect_token_t) - sizeof(input_token.signature) ) == 0 );
+}
+
 #define RUN_TEST( test_function )                                           \
     do                                                                      \
     {                                                                       \
@@ -1015,6 +1050,7 @@ void next_run_tests()
         RUN_TEST( test_platform_thread );
         RUN_TEST( test_platform_mutex );
         RUN_TEST( test_value_tracker );
+        RUN_TEST( test_connect_token );
     }
 }
 
