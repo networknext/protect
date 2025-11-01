@@ -20,9 +20,67 @@ DONE
 
     Move CMake shit into "build" dir because it's terrible
 
+    Work out required crypto steps for client backend token
+
+    It's simple, it's symmetric encryption, so we just have a private key for the client backend
+
+        #define hydro_secretbox_CONTEXTBYTES 8
+        #define hydro_secretbox_HEADERBYTES  (20 + 16)
+        #define hydro_secretbox_KEYBYTES     32
+ 
+        void hydro_secretbox_keygen(uint8_t key[hydro_secretbox_KEYBYTES]);
+
+        int hydro_secretbox_encrypt(uint8_t *c, const void *m_, size_t mlen, uint64_t msg_id,
+                                    const char    ctx[hydro_secretbox_CONTEXTBYTES],
+                                    const uint8_t key[hydro_secretbox_KEYBYTES]);
+
+        int hydro_secretbox_decrypt(void *m_, const uint8_t *c, size_t clen, uint64_t msg_id,
+                                    const char    ctx[hydro_secretbox_CONTEXTBYTES],
+                                    const uint8_t key[hydro_secretbox_KEYBYTES])
+
+    Need to work out what hydro_secretbox_CONTEXTBYTES and hydro_secretbox_HEADERBYTES are for
+
+        // 1. Generate a secret key
+        uint8_t key[hydro_secretbox_KEYBYTES];
+        hydro_secretbox_keygen(key);
+
+         // 2. Define message, context, and message ID
+        const char *message = "This is a secret message.";
+        size_t message_len = strlen(message);
+        const char context[hydro_secretbox_CONTEXTBYTES] = "my_app_ctx";
+        uint64_t msg_id = 12345; // Optional message identifier
+
+        // 3. Prepare buffer for ciphertext
+        // Ciphertext length = HEADERBYTES + message_len
+        uint8_t ciphertext[hydro_secretbox_HEADERBYTES + message_len];
+
+        // 4. Encrypt the message
+        int encrypt_result = hydro_secretbox_encrypt(
+            ciphertext,
+            (const void *)message,
+            message_len,
+            msg_id,
+            context,
+            key
+        );
+
+    But aside from this, it looks like a pretty standard encryption/decryption
+
+    msg_id is optional and we can just omit it
+
+    nonce is automatically generated (random) and is secure. it's included in the header part.
+
 TODO
 
-    Define and unit test the client backend token
+    Define the client backend token including crypto parts
+
+    -------------
+
+    Implement next_write_client_backend_token
+
+    Implement next_read_client_backend_token
+
+    Unit test client backend token
 
     -------------
 
@@ -30,7 +88,7 @@ TODO
 
     -------------
 
-    Implement the client sending the client init request packet to n backends until it receives n responses from a backend.
+    Implement the client sending the client init request packet to n backends until it receives m responses from a backend and picks that client backend.
 
     -------------
 
@@ -38,3 +96,6 @@ TODO
 
     -------------
 
+    Generalize connect token and client backend token so they know to do the bswap fixup for big endian machines
+
+    -------------
