@@ -18,6 +18,8 @@ DONE
 
     Bring back other unit tests that are not related to client/server.
 
+    Move CMake shit into "build" dir because it's terrible
+
 TODO
 
     Define and unit test the client backend token
