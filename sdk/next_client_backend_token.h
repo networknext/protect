@@ -11,7 +11,7 @@
 #pragma pack(push,1)
 struct next_client_backend_token_t
 {
-    uint8_t crypto_header[hydro_secretbox_HEADERBYTES];
+    uint8_t crypto_header[36];          // hydro_secretbox_HEADERBYTES = (20+16)
     uint64_t version;
     uint64_t expire_timestamp;
     uint64_t buyer_id;
