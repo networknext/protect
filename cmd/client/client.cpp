@@ -58,12 +58,15 @@ int main()
         }
     }
 
+    // todo
+    /*
     next_connect_token_t token;
     if ( !next_read_connect_token( &token, connect_token_string, buyer_public_key ) )
     {
         next_printf( NEXT_LOG_LEVEL_ERROR, "failed to read connect token" );
         return 1;        
     }
+    */
 
     next_client_t * client = next_client_create( NULL, connect_token_string, packet_received_callback );
     if ( !client )

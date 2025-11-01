@@ -72,7 +72,11 @@ add_library(next ${NEXT_SOURCE} ${NEXT_HEADERS})
 
 add_dependencies(next platform hydrogen)
 
-target_link_libraries(next platform shared hydrogen)
+if (APPLE)
+    target_link_libraries(next platform shared hydrogen Threads::Threads "-framework CoreFoundation" "-framework SystemConfiguration")
+else()
+    target_link_libraries(next platform shared hydrogen Threads::Threads)
+endif()
 
 
 
@@ -84,16 +88,11 @@ enable_language(CXX)
 
 add_executable(client cmd/client/client.cpp)
 
-add_dependencies(client platform shared hydrogen next)
+add_dependencies(client next)
 
 find_package(Threads REQUIRED)
 
-if (APPLE)
-    target_link_libraries(client platform shared hydrogen next Threads::Threads "-framework CoreFoundation" "-framework SystemConfiguration")
-else()
-    target_link_libraries(client platform shared hydrogen next Threads::Threads)
-endif()
-
+target_link_libraries(client next)
 
 
 # server
@@ -104,15 +103,11 @@ enable_language(CXX)
 
 add_executable(server cmd/server/server.cpp)
 
-add_dependencies(server platform shared hydrogen next)
+add_dependencies(server next)
 
 find_package(Threads REQUIRED)
 
-if (APPLE)
-    target_link_libraries(server platform shared hydrogen next Threads::Threads "-framework CoreFoundation" "-framework SystemConfiguration")
-else()
-    target_link_libraries(server platform shared hydrogen next Threads::Threads)
-endif()
+target_link_libraries(server next)
 
 
 
