@@ -8,35 +8,23 @@
 
 int next_write_client_backend_token( next_client_backend_token_t * token, uint8_t * output, const uint8_t * private_key )
 {
-    /*
-    int encrypt_result = hydro_secretbox_encrypt(
-        ciphertext,
-        (const void *)message,
-        message_len,
-        msg_id,
-        context,
-        key
-    );
-    */
-
-    // todo
-    return 0;
+    next_assert( token );
+    next_assert( output );
+    next_assert( private_key );
+    const int encrypt_result = hydro_secretbox_encrypt( output, (uint8_t*) token, sizeof(next_client_backend_token_t) - sizeof(token->crypto_header), 0, "client backend token", private_key );
+    if ( encrypt_result != 0 )
+        return sizeof(next_client_backend_token_t);
+    else
+        return 0;
 }
 
-bool next_read_client_backend_token( next_client_backend_token_t * token, const uint8_t * input, int input_bytes, const uint8_t * public_key )
+bool next_read_client_backend_token( next_client_backend_token_t * token, const uint8_t * input, int input_bytes, const uint8_t * private_key )
 {
-    /*
-    uint8_t decrypted_message[message_len];
-    int decrypt_result = hydro_secretbox_decrypt(
-        decrypted_message,
-        ciphertext,
-        hydro_secretbox_HEADERBYTES + message_len,
-        msg_id,
-        context,
-        key
-    );
-    */
-    
-    // todo
-    return false;
+    next_assert( token );
+    next_assert( input );
+    next_assert( private_key );
+    if ( input_bytes != sizeof(next_client_backend_token_t) )
+        return false;
+    int decrypt_result = hydro_secretbox_decrypt( (uint8_t*) token, input, input_bytes, 0, "client backend token", private_key );
+    return decrypt_result == 0;
 }

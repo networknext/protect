@@ -23,6 +23,6 @@ struct next_client_backend_token_t
 
 int next_write_client_backend_token( next_client_backend_token_t * token, uint8_t * output, const uint8_t * private_key );
 
-bool next_read_client_backend_token( next_client_backend_token_t * token, const uint8_t * input, int input_bytes, const uint8_t * public_key );
+bool next_read_client_backend_token( next_client_backend_token_t * token, const uint8_t * input, int input_bytes, const uint8_t * private_key );
 
 #endif // #ifndef NEXT_ROUTE_TOKEN_H
