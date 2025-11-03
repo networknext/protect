@@ -172,11 +172,11 @@ void next_client_send_backend_init_request_packet( next_client_t * client, next_
     *p = NEXT_CLIENT_BACKEND_PACKET_INIT_REQUEST;
     p += 18;
 
-    memcpy( p, &request_id, 8 );                                                     // todo: endian
-    p += 8;
-
     memcpy( p, &client->connect_token, sizeof(next_connect_token_t) );               // todo: endian
     p += sizeof(next_connect_token_t);
+
+    memcpy( p, &request_id, 8 );                                                     // todo: endian
+    p += 8;
 
     int packet_length = (int) ( p - packet_data );
 

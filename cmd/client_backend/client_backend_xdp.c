@@ -530,9 +530,98 @@ SEC("client_backend_xdp") int client_backend_xdp_filter( struct xdp_md *ctx )
                         {
                             case NEXT_CLIENT_BACKEND_PACKET_INIT_REQUEST:
                             {
-                                if ( (void*)packet_data + 336 != data_end )
+                                if ( (void*)packet_data + 336 < data_end )
                                 {
-                                    debug_printf( "client backend init request packet is wrong size" );
+                                    debug_printf( "client backend init request packet is too small" );
+                                    return XDP_DROP;
+                                }
+
+                                // todo: look up buyer public key by buyer_id in map
+
+                                // todo: move to buyer map
+                                const uint8_t buyer_public_key[] = { 0x9d, 0x59, 0x40, 0xa4, 0xe2, 0x4a, 0xa3, 0x0a, 0xf2, 0x30, 0xb6, 0x1b, 0x49, 0x7d, 0x60, 0xe8, 0x6d, 0xf9, 0x03, 0x28, 0x5c, 0x96, 0x83, 0x06, 0x89, 0xf5, 0xdd, 0x62, 0x8a, 0x25, 0x95, 0x16 };
+
+                                uint8_t signature[64];
+                                if ( bpf_next_ed25519( packet_data + 18, 310, signature, sizeof(signature), buyer_public_key, sizeof(public_key__sz) ) != 0 )
+                                {
+                                    debug_printf( "could not create ed25519 signature" );
+                                    return XDP_DROP;
+                                }
+
+                                uint8_t * packet_signature = packet_data + 18 + 246;
+
+                                if ( signature[0] != packet_signature[0] ||
+                                     signature[1] != packet_signature[1] ||
+                                     signature[2] != packet_signature[2] ||
+                                     signature[3] != packet_signature[3] ||
+                                     signature[4] != packet_signature[4] ||
+                                     signature[5] != packet_signature[5] ||
+                                     signature[6] != packet_signature[6] ||
+                                     signature[7] != packet_signature[7] ||
+                                     signature[8] != packet_signature[8] ||
+                                     signature[9] != packet_signature[9] ||
+
+                                     signature[10] != packet_signature[10] ||
+                                     signature[11] != packet_signature[11] ||
+                                     signature[12] != packet_signature[12] ||
+                                     signature[13] != packet_signature[13] ||
+                                     signature[14] != packet_signature[14] ||
+                                     signature[15] != packet_signature[15] ||
+                                     signature[16] != packet_signature[16] ||
+                                     signature[17] != packet_signature[17] ||
+                                     signature[18] != packet_signature[18] ||
+                                     signature[19] != packet_signature[19] ||
+
+                                     signature[20] != packet_signature[20] ||
+                                     signature[21] != packet_signature[21] ||
+                                     signature[22] != packet_signature[22] ||
+                                     signature[23] != packet_signature[23] ||
+                                     signature[24] != packet_signature[24] ||
+                                     signature[25] != packet_signature[25] ||
+                                     signature[26] != packet_signature[26] ||
+                                     signature[27] != packet_signature[27] ||
+                                     signature[28] != packet_signature[28] ||
+                                     signature[29] != packet_signature[29] ||
+
+                                     signature[30] != packet_signature[30] ||
+                                     signature[31] != packet_signature[31] ||
+                                     signature[32] != packet_signature[32] ||
+                                     signature[33] != packet_signature[33] ||
+                                     signature[34] != packet_signature[34] ||
+                                     signature[35] != packet_signature[35] ||
+                                     signature[36] != packet_signature[36] ||
+                                     signature[37] != packet_signature[37] ||
+                                     signature[38] != packet_signature[38] ||
+                                     signature[39] != packet_signature[39] ||
+
+                                     signature[40] != packet_signature[40] ||
+                                     signature[41] != packet_signature[41] ||
+                                     signature[42] != packet_signature[42] ||
+                                     signature[43] != packet_signature[43] ||
+                                     signature[44] != packet_signature[44] ||
+                                     signature[45] != packet_signature[45] ||
+                                     signature[46] != packet_signature[46] ||
+                                     signature[47] != packet_signature[47] ||
+                                     signature[48] != packet_signature[48] ||
+                                     signature[49] != packet_signature[49] ||
+
+                                     signature[50] != packet_signature[50] ||
+                                     signature[51] != packet_signature[51] ||
+                                     signature[52] != packet_signature[52] ||
+                                     signature[53] != packet_signature[53] ||
+                                     signature[54] != packet_signature[54] ||
+                                     signature[55] != packet_signature[55] ||
+                                     signature[56] != packet_signature[56] ||
+                                     signature[57] != packet_signature[57] ||
+                                     signature[58] != packet_signature[58] ||
+                                     signature[59] != packet_signature[59] ||
+
+                                     signature[60] != packet_signature[60] ||
+                                     signature[61] != packet_signature[61] ||
+                                     signature[62] != packet_signature[62] ||
+                                     signature[63] != packet_signature[63] )
+                                {
+                                    debug_printf( "connect token did not verify" );
                                     return XDP_DROP;
                                 }
 

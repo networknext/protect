@@ -6,11 +6,9 @@ DONE
 
     So we have to extend the connect token so it has an encrypted part, and this will require asymmetric encryption, since the buyer creates the connect token.
 
-TODO
-
     Implement part where we send the client backend init request packet to the client backend during init
 
-    -------------
+TODO
 
     Implement client backend XDP program verifying client init request packet using hydrogen, and responding with an encrypted client backend token
 
