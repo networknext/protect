@@ -49,7 +49,7 @@
 
 struct ed25519_args
 {
-    __u8 public_key[64];
+    __u8 public_key[32];
     __u8 signature[64];
 };
 
