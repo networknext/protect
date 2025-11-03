@@ -31,12 +31,13 @@ MODULE_DESCRIPTION( "Network Next kernel module" );
 
 __bpf_kfunc int bpf_next_sha256( void * data, int data__sz, void * output, int output__sz );
 
-struct ed25519_data
+struct ed25519_args
 {
     __u8 public_key[64];
+    __u8 signature[64];
 };
 
-__bpf_kfunc int bpf_next_ed25519( void * data, int data__sz, void * output, int output__sz, struct ed25519_data * ed25519 );
+__bpf_kfunc int bpf_next_ed25519( void * data, int data__sz, struct ed25519_args * args );
 
 // ----------------------------------------------------------------------------------------------------------------------
 
@@ -58,7 +59,7 @@ __bpf_kfunc int bpf_next_sha256( void * data, int data__sz, void * output, int o
     return 0;
 }
 
-__bpf_kfunc int bpf_next_ed25519( void * data, int data__sz, void * output, int output__sz, struct ed25519_data * ed25519 )
+__bpf_kfunc int bpf_next_ed25519( void * data, int data__sz, void * output, int output__sz, struct ed25519_args * args )
 {
     // todo: hydrogen impl
     return 0;
