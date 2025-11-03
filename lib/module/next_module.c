@@ -59,7 +59,7 @@ __bpf_kfunc int bpf_next_sha256( void * data, int data__sz, void * output, int o
     return 0;
 }
 
-__bpf_kfunc int bpf_next_ed25519( void * data, int data__sz, void * output, int output__sz, struct ed25519_args * args )
+__bpf_kfunc int bpf_next_ed25519( void * data, int data__sz, struct ed25519_args * args )
 {
     // todo: hydrogen impl
     return 0;
