@@ -10,7 +10,14 @@
 #include <memory.h>
 #include <stdio.h>
 
-#define NEXT_ADDRESS_BUFFER_SAFETY 32
+void next_address_load_ipv4( struct next_address_t * address, uint32_t big_endian_ipv4, uint16_t big_endian_port )
+{
+    next_assert( address );
+    memset( address, 0, sizeof(next_address_t) );
+    address->type = NEXT_ADDRESS_IPV4;
+    memcpy( address->data.ipv4, (uint8_t*) &big_endian_ipv4, 4 );
+    address->port = next_platform_ntohs( big_endian_port );
+}
 
 int next_address_parse( next_address_t * address, const char * address_string_in )
 {
@@ -28,6 +35,8 @@ int next_address_parse( next_address_t * address, const char * address_string_in
     // first try to parse the string as an IPv6 address:
     // 1. if the first character is '[' then it's probably an ipv6 in form "[addr6]:portnum"
     // 2. otherwise try to parse as an IPv6 address using inet_pton
+
+    #define NEXT_ADDRESS_BUFFER_SAFETY 32
 
     char buffer[NEXT_MAX_ADDRESS_STRING_LENGTH + NEXT_ADDRESS_BUFFER_SAFETY*2];
 

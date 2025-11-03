@@ -11,8 +11,7 @@
 #include "next_packet_filter.h"
 #include "next_connect_token.h"
 #include "next_client_backend_token.h"
-
-#include "platform/platform.h"
+#include "next_platform.h"
 
 #include <memory.h>
 
@@ -145,9 +144,10 @@ void next_client_destroy( next_client_t * client )
     next_clear_and_free( client->context, client, sizeof(next_client_t) );
 }
 
-void next_client_update_initialize( next_client_t * client )
+void next_client_send_backend_init_request_packet( next_client_t * client, next_address_t * to_address )
 {
-    next_printf( NEXT_LOG_LEVEL_INFO, "initializing..." );
+    uint8_t to_address_data[32];
+    next_address_data( to_address, to_address_data );
 
     next_address_t from_address;
     memset( &from_address, 0, sizeof(from_address) );
@@ -157,12 +157,47 @@ void next_client_update_initialize( next_client_t * client )
     uint8_t from_address_data[32];
     next_address_data( &from_address, from_address_data );
 
-    double current_time = platform_time();
+    uint8_t test_packet_data[18+100];
+    memset( test_packet_data, 0, sizeof(test_packet_data) );
+
+    uint8_t * a = test_packet_data + 1;
+    uint8_t * b = test_packet_data + 3;
+
+    uint8_t magic[8];
+    memset( magic, 0, sizeof(magic) );
+
+    int test_packet_length = 118;
+    next_generate_pittle( a, from_address_data, to_address_data, test_packet_length );
+    next_generate_chonkle( b, magic, from_address_data, to_address_data, test_packet_length );
+
+    test_packet_data[0] = NEXT_CLIENT_BACKEND_PACKET_INIT_REQUEST;
+
+    next_platform_socket_send_packet( client->socket, to_address, test_packet_data, test_packet_length );
+
+    // todo
+    printf( "sent init packet\n" );
+}
+
+void next_client_update_initialize( next_client_t * client )
+{
+    /*
+        Our strategy is to ping n client backends and accept the first backend that we init with and receive n pongs from
+        This biases us towards selecting the client backend with the lowest latency lowest packet loss for the client
+    */
+
+    next_printf( NEXT_LOG_LEVEL_INFO, "initializing..." );
+
+    double current_time = next_platform_time();
+
+    next_address_t from;
+    next_address_load_ipv4( &from, client->connect_token.client_public_address, 0 );
 
     for ( int i = 0; i < NEXT_MAX_CONNECT_TOKEN_BACKENDS; i++ )
     {
         if ( client->connect_token.backend_addresses[i] == 0 )
+        {
             continue;
+        }
 
         if ( client->backend_init_data[i].next_update_time == 0.0 )
         {
@@ -177,34 +212,9 @@ void next_client_update_initialize( next_client_t * client )
             continue;
         }
 
-        next_address_t to_address;
-        memset( &to_address, 0, sizeof(to_address) );
-        to_address.type = NEXT_ADDRESS_IPV4;
-        memcpy( to_address.data.ipv4, (uint8_t*) &client->connect_token.backend_addresses[i], 4 );
-        to_address.port = platform_ntohs( client->connect_token.backend_ports[i] );
-
-        uint8_t to_address_data[32];
-        next_address_data( &to_address, to_address_data );
-
-        uint8_t test_packet_data[18+100];
-        memset( test_packet_data, 0, sizeof(test_packet_data) );
-
-        uint8_t * a = test_packet_data + 1;
-        uint8_t * b = test_packet_data + 3;
-
-        uint8_t magic[8];
-        memset( magic, 0, sizeof(magic) );
-
-        int test_packet_length = 118;
-        next_generate_pittle( a, from_address_data, to_address_data, test_packet_length );
-        next_generate_chonkle( b, magic, from_address_data, to_address_data, test_packet_length );
-
-        test_packet_data[0] = 0;
-
-        next_platform_socket_send_packet( client->socket, &to_address, test_packet_data, test_packet_length );
-
-        // todo
-        printf( "sent init packet\n" );
+        next_address_t to;
+        next_address_load_ipv4( &to, client->connect_token.backend_addresses[i], client->connect_token.backend_ports[i] );
+        next_client_send_backend_init_request_packet( client, &to );
     }
 }
 

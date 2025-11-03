@@ -20,6 +20,8 @@ struct next_address_t
 };
 #endif 
 
+NEXT_EXPORT_FUNC void next_address_load_ipv4( struct next_address_t * address, uint32_t big_endian_ipv4, uint16_t big_endian_port );
+
 NEXT_EXPORT_FUNC int next_address_parse( struct next_address_t * address, const char * address_string );
 
 NEXT_EXPORT_FUNC const char * next_address_to_string( const struct next_address_t * address, char * buffer );
