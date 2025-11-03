@@ -47,9 +47,14 @@
 # error "Endianness detection needs to be set up for your compiler?!"
 #endif
 
+struct ed25519_data
+{
+    __u8 public_key[64];
+};
+
 int bpf_next_sha256( void * data, int data__sz, void * output, int output__sz ) __ksym;
 
-int bpf_next_ed25519( void * data, int data__sz, void * output, int output__sz, ed25519_data * ed25519 ) __ksym;
+int bpf_next_ed25519( void * data, int data__sz, void * output, int output__sz, struct ed25519_data * ed25519 ) __ksym;
 
 struct {
     __uint( type, BPF_MAP_TYPE_ARRAY );
