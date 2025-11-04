@@ -47,15 +47,14 @@
 # error "Endianness detection needs to be set up for your compiler?!"
 #endif
 
-struct ed25519_args
+struct next_sign_args
 {
     __u8 public_key[32];
-    __u8 signature[64];
 };
 
 extern int bpf_next_sha256( void * data, int data__sz, void * output, int output__sz ) __ksym;
 
-extern int bpf_next_ed25519( void * data, int data__sz, struct ed25519_args * args ) __ksym;
+extern int bpf_next_sign_verify( void * data, int data__sz, void * signature, int signature__sz, struct next_sign_args * args ) __ksym;
 
 struct {
     __uint( type, BPF_MAP_TYPE_ARRAY );
@@ -547,92 +546,13 @@ SEC("client_backend_xdp") int client_backend_xdp_filter( struct xdp_md *ctx )
                                 // todo: move to buyer map
                                 __u8 buyer_public_key[] = { 0x9d, 0x59, 0x40, 0xa4, 0xe2, 0x4a, 0xa3, 0x0a, 0xf2, 0x30, 0xb6, 0x1b, 0x49, 0x7d, 0x60, 0xe8, 0x6d, 0xf9, 0x03, 0x28, 0x5c, 0x96, 0x83, 0x06, 0x89, 0xf5, 0xdd, 0x62, 0x8a, 0x25, 0x95, 0x16 };
 
-                                struct ed25519_args args;
+                                struct next_sign_args args;
                                 memcpy( args.public_key, buyer_public_key, 32 );
-                                if ( bpf_next_ed25519( packet_data + 18, 264, &args ) != 0 )
-                                {
-                                    debug_printf( "could not create ed25519 signature" );
-                                    return XDP_DROP;
-                                }
-
-                                /*
-                                __u8 * packet_signature = packet_data + 18 + 246;
-
-                                if ( args.signature[0] != packet_signature[0] ||
-                                     args.signature[1] != packet_signature[1] ||
-                                     args.signature[2] != packet_signature[2] ||
-                                     args.signature[3] != packet_signature[3] ||
-                                     args.signature[4] != packet_signature[4] ||
-                                     args.signature[5] != packet_signature[5] ||
-                                     args.signature[6] != packet_signature[6] ||
-                                     args.signature[7] != packet_signature[7] ||
-                                     args.signature[8] != packet_signature[8] ||
-                                     args.signature[9] != packet_signature[9] ||
-
-                                     args.signature[10] != packet_signature[10] ||
-                                     args.signature[11] != packet_signature[11] ||
-                                     args.signature[12] != packet_signature[12] ||
-                                     args.signature[13] != packet_signature[13] ||
-                                     args.signature[14] != packet_signature[14] ||
-                                     args.signature[15] != packet_signature[15] ||
-                                     args.signature[16] != packet_signature[16] ||
-                                     args.signature[17] != packet_signature[17] ||
-                                     args.signature[18] != packet_signature[18] ||
-                                     args.signature[19] != packet_signature[19] ||
-
-                                     args.signature[20] != packet_signature[20] ||
-                                     args.signature[21] != packet_signature[21] ||
-                                     args.signature[22] != packet_signature[22] ||
-                                     args.signature[23] != packet_signature[23] ||
-                                     args.signature[24] != packet_signature[24] ||
-                                     args.signature[25] != packet_signature[25] ||
-                                     args.signature[26] != packet_signature[26] ||
-                                     args.signature[27] != packet_signature[27] ||
-                                     args.signature[28] != packet_signature[28] ||
-                                     args.signature[29] != packet_signature[29] ||
-
-                                     args.signature[30] != packet_signature[30] ||
-                                     args.signature[31] != packet_signature[31] ||
-                                     args.signature[32] != packet_signature[32] ||
-                                     args.signature[33] != packet_signature[33] ||
-                                     args.signature[34] != packet_signature[34] ||
-                                     args.signature[35] != packet_signature[35] ||
-                                     args.signature[36] != packet_signature[36] ||
-                                     args.signature[37] != packet_signature[37] ||
-                                     args.signature[38] != packet_signature[38] ||
-                                     args.signature[39] != packet_signature[39] ||
-
-                                     args.signature[40] != packet_signature[40] ||
-                                     args.signature[41] != packet_signature[41] ||
-                                     args.signature[42] != packet_signature[42] ||
-                                     args.signature[43] != packet_signature[43] ||
-                                     args.signature[44] != packet_signature[44] ||
-                                     args.signature[45] != packet_signature[45] ||
-                                     args.signature[46] != packet_signature[46] ||
-                                     args.signature[47] != packet_signature[47] ||
-                                     args.signature[48] != packet_signature[48] ||
-                                     args.signature[49] != packet_signature[49] ||
-
-                                     args.signature[50] != packet_signature[50] ||
-                                     args.signature[51] != packet_signature[51] ||
-                                     args.signature[52] != packet_signature[52] ||
-                                     args.signature[53] != packet_signature[53] ||
-                                     args.signature[54] != packet_signature[54] ||
-                                     args.signature[55] != packet_signature[55] ||
-                                     args.signature[56] != packet_signature[56] ||
-                                     args.signature[57] != packet_signature[57] ||
-                                     args.signature[58] != packet_signature[58] ||
-                                     args.signature[59] != packet_signature[59] ||
-
-                                     args.signature[60] != packet_signature[60] ||
-                                     args.signature[61] != packet_signature[61] ||
-                                     args.signature[62] != packet_signature[62] ||
-                                     args.signature[63] != packet_signature[63] )
+                                if ( bpf_next_sign_verify( packet_data + 18, 264, &args ) != 0 )
                                 {
                                     debug_printf( "connect token did not verify" );
                                     return XDP_DROP;
                                 }
-                                */
 
                                 debug_printf( "reflect packet" );
 
