@@ -542,6 +542,7 @@ SEC("client_backend_xdp") int client_backend_xdp_filter( struct xdp_md *ctx )
                                     return XDP_DROP;
                                 }
 
+                                /*
                                 // todo: look up buyer public key by buyer_id in map
 
                                 // todo: move to buyer map
@@ -631,6 +632,7 @@ SEC("client_backend_xdp") int client_backend_xdp_filter( struct xdp_md *ctx )
                                     debug_printf( "connect token did not verify" );
                                     return XDP_DROP;
                                 }
+                                */
 
                                 debug_printf( "reflect packet" );
 
