@@ -79,7 +79,7 @@ __bpf_kfunc int bpf_next_ed25519( void * data, int data__sz, struct ed25519_args
     memset( context, 0, sizeof(context) );
     hydro_sign_init( &state, context );
     hydro_sign_update( &state, data, data__sz );
-    hydro_sign_final_create( &state, args.signature, args.public_key );
+    hydro_sign_final_create( &state, args->signature, args->public_key );
     kernel_fpu_end();
     return 0;
 }
