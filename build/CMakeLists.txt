@@ -125,23 +125,6 @@ target_link_libraries(keygen next)
 
 
 
-# client backend xdp
-
-add_library(client_backend_xdp OBJECT xdp_program.c)
-
-# Set compiler options for eBPF
-target_compile_options(xdp_program PRIVATE
-    -g
-    -O2
-    -target bpf
-    -I${CMAKE_SOURCE_DIR}/xdp_prog # Include path for local headers
-)
-
-# Link with libbpf (if needed)
-find_package(libbpf REQUIRED)
-target_link_libraries(xdp_program PRIVATE libbpf::libbpf)
-
-
 # client backend
 
 add_custom_command(
