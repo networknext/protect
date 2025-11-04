@@ -549,7 +549,7 @@ SEC("client_backend_xdp") int client_backend_xdp_filter( struct xdp_md *ctx )
 
                                 struct ed25519_args args;
                                 memcpy( args.public_key, buyer_public_key, 32 );
-                                if ( bpf_next_ed25519( packet_data + 18, 10, &args ) != 0 )
+                                if ( bpf_next_ed25519( packet_data + 18, 264, &args ) != 0 )
                                 {
                                     debug_printf( "could not create ed25519 signature" );
                                     return XDP_DROP;
