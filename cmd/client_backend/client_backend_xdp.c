@@ -542,7 +542,6 @@ SEC("client_backend_xdp") int client_backend_xdp_filter( struct xdp_md *ctx )
                                     return XDP_DROP;
                                 }
 
-                                /*
                                 // todo: look up buyer public key by buyer_id in map
 
                                 // todo: move to buyer map
@@ -550,12 +549,13 @@ SEC("client_backend_xdp") int client_backend_xdp_filter( struct xdp_md *ctx )
 
                                 struct ed25519_args args;
                                 memcpy( args.public_key, buyer_public_key, 32 );
-                                if ( bpf_next_ed25519( packet_data + 18, 310, &args ) != 0 )
+                                if ( bpf_next_ed25519( packet_data + 18, 10, &args ) != 0 )
                                 {
                                     debug_printf( "could not create ed25519 signature" );
                                     return XDP_DROP;
                                 }
 
+                                /*
                                 __u8 * packet_signature = packet_data + 18 + 246;
 
                                 if ( args.signature[0] != packet_signature[0] ||
