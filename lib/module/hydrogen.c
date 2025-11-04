@@ -3096,6 +3096,8 @@ hydro_sign_verify(const uint8_t csig[hydro_sign_BYTES], const void *m_, size_t m
 
 // ----------------------------------------------------------------------------------------------------------
 
+void warnings_fuck_off(void);       // -Wmissing-prototypes
+
 void warnings_fuck_off(void)
 {
     (void) load16_le;
