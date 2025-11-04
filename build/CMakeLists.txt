@@ -151,7 +151,7 @@ list(FILTER BACKEND_SOURCE EXCLUDE REGEX ".*_xdp\\.c$")
 
 add_executable(client_backend ${CLIENT_BACKEND_SOURCE} ${CLIENT_BACKEND_HEADERS} ../cmd/client_backend/client_backend_xdp_source.h)
 
-add_dependencies(client_backend platform shared client_backend_xdp)
+add_dependencies(client_backend platform shared)
 
 find_package(Threads REQUIRED)
 
