@@ -543,15 +543,9 @@ SEC("client_backend_xdp") int client_backend_xdp_filter( struct xdp_md *ctx )
                                     return XDP_DROP;
                                 }
 
-                                // todo: look up buyer public key by buyer_id in map
-
-                                // todo: move to buyer map
-                                __u8 buyer_public_key[] = { 0x9d, 0x59, 0x40, 0xa4, 0xe2, 0x4a, 0xa3, 0x0a, 0xf2, 0x30, 0xb6, 0x1b, 0x49, 0x7d, 0x60, 0xe8, 0x6d, 0xf9, 0x03, 0x28, 0x5c, 0x96, 0x83, 0x06, 0x89, 0xf5, 0xdd, 0x62, 0x8a, 0x25, 0x95, 0x16 };
-
-                                struct next_sign_args args;
-                                memcpy( args.public_key, buyer_public_key, 32 );
+                                struct next_sign_args args = { { 0x9d, 0x59, 0x40, 0xa4, 0xe2, 0x4a, 0xa3, 0x0a, 0xf2, 0x30, 0xb6, 0x1b, 0x49, 0x7d, 0x60, 0xe8, 0x6d, 0xf9, 0x03, 0x28, 0x5c, 0x96, 0x83, 0x06, 0x89, 0xf5, 0xdd, 0x62, 0x8a, 0x25, 0x95, 0x16 } };
                                 __u8 * connect_token = packet_data + 18;
-                                __u8 * signature = packet_data + ( 310 - 64 );
+                                __u8 * signature = packet_data + 18 + 310 - 64;
                                 if ( bpf_next_sign_verify( connect_token, 310 - 64, signature, 64, &args ) != 0 )
                                 {
                                     debug_printf( "connect token did not verify" );

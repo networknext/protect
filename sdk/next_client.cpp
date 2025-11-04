@@ -180,9 +180,6 @@ void next_client_send_backend_init_request_packet( next_client_t * client, next_
 
     int packet_length = (int) ( p - packet_data );
 
-    // todo
-    printf( "packet length = %d\n", packet_length );
-
     next_generate_pittle( a, from_address_data, to_address_data, packet_length );
     next_generate_chonkle( b, magic, from_address_data, to_address_data, packet_length );
 
