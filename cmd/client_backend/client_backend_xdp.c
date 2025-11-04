@@ -551,7 +551,7 @@ SEC("client_backend_xdp") int client_backend_xdp_filter( struct xdp_md *ctx )
                                 struct next_sign_args args;
                                 memcpy( args.public_key, buyer_public_key, 32 );
                                 __u8 * connect_token = packet_data + 18;
-                                __u8 * signature = connect_token + 264;
+                                __u8 * signature = packet_data + 272;
                                 if ( bpf_next_sign_verify( connect_token, 264, signature, 64, &args ) != 0 )
                                 {
                                     debug_printf( "connect token did not verify" );
