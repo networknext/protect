@@ -12,13 +12,11 @@ DONE
 
     Hook up hydro_sign_verify in next_module
 
+    I have some work to do to get hydro compiling in the kernel module
+
 TODO
 
-    I have some work to do to get hydro compiling in the kernel module. It was not building before (needed to add the .o to the makefile)
-
-    -------------
-
-    Verify that we get a client backend init response back on the client
+    Work through it until we get the connect token verifying in the XDP module and responding with a reflected packet
 
     -------------
 

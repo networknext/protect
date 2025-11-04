@@ -60,7 +60,7 @@ __bpf_kfunc int bpf_next_sign_verify( void * data, int data__sz, void * signatur
     memset( context, 0, sizeof(context) );
     int result = hydro_sign_verify( signature, data, data__sz, context, args->public_key );
     kernel_fpu_end();
-    return result != 0;
+    return result;
 }
 
 BTF_SET8_START( bpf_task_set )
