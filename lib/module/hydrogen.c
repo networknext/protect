@@ -3115,8 +3115,4 @@ void warnings_fuck_off(void)
     (void) store64_be;
 }
 
-#if defined(__linux__) && defined(__KERNEL__)
-MODULE_LICENSE( "ISC" ); 
-#endif // #if defined(__linux__) && defined(__KERNEL__)
-
 // ----------------------------------------------------------------------------------------------------------
