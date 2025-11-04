@@ -27,7 +27,8 @@
 #endif
 
 #if defined(__linux__) && defined(__KERNEL__)
-#include "linux/types.h"
+#include <linux/types.h>
+#include <linux/string.h>
 typedef __u64 uint64_t;
 typedef __u32 uint32_t;
 typedef __u16 uint16_t;
