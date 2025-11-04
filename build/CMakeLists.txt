@@ -147,7 +147,7 @@ project(client_backend)
 file(GLOB CLIENT_BACKEND_SOURCE ../cmd/client_backend/*.c)
 file(GLOB CLIENT_BACKEND_HEADERS ../cmd/client_backend/*.h)
 
-list(FILTER BACKEND_SOURCE EXCLUDE REGEX ".*_xdp\\.c$")
+list(REMOVE_ITEM CLIENT_BACKEND_SOURCE "../cmd/client_backend/client_backend_xdp.c")
 
 add_executable(client_backend ${CLIENT_BACKEND_SOURCE} ${CLIENT_BACKEND_HEADERS} ../cmd/client_backend/client_backend_xdp_source.h)
 
