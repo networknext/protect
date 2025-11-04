@@ -152,6 +152,8 @@ static void __exit next_exit( void )
 module_init( next_init );
 module_exit( next_exit );
 
+#include "hydrogen.c"
+
 MODULE_VERSION( "1.0.0" );
 MODULE_LICENSE( "GPL" ); 
 MODULE_AUTHOR( "Glenn Fiedler" ); 
