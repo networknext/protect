@@ -27,15 +27,11 @@
 #endif
 
 #if defined(__linux__) && defined(__KERNEL__)
-typedef __u64 uint64_t
-typedef __u32 uint32_t
-typedef __u16 uint16_t
-typedef __u8  uint8_t
-typedef __i64 int64_t 
-typedef __i32 int32_t
-typedef __i16 int16_t
-typedef __i8  int8_t
-typedef __u64 size_t
+typedef __u64 uint64_t;
+typedef __u32 uint32_t;
+typedef __u16 uint16_t;
+typedef __u8  uint8_t;
+typedef __u64 size_t;
 #endif
 
 #if !defined(__cplusplus) && defined(__GNUC__)
