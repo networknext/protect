@@ -23,13 +23,24 @@
 #include <linux/string.h>
 #include <bpf/bpf_helpers.h>
 
-#define NEXT_CLIENT_BACKEND_PACKET_INIT_REQUEST         0
-#define NEXT_CLIENT_BACKEND_PACKET_INIT_RESPONSE        1
-#define NEXT_CLIENT_BACKEND_PACKET_PING                 2
-#define NEXT_CLIENT_BACKEND_PACKET_PONG                 3
-#define NEXT_CLIENT_BACKEND_PACKET_REFRESH_TOKEN        4
+#define NEXT_CLIENT_BACKEND_PACKET_INIT_REQUEST              0
+#define NEXT_CLIENT_BACKEND_PACKET_INIT_RESPONSE             1
+#define NEXT_CLIENT_BACKEND_PACKET_PING                      2
+#define NEXT_CLIENT_BACKEND_PACKET_PONG                      3
+#define NEXT_CLIENT_BACKEND_PACKET_REFRESH_TOKEN             4
 
-#define ADVANCED_PACKET_FILTER 0
+#define NEXT_SIGN_PUBLIC_KEY_BYTES                          32
+#define NEXT_SIGN_PRIVATE_KEY_BYTES                         64
+
+#define NEXT_SECRETBOX_KEY_BYTES                            32
+
+#define NEXT_MAX_CONNECT_TOKEN_BYTES                       500
+#define NEXT_MAX_CONNECT_TOKEN_BACKENDS                     32
+#define NEXT_CONNECT_TOKEN_SIGNATURE_BYTES                  64
+
+#define NEXT_CLIENT_BACKEND_TOKEN_CRYPTO_HEADER_BYTES       36
+
+#define ADVANCED_PACKET_FILTER                               0
 
 #include "client_backend_shared.h"
 
@@ -46,12 +57,6 @@
 #else
 # error "Endianness detection needs to be set up for your compiler?!"
 #endif
-
-#define NEXT_SIGN_PUBLIC_KEY_BYTES  32
-
-#define NEXT_SIGN_PRIVATE_KEY_BYTES 64
-
-#define NEXT_SECRETBOX_KEY_BYTES    32
 
 struct next_sign_create_args
 {
@@ -72,6 +77,37 @@ extern int bpf_next_sign_verify( void * data, int data__sz, void * signature, in
 extern int bpf_next_secretbox_encrypt( void * data, int data__sz, void * key, int key__sz ) __ksym;
 
 extern int bpf_next_secretbox_decrypt( void * data, int data__sz, void * key, int key__sz ) __ksym;
+
+#pragma pack(push,1)
+struct next_connect_token_t
+{
+    uint64_t version;
+    uint64_t expire_timestamp;
+    uint64_t buyer_id;
+    uint64_t server_id;
+    uint64_t session_id;
+    uint64_t user_hash;
+    uint32_t client_public_address;
+    uint32_t backend_addresses[NEXT_MAX_CONNECT_TOKEN_BACKENDS];             // big endian ipv4. 0 if not provided.
+    uint16_t backend_ports[NEXT_MAX_CONNECT_TOKEN_BACKENDS];                 // big endian port. 0 if not provided.
+    uint8_t pings_per_second;
+    uint8_t max_connect_seconds;
+    uint8_t signature[NEXT_CONNECT_TOKEN_SIGNATURE_BYTES];
+};
+#pragma pack(pop)
+
+#pragma pack(push,1)
+struct next_client_backend_token_t
+{
+    uint8_t crypto_header[NEXT_CLIENT_BACKEND_TOKEN_CRYPTO_HEADER_BYTES];
+    uint64_t version;
+    uint64_t expire_timestamp;
+    uint64_t buyer_id;
+    uint64_t server_id;
+    uint64_t session_id;
+    uint64_t user_hash;
+};
+#pragma pack(pop)
 
 struct {
     __uint( type, BPF_MAP_TYPE_ARRAY );
@@ -314,8 +350,6 @@ SEC("client_backend_xdp") int client_backend_xdp_filter( struct xdp_md *ctx )
 
                 if ( (void*)udp + sizeof(struct udphdr) <= data_end )
                 {
-                    debug_printf( "udp packet" );
-
                     int key = 0;
                     struct client_backend_config * config = (struct client_backend_config*) bpf_map_lookup_elem( &client_backend_config_map, &key );
                     if ( config == NULL )
@@ -585,6 +619,7 @@ SEC("client_backend_xdp") int client_backend_xdp_filter( struct xdp_md *ctx )
                             {
                                 // ...
                             }
+                            break;
 
                             default:
                                 return XDP_DROP;
