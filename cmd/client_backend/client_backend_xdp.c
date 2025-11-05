@@ -666,9 +666,9 @@ SEC("client_backend_xdp") int client_backend_xdp_filter( struct xdp_md *ctx )
                                     return XDP_DROP;
                                 }
 
-                                // todo: adjust packet size down
+                                reflect_packet( data, sizeof(struct next_client_init_response_packet_t), magic );
 
-                                reflect_packet( data, 336, magic );
+                                bpf_xdp_adjust_tail( ctx, -( sizeof(struct next_client_init_request_packet_t) - sizeof(struct next_client_init_response_packet_t) ) );
 
                                 debug_printf( "sent response" );
                             }

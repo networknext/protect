@@ -26,23 +26,21 @@ DONE
 
     Encrypt the backend token
 
-TODO
-
     Implement the secretbox_encrypt function in the kernel module
 
     Verify the encrypt succeeds and the client backend responds
 
-    -------------
+TODO
 
     Resize the response packet
 
     -------------
 
-    Verify the client gets the client init response packet and can decrypt it
+    Verify the client gets the client init response packet and it's a smaller size
 
     -------------
 
-    The client must check the request id vs. the request and ignore if it doesn't match
+    Check the request id is the correct value
 
     -------------
 
@@ -50,7 +48,7 @@ TODO
 
     -------------
 
-    Check for connect token expiry in client init request handler
+    Pass in current_timestamp via state once per-second
 
     -------------
 
