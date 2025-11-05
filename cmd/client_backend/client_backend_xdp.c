@@ -112,7 +112,7 @@ struct next_client_init_request_packet_t
 {
     __u8 packet_type;
     __u8 prefix[17];
-    next_connect_token_t connect_token;
+    struct next_connect_token_t connect_token;
     __u64 request_id;
 };
 
@@ -121,7 +121,7 @@ struct next_client_init_response_packet_t
     __u8 packet_type;
     __u8 prefix[17];
     __u64 request_id;
-    next_client_backend_token_t backend_token;
+    struct next_client_backend_token_t backend_token;
 };
 
 #pragma pack(pop)
