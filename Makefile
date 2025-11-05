@@ -2,11 +2,11 @@
 
 .PHONY: build
 build: build/Makefile
-	cd build && make -j
+	cd build && make -j --no-print-directory
 
 .PHONY: clean
 clean: build/Makefile
-	cd build && make clean
+	cd build && make clean --no-print-directory
 	rm -rf dist/*
 
 build/Makefile: build/CMakeLists.txt
