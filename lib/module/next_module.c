@@ -39,47 +39,43 @@ __bpf_kfunc int bpf_next_sha256( void * data, int data__sz, void * output, int o
 
 // ----------------------------------------------------------------------------------------------------------------------
 
+static __u8 sign_context[hydro_sign_CONTEXTBYTES];
+
 __bpf_kfunc int bpf_next_sign_create( void * data, int data__sz, void * signature, int signature__sz, struct next_sign_create_args * args )
 {
     kernel_fpu_begin();
-    char context[hydro_sign_CONTEXTBYTES];
-    memset( context, 0, sizeof(context) );
-    int result = hydro_sign_create( signature, data, data__sz, context, args->private_key );
+    int result = hydro_sign_create( signature, data, data__sz, sign_context, args->private_key );
     kernel_fpu_end();
     return result;
 }
-
-// ----------------------------------------------------------------------------------------------------------------------
 
 __bpf_kfunc int bpf_next_sign_verify( void * data, int data__sz, void * signature, int signature__sz, struct next_sign_verify_args * args )
 {
     kernel_fpu_begin();
     char context[hydro_sign_CONTEXTBYTES];
     memset( context, 0, sizeof(context) );
-    int result = hydro_sign_verify( signature, data, data__sz, context, args->public_key );
+    int result = hydro_sign_verify( signature, data, data__sz, sign_context, args->public_key );
     kernel_fpu_end();
     return result;
 }
 
 // ----------------------------------------------------------------------------------------------------------------------
 
-int bpf_next_secretbox_encrypt( void * data, int data__sz, void * key, int key__sz )
+static __u8 secretbox_context[hydro_secretbox_CONTEXTBYTES];
+
+int bpf_next_secretbox_encrypt( void * data, int data__sz, __u64 message_id, void * key, int key__sz )
 {
     kernel_fpu_begin();
-    char context[hydro_sign_CONTEXTBYTES];
-    memset( context, 0, sizeof(context) );
-    // ...
+    void * message = data + NEXT_SECRETBOX_CRYPTO_HEADER_BYTES;
+    int message_bytes = data__sz - NEXT_SECRETBOX_CRYPTO_HEADER_BYTES;
+    int result = hydro_secretbox_encrypt( data, message, message_bytes, message_id, secretbox_context, key );
     kernel_fpu_end();
-    return 0;
+    return result;
 }
 
-// ----------------------------------------------------------------------------------------------------------------------
-
-int bpf_next_secretbox_decrypt( void * data, int data__sz, void * key, int key__sz )
+int bpf_next_secretbox_decrypt( void * data, int data__sz, __u64 message_id, void * key, int key__sz )
 {
     kernel_fpu_begin();
-    char context[hydro_sign_CONTEXTBYTES];
-    memset( context, 0, sizeof(context) );
     // ...
     kernel_fpu_end();
     return 0;

@@ -24,11 +24,19 @@ DONE
 
     Verify the client still gets the response
 
-TODO
-
     Encrypt the backend token
 
+TODO
+
+    Implement the secretbox_encrypt function in the kernel module
+
+    Verify the encrypt succeeds and the client backend responds
+
+    -------------
+
     Resize the response packet
+
+    -------------
 
     Verify the client gets the client init response packet and can decrypt it
 

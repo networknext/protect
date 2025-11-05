@@ -8,11 +8,11 @@
 
 #include <linux/types.h>
 
-#define NEXT_SIGN_PUBLIC_KEY_BYTES  32
+#define NEXT_SIGN_PUBLIC_KEY_BYTES              32
+#define NEXT_SIGN_PRIVATE_KEY_BYTES             64
 
-#define NEXT_SIGN_PRIVATE_KEY_BYTES 64
-
-#define NEXT_SECRETBOX_KEY_BYTES    32
+#define NEXT_SECRETBOX_KEY_BYTES                32
+#define NEXT_SECRETBOX_CRYPTO_HEADER_BYTES      36
 
 struct next_sign_create_args
 {
@@ -30,6 +30,6 @@ extern int bpf_next_sign_create( void * data, int data__sz, void * signature, in
 
 extern int bpf_next_sign_verify( void * data, int data__sz, void * signature, int signature__sz, struct next_sign_verify_args * args );
 
-extern int bpf_next_secretbox_encrypt( void * data, int data__sz, void * key, int key__sz );
+extern int bpf_next_secretbox_encrypt( void * data, int data__sz, __u64 message_id, void * key, int key__sz );
 
-extern int bpf_next_secretbox_decrypt( void * data, int data__sz, void * key, int key__sz );
+extern int bpf_next_secretbox_decrypt( void * data, int data__sz, __u64 message_id, void * key, int key__sz );
