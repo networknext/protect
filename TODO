@@ -16,9 +16,27 @@ DONE
 
     Work through it until we get the connect token verifying in the XDP module and responding with a reflected packet
 
+    Extend the kernel module so we have access to secretbox encrypt/decrypt
+
 TODO
 
-    Now I have to work out how to encrypt the client backend token in XDP as well as doing the key exchange
+    Extend keygen so the client backend has its own symmetric key for secretbox
+
+    -------------
+
+    We need definitions of the next_connect_token_t and the next_backend_token_t inside the XDP program and the client backend
+
+    -------------
+
+    Build a next_backend_token_t in response to the client init request and send it back to the client
+
+    -------------
+
+    Verify the client gets the client init response packet and can decrypt it
+
+    -------------
+
+    The client must check the request id vs. the request and ignore if it doesn't match
 
     -------------
 
@@ -28,6 +46,10 @@ TODO
 
         [2] (17 byte header) (client backend token) (uint64 request_id)
         [3] (17 byte header) (uint64 request id)
+
+    -------------
+
+    Implement XDP program to verify that the client backend token decrypts
 
     -------------
 
