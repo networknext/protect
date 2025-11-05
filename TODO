@@ -22,19 +22,13 @@ DONE
 
     Build a next_backend_token_t in response to the client init request and send it back to the client
 
-TODO
-
     Verify the client still gets the response
 
-    -------------
+TODO
 
     Encrypt the backend token
 
-    -------------
-
     Resize the response packet
-
-    -------------
 
     Verify the client gets the client init response packet and can decrypt it
 
