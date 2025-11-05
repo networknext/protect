@@ -63,9 +63,35 @@ __bpf_kfunc int bpf_next_sign_verify( void * data, int data__sz, void * signatur
 
 // ----------------------------------------------------------------------------------------------------------------------
 
+int bpf_next_secretbox_encrypt( void * data, int data__sz, void * key, int key__sz )
+{
+    kernel_fpu_begin();
+    char context[hydro_sign_CONTEXTBYTES];
+    memset( context, 0, sizeof(context) );
+    // ...
+    kernel_fpu_end();
+    return 0;
+}
+
+// ----------------------------------------------------------------------------------------------------------------------
+
+int bpf_next_secretbox_decrypt( void * data, int data__sz, void * key, int key__sz )
+{
+    kernel_fpu_begin();
+    char context[hydro_sign_CONTEXTBYTES];
+    memset( context, 0, sizeof(context) );
+    // ...
+    kernel_fpu_end();
+    return 0;
+}
+
+// ----------------------------------------------------------------------------------------------------------------------
+
 BTF_SET8_START( bpf_task_set )
 BTF_ID_FLAGS( func, bpf_next_sha256 )
 BTF_ID_FLAGS( func, bpf_next_sign_verify )
+BTF_ID_FLAGS( func, bpf_next_secretbox_encrypt )
+BTF_ID_FLAGS( func, bpf_next_secretbox_decrypt )
 BTF_SET8_END( bpf_task_set )
 
 static const struct btf_kfunc_id_set bpf_task_kfunc_set = {
