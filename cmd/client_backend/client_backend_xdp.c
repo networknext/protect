@@ -1,5 +1,5 @@
 /*
-    Network Next. Copyright 2017 - 2025 Network Next, Inc.  
+    Network Next Client Backend XDP program
 
     Licensed under the GNU General Public License 3.0
 
