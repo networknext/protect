@@ -595,7 +595,7 @@ SEC("client_backend_xdp") int client_backend_xdp_filter( struct xdp_md *ctx )
 
                                 __u8 * connect_token = (__u8*) &request->connect_token;
                                 __u8 * signature = (__u8*) &request->connect_token.signature;
-                                if ( proton_sign_verify( connect_token, sizeof(struct next_connect_token_t) - NEXT_SIGNATURE_BYTES, signature, NEXT_SIGNATURE_BYTES, &args ) != 0 )
+                                if ( proton_sign_verify( connect_token, sizeof(struct next_connect_token_t) - PROTON_SIGNATURE_BYTES, signature, PROTON_SIGNATURE_BYTES, &args ) != 0 )
                                 {
                                     debug_printf( "connect token did not verify" );
                                     return XDP_DROP;
@@ -635,7 +635,7 @@ SEC("client_backend_xdp") int client_backend_xdp_filter( struct xdp_md *ctx )
                                 // todo: we should get the client backend private key from the client backend state map
                                 __u8 client_backend_private_key[] = { 0x7a, 0xb9, 0x48, 0x82, 0x18, 0xc1, 0xee, 0xcb, 0x06, 0xa7, 0xbb, 0x08, 0x0d, 0xa9, 0x75, 0x81, 0xe7, 0xdc, 0xe0, 0xb7, 0xa1, 0xbf, 0x58, 0x47, 0x29, 0xe2, 0xb8, 0x84, 0xd9, 0xf9, 0x3c, 0x23 };                                
 
-                                int result = proton_secretbox_encrypt( (__u8*) &response->backend_token, sizeof(struct next_client_backend_token_t), 0, client_backend_private_key, NEXT_SECRETBOX_KEY_BYTES );
+                                int result = proton_secretbox_encrypt( (__u8*) &response->backend_token, sizeof(struct next_client_backend_token_t), 0, client_backend_private_key, PROTON_SECRETBOX_KEY_BYTES );
                                 if ( result != 0 )
                                 {
                                     debug_printf( "could not encrypt backend token" );
