@@ -668,11 +668,7 @@ SEC("client_backend_xdp") int client_backend_xdp_filter( struct xdp_md *ctx )
 
                                 reflect_packet( data, sizeof(struct next_client_init_response_packet_t), magic );
 
-                                // todo
-                                debug_printf( "request packet = %d", (int) sizeof(struct next_client_init_request_packet_t) );
-                                debug_printf( "reseponse packet) = %d", (int) sizeof(struct next_client_init_response_packet_t) );
-
-                                // bpf_xdp_adjust_tail( ctx, -( sizeof(struct next_client_init_request_packet_t) - sizeof(struct next_client_init_response_packet_t) ) );
+                                bpf_xdp_adjust_tail( ctx, -( (int) sizeof(struct next_client_init_request_packet_t) - (int) sizeof(struct next_client_init_response_packet_t) ) );
 
                                 debug_printf( "sent response" );
                             }
