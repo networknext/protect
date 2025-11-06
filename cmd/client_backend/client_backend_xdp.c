@@ -23,24 +23,13 @@
 #include <linux/string.h>
 #include <bpf/bpf_helpers.h>
 
+#include "proton.h"
+
 #define NEXT_CLIENT_BACKEND_PACKET_INIT_REQUEST              0
 #define NEXT_CLIENT_BACKEND_PACKET_INIT_RESPONSE             1
 #define NEXT_CLIENT_BACKEND_PACKET_PING                      2
 #define NEXT_CLIENT_BACKEND_PACKET_PONG                      3
 #define NEXT_CLIENT_BACKEND_PACKET_REFRESH_TOKEN             4
-
-#define NEXT_SIGNATURE_BYTES                                64
-#define NEXT_SIGN_PUBLIC_KEY_BYTES                          32
-#define NEXT_SIGN_PRIVATE_KEY_BYTES                         64
-
-#define NEXT_SECRETBOX_KEY_BYTES                            32
-
-#define NEXT_MAX_CONNECT_TOKEN_BYTES                       500
-#define NEXT_MAX_CONNECT_TOKEN_BACKENDS                     32
-#define NEXT_CONNECT_TOKEN_SIGNATURE_BYTES                  64
-
-#define NEXT_CLIENT_BACKEND_TOKEN_CRYPTO_HEADER_BYTES       36
-#define NEXT_CLIENT_BACKEND_TOKEN_EXPIRE_SECONDS            60
 
 #define ADVANCED_PACKET_FILTER                               0
 
@@ -59,26 +48,6 @@
 #else
 # error "Endianness detection needs to be set up for your compiler?!"
 #endif
-
-struct next_sign_create_args
-{
-    __u8 private_key[NEXT_SIGN_PRIVATE_KEY_BYTES];
-};
-
-struct next_sign_verify_args
-{
-    __u8 public_key[NEXT_SIGN_PUBLIC_KEY_BYTES];
-};
-
-extern int bpf_next_sha256( void * data, int data__sz, void * output, int output__sz ) __ksym;
-
-extern int bpf_next_sign_create( void * data, int data__sz, void * signature, int signature__sz, struct next_sign_create_args * args ) __ksym;
-
-extern int bpf_next_sign_verify( void * data, int data__sz, void * signature, int signature__sz, struct next_sign_verify_args * args ) __ksym;
-
-extern int bpf_next_secretbox_encrypt( void * data, int data__sz, __u64 message_id, void * key, int key__sz ) __ksym;
-
-extern int bpf_next_secretbox_decrypt( void * data, int data__sz, __u64 message_id, void * key, int key__sz ) __ksym;
 
 #pragma pack(push,1)
 
@@ -619,7 +588,7 @@ SEC("client_backend_xdp") int client_backend_xdp_filter( struct xdp_md *ctx )
 
                                 __u8 * connect_token = (__u8*) &request->connect_token;
                                 __u8 * signature = (__u8*) &request->connect_token.signature;
-                                if ( bpf_next_sign_verify( connect_token, sizeof(struct next_connect_token_t) - NEXT_SIGNATURE_BYTES, signature, NEXT_SIGNATURE_BYTES, &args ) != 0 )
+                                if ( proton_sign_verify( connect_token, sizeof(struct next_connect_token_t) - NEXT_SIGNATURE_BYTES, signature, NEXT_SIGNATURE_BYTES, &args ) != 0 )
                                 {
                                     debug_printf( "connect token did not verify" );
                                     return XDP_DROP;
@@ -659,7 +628,7 @@ SEC("client_backend_xdp") int client_backend_xdp_filter( struct xdp_md *ctx )
                                 // todo: we should get the client backend private key from the client backend state map
                                 __u8 client_backend_private_key[] = { 0x7a, 0xb9, 0x48, 0x82, 0x18, 0xc1, 0xee, 0xcb, 0x06, 0xa7, 0xbb, 0x08, 0x0d, 0xa9, 0x75, 0x81, 0xe7, 0xdc, 0xe0, 0xb7, 0xa1, 0xbf, 0x58, 0x47, 0x29, 0xe2, 0xb8, 0x84, 0xd9, 0xf9, 0x3c, 0x23 };                                
 
-                                int result = bpf_next_secretbox_encrypt( (__u8*) &response->backend_token, sizeof(struct next_client_backend_token_t), 0, client_backend_private_key, NEXT_SECRETBOX_KEY_BYTES );
+                                int result = proton_secretbox_encrypt( (__u8*) &response->backend_token, sizeof(struct next_client_backend_token_t), 0, client_backend_private_key, NEXT_SECRETBOX_KEY_BYTES );
                                 if ( result != 0 )
                                 {
                                     debug_printf( "could not encrypt backend token" );

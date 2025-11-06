@@ -128,10 +128,18 @@ target_link_libraries(keygen next)
 # client backend
 
 add_custom_command(
+    COMMENT "Copying proton.h for client backend"
+    OUTPUT ../cmd/client_backend/proton.h
+    COMMAND bash -c "cp ../lib/proton/proton.h ../cmd/client_backend/proton.h"
+    DEPENDS ../lib/proton/proton.h
+)
+
+add_custom_command(
     COMMENT "Generating client_backend_xdp_source.h"
     OUTPUT ../cmd/client_backend/client_backend_xdp_source.h
     COMMAND bash -c "mkdir -p ../cmd/client_backend/client_backend_xdp_source"
     COMMAND bash -c "cp ../cmd/client_backend/Makefile ../cmd/client_backend/client_backend_xdp_source"
+    COMMAND bash -c "cp ../cmd/client_backend/proton.h ../cmd/client_backend/client_backend_xdp_source"
     COMMAND bash -c "cp ../cmd/client_backend/client_backend_xdp.c ../cmd/client_backend/client_backend_xdp_source"
     COMMAND bash -c "cp ../cmd/client_backend/client_backend_shared.h ../cmd/client_backend/client_backend_xdp_source"
     COMMAND bash -c "cp ../cmd/client_backend/client_backend_constants.h ../cmd/client_backend/client_backend_xdp_source"
@@ -147,7 +155,7 @@ project(client_backend)
 file(GLOB CLIENT_BACKEND_SOURCE ../cmd/client_backend/*.c)
 file(GLOB CLIENT_BACKEND_HEADERS ../cmd/client_backend/*.h)
 
-add_executable(client_backend ${CLIENT_BACKEND_SOURCE} ${CLIENT_BACKEND_HEADERS} ../cmd/client_backend/client_backend_xdp_source.h)
+add_executable(client_backend ${CLIENT_BACKEND_SOURCE} ${CLIENT_BACKEND_HEADERS} ../cmd/client_backend/client_backend_xdp_source.h ../cmd/client_backend/proton.h)
 
 add_dependencies(client_backend platform shared)
 
