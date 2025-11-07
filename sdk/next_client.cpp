@@ -33,7 +33,8 @@ struct next_client_t
     uint16_t bound_port;
     next_connect_token_t connect_token;
     next_client_backend_init_data_t backend_init_data[NEXT_MAX_CONNECT_TOKEN_BACKENDS];
-    int num_updates;
+    next_address_t client_backend_address;
+    next_client_backend_token_t backend_token;
     uint64_t session_id;
     uint64_t server_id;
     next_platform_socket_t * socket;
@@ -41,8 +42,6 @@ struct next_client_t
 };
 
 #pragma pack(push,1)
-
-// todo: gotta build some versioning in to these
 
 struct next_client_backend_init_request_packet_t
 {
@@ -234,6 +233,8 @@ void next_client_send_backend_init_request_packet( next_client_t * client, next_
     next_generate_pittle( a, from_address_data, to_address_data, packet_length );
     next_generate_chonkle( b, magic, from_address_data, to_address_data, packet_length );
 
+    // todo: endian fixup
+
     next_platform_socket_send_packet( client->socket, to_address, packet_data, packet_length );
 }
 
@@ -365,6 +366,8 @@ void next_client_process_packet( next_client_t * client, next_address_t * from, 
         {
             const next_client_backend_init_response_packet_t * packet = (const next_client_backend_init_response_packet_t*) packet_data;
 
+            // todo: endian fixup
+
             for ( int i = 0; i < NEXT_MAX_CONNECT_TOKEN_BACKENDS; i++ )
             {
                 if ( client->connect_token.backend_addresses[i] != from_ipv4 || client->connect_token.backend_ports[i] != from_port )
@@ -387,7 +390,9 @@ void next_client_process_packet( next_client_t * client, next_address_t * from, 
         }
         else if ( packet_type == NEXT_CLIENT_BACKEND_PACKET_PONG && packet_bytes == sizeof(next_client_backend_pong_packet_t) )
         {
-            const next_client_backend_init_response_packet_t * packet = (const next_client_backend_init_response_packet_t*) packet_data;
+            const next_client_backend_pong_packet_t * packet = (const next_client_backend_pong_packet_t*) packet_data;
+
+            // todo: endian fixup
 
             for ( int i = 0; i < NEXT_MAX_CONNECT_TOKEN_BACKENDS; i++ )
             {
@@ -400,9 +405,24 @@ void next_client_process_packet( next_client_t * client, next_address_t * from, 
                 if ( client->backend_init_data[i].request_id != packet->request_id )
                     break;
 
+                if ( packet->ping_sequence < client->backend_init_data[i].pong_sequence )
+                    break;
+
                 next_printf( NEXT_LOG_LEVEL_INFO, "received pong from client backend %d", i );
 
-                // todo: count pongs. if we are above n pongs, then select this client backend and transition to initialized state
+                client->backend_init_data[i].pong_sequence = packet->ping_sequence + 1;
+                client->backend_init_data[i].num_pongs_received++;
+
+                if ( client->backend_init_data[i].num_pongs_received++ > 10 )       // todo: 10 value should be in connect token
+                {
+                    client->state = NEXT_CLIENT_CONNECTED;
+                    client->client_backend_address = *from;
+                    client->backend_token = client->backend_init_data[i].backend_token;
+
+                    next_printf( NEXT_LOG_LEVEL_INFO, "selected client backend %d", i );
+                }
+
+                break;
             }
         }
     }
@@ -435,13 +455,6 @@ void next_client_update( next_client_t * client )
 
     next_client_update_receive_packets( client );
 
-    // todo: mock connection
-    client->num_updates++;
-    if ( client->num_updates == 100 )
-    {
-        client->state = NEXT_CLIENT_CONNECTED;
-    }
-
     // todo
     (void) client;
     next_platform_sleep( 1.0 / 100.0 );
@@ -454,7 +467,7 @@ void next_client_send_packet( next_client_t * client, const uint8_t * packet_dat
     if ( client->state != NEXT_CLIENT_CONNECTED )
         return;
 
-    // todo
+    // todo: send payload packet
     (void) client;
     (void) packet_data;
     (void) packet_bytes;

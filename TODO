@@ -56,17 +56,19 @@ DONE
 
     Verify backend token has not expired
 
-TODO
-
     Respond with a client backend pong packet
-
-    -------------
 
     Verify the client gets the backend pong packets
 
-    -------------
+    Increase pong count if the pong packet has a ping sequence >= current pong sequence, this way we reward in-order responses.
 
-    After n pongs transition to selecting that client backend and transition to the next client state
+    After n pongs transition to selecting that client backend and transition to the connected state temporarily so we have some closure here.
+
+TODO
+
+    Implement the request to refresh the backend token
+
+    Call the refresh once every 30 seconds
 
     -------------
 

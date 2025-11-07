@@ -716,8 +716,6 @@ SEC("client_backend_xdp") int client_backend_xdp_filter( struct xdp_md *ctx )
 
                                 bpf_xdp_adjust_tail( ctx, -( (int) sizeof(struct next_client_backend_ping_packet_t) - (int) sizeof(struct next_client_backend_pong_packet_t) ) );
 
-                                debug_printf( "sent pong" );
-
                                 return XDP_TX;
                             }
                             break;
