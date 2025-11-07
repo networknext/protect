@@ -329,3 +329,11 @@ void next_address_convert_ipv6_to_ipv4( struct next_address_t * address )
     address->data.ipv4[2] = c;
     address->data.ipv4[3] = d;
 }
+
+uint32_t next_address_ipv4( struct next_address_t * address )
+{
+    next_assert( address );
+    uint32_t ipv4;
+    memcpy( (char*) &ipv4, address->data.ipv4, 4 );
+    return ipv4;
+}

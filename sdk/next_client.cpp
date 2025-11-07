@@ -285,13 +285,27 @@ void next_client_process_packet( next_client_t * client, next_address_t * from, 
     {
         // client is initializing
 
+        const uint32_t from_ipv4 = next_address_ipv4( from );
+        const uint16_t from_port = next_platform_htons( from->port );
+
         if ( packet_type == NEXT_CLIENT_BACKEND_PACKET_INIT_RESPONSE && packet_bytes == sizeof(next_client_init_response_packet_t) )
         {
-            next_printf( NEXT_LOG_LEVEL_INFO, "client received init response packet" );
-
             for ( int i = 0; i < NEXT_MAX_CONNECT_TOKEN_BACKENDS; i++ )
             {
-                // if ( client->connect_token.backend_addresses[i] != from->data.ipv4 )
+                if ( client->connect_token.backend_addresses[i] != from_ipv4 || client->connect_token.backend_ports[i] != from_port )
+                    continue;
+
+                if ( client->backend_init_data[i].initialized )
+                    break;
+
+                // todo: check request id
+
+                client->backend_init_data[i].initialized = true;
+                client->backend_init_data[i].next_update_time = next_platform_time();
+
+                next_printf( NEXT_LOG_LEVEL_INFO, "client initialized with client backend %d", i );
+
+                break;
             }
         }
     }

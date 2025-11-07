@@ -38,4 +38,6 @@ NEXT_EXPORT_FUNC void next_address_convert_ipv6_to_ipv4( struct next_address_t *
 
 NEXT_EXPORT_FUNC void next_address_convert_ipv4_to_ipv6( struct next_address_t * address );
 
+NEXT_EXPORT_FUNC uint32_t next_address_ipv4( struct next_address_t * address );
+
 #endif // #ifndef NEXT_ADDRESS_H
