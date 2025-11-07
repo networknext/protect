@@ -88,7 +88,7 @@ struct next_client_backend_token_t
 
 struct next_client_backend_init_request_packet_t
 {
-    __u8 packet_type;
+    __u8 type;
     __u8 prefix[17];
     __u8 sdk_version_major;
     __u8 sdk_version_minor;
@@ -99,7 +99,7 @@ struct next_client_backend_init_request_packet_t
 
 struct next_client_backend_init_response_packet_t
 {
-    __u8 packet_type;
+    __u8 type;
     __u8 prefix[17];
     __u64 request_id;
     struct next_client_backend_token_t backend_token;
@@ -107,7 +107,7 @@ struct next_client_backend_init_response_packet_t
 
 struct next_client_backend_ping_packet_t
 {
-    __u8 packet_type;
+    __u8 type;
     __u8 prefix[17];
     __u8 sdk_version_major;
     __u8 sdk_version_minor;
@@ -119,7 +119,7 @@ struct next_client_backend_ping_packet_t
 
 struct next_client_backend_pong_packet_t
 {
-    __u8 packet_type;
+    __u8 type;
     __u8 prefix[17];
     __u64 request_id;
     __u64 ping_sequence;
@@ -648,7 +648,7 @@ SEC("client_backend_xdp") int client_backend_xdp_filter( struct xdp_md *ctx )
 
                                 struct next_client_backend_init_response_packet_t * response = (struct next_client_backend_init_response_packet_t*) packet_data;
 
-                                response->packet_type = NEXT_CLIENT_BACKEND_PACKET_INIT_RESPONSE;
+                                response->type = NEXT_CLIENT_BACKEND_PACKET_INIT_RESPONSE;
                                 response->request_id = request_id;
                                 response->backend_token.expire_timestamp = current_timestamp + NEXT_CLIENT_BACKEND_TOKEN_EXPIRE_SECONDS;
                                 response->backend_token.buyer_id = buyer_id;
@@ -701,9 +701,20 @@ SEC("client_backend_xdp") int client_backend_xdp_filter( struct xdp_md *ctx )
                                 {
                                     debug_printf( "backend token expired" );
                                     return XDP_DROP;
-                                }                                
+                                }
 
-                                // todo: send pong
+                                const __u64 request_id = request->request_id;
+                                const __u64 ping_sequence = request->ping_sequence;
+
+                                struct next_client_backend_init_response_packet_t * response = (struct next_client_backend_init_response_packet_t*) packet_data;
+
+                                response->type = NEXT_CLIENT_BACKEND_PACKET_PONG;
+                                response->request_id = request_id;
+                                response->ping_sequence = ping_sequence;
+
+                                reflect_packet( data, sizeof(struct next_client_backend_pong_packet_t), magic );
+
+                                bpf_xdp_adjust_tail( ctx, -( (int) sizeof(struct next_client_backend_ping_packet_t) - (int) sizeof(struct next_client_backend_pong_packet_t) ) );
 
                                 debug_printf( "send pong" );
                             }

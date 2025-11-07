@@ -54,11 +54,9 @@ DONE
 
     Verify backend token decrypts
 
-TODO
-
     Verify backend token has not expired
 
-    -------------
+TODO
 
     Respond with a client backend pong packet
 
