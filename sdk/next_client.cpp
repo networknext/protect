@@ -225,14 +225,14 @@ void next_client_update_initialize( next_client_t * client )
 
 void next_client_process_packet( next_client_t * client, next_address_t * from, uint8_t * packet_data, int packet_bytes )
 {
-    // packet filter
+    // basic packet filter
 
-    if ( packet_bytes < 18 )
+    if ( !next_basic_packet_filter( packet_data, packet_bytes ) )
         return;
 
-    
-
     // process packet type
+
+    const uint8_t packet_type = packet_data[0];
 
     if ( client->state == NEXT_CLIENT_CONNECTED )
     {
@@ -244,9 +244,12 @@ void next_client_process_packet( next_client_t * client, next_address_t * from, 
     {
         // client is initializing
 
-        next_printf( NEXT_LOG_LEVEL_INFO, "client received %d byte packet while initializing", packet_bytes );
+        if ( packet_type == NEXT_CLIENT_BACKEND_PACKET_INIT_RESPONSE && packet_bytes == 110 )
+        {
+            next_printf( NEXT_LOG_LEVEL_INFO, "client received init response packet (%d bytes)", packet_bytes );
 
-        
+            // ...
+        }
     }
 }
 
