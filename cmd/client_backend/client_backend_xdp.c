@@ -706,7 +706,7 @@ SEC("client_backend_xdp") int client_backend_xdp_filter( struct xdp_md *ctx )
                                 const __u64 request_id = request->request_id;
                                 const __u64 ping_sequence = request->ping_sequence;
 
-                                struct next_client_backend_init_response_packet_t * response = (struct next_client_backend_init_response_packet_t*) packet_data;
+                                struct next_client_backend_pong_packet_t * response = (struct next_client_backend_pong_packet_t*) packet_data;
 
                                 response->type = NEXT_CLIENT_BACKEND_PACKET_PONG;
                                 response->request_id = request_id;
