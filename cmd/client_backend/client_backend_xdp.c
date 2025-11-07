@@ -101,7 +101,7 @@ struct next_client_backend_init_response_packet_t
 {
     __u8 packet_type;
     __u8 prefix[17];
-    __u64 request_id
+    __u64 request_id;
     struct next_client_backend_token_t backend_token;
 };
 
