@@ -670,8 +670,6 @@ SEC("client_backend_xdp") int client_backend_xdp_filter( struct xdp_md *ctx )
 
                                 bpf_xdp_adjust_tail( ctx, -( (int) sizeof(struct next_client_backend_init_request_packet_t) - (int) sizeof(struct next_client_backend_init_response_packet_t) ) );
 
-                                debug_printf( "sent response" );
-
                                 return XDP_TX;                                
                             }
                             break;
@@ -718,7 +716,7 @@ SEC("client_backend_xdp") int client_backend_xdp_filter( struct xdp_md *ctx )
 
                                 bpf_xdp_adjust_tail( ctx, -( (int) sizeof(struct next_client_backend_ping_packet_t) - (int) sizeof(struct next_client_backend_pong_packet_t) ) );
 
-                                debug_printf( "send pong" );
+                                debug_printf( "sent pong" );
 
                                 return XDP_TX;
                             }
