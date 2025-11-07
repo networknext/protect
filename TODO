@@ -44,7 +44,7 @@ DONE
 
 TODO
 
-    Define the ping packet and pong packets
+    Define the ping packet and pong packet structs (SDK side and also XDP side...)
 
     -------------
 

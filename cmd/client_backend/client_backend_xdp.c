@@ -86,20 +86,43 @@ struct next_client_backend_token_t
     __u64 user_hash;
 };
 
-struct next_client_init_request_packet_t
+struct next_client_backend_init_request_packet_t
 {
     __u8 packet_type;
     __u8 prefix[17];
+    __u8 sdk_version_major;
+    __u8 sdk_version_minor;
+    __u8 sdk_version_patch;
     struct next_connect_token_t connect_token;
     __u64 request_id;
 };
 
-struct next_client_init_response_packet_t
+struct next_client_backend_init_response_packet_t
 {
     __u8 packet_type;
     __u8 prefix[17];
     __u64 request_id;
     struct next_client_backend_token_t backend_token;
+};
+
+struct next_client_backend_ping_packet_t
+{
+    uint8_t packet_type;
+    uint8_t prefix[17];
+    uint8_t sdk_version_major;
+    uint8_t sdk_version_minor;
+    uint8_t sdk_version_patch;
+    uint64_t request_id;
+    uint64_t ping_sequence;
+    struct next_client_backend_token_t backend_token;
+};
+
+struct next_client_backend_pong_packet_t
+{
+    uint8_t packet_type;
+    uint8_t prefix[17];
+    uint64_t request_id;
+    uint64_t ping_sequence;
 };
 
 #pragma pack(pop)
@@ -583,13 +606,13 @@ SEC("client_backend_xdp") int client_backend_xdp_filter( struct xdp_md *ctx )
                         {
                             case NEXT_CLIENT_BACKEND_PACKET_INIT_REQUEST:
                             {
-                                if ( (void*)packet_data + sizeof(struct next_client_init_request_packet_t) > data_end )
+                                if ( (void*)packet_data + sizeof(struct next_client_backend_init_request_packet_t) > data_end )
                                 {
                                     debug_printf( "client backend init request packet is too small" );
                                     return XDP_DROP;
                                 }
 
-                                struct next_client_init_request_packet_t * request = (struct next_client_init_request_packet_t*) packet_data;
+                                struct next_client_backend_init_request_packet_t * request = (struct next_client_backend_init_request_packet_t*) packet_data;
 
                                 // todo: buyer public key should come from a map indexed by buyer id
                                 struct proton_sign_verify_args args = { { 0x9d, 0x59, 0x40, 0xa4, 0xe2, 0x4a, 0xa3, 0x0a, 0xf2, 0x30, 0xb6, 0x1b, 0x49, 0x7d, 0x60, 0xe8, 0x6d, 0xf9, 0x03, 0x28, 0x5c, 0x96, 0x83, 0x06, 0x89, 0xf5, 0xdd, 0x62, 0x8a, 0x25, 0x95, 0x16 } };
@@ -623,7 +646,7 @@ SEC("client_backend_xdp") int client_backend_xdp_filter( struct xdp_md *ctx )
                                 const __u64 session_id = request->connect_token.session_id;
                                 const __u64 user_hash = request->connect_token.user_hash;
 
-                                struct next_client_init_response_packet_t * response = (struct next_client_init_response_packet_t*) packet_data;
+                                struct next_client_backend_init_response_packet_t * response = (struct next_client_init_response_packet_t*) packet_data;
 
                                 response->packet_type = NEXT_CLIENT_BACKEND_PACKET_INIT_RESPONSE;
                                 response->request_id = request_id;
@@ -643,9 +666,9 @@ SEC("client_backend_xdp") int client_backend_xdp_filter( struct xdp_md *ctx )
                                     return XDP_DROP;
                                 }
 
-                                reflect_packet( data, sizeof(struct next_client_init_response_packet_t), magic );
+                                reflect_packet( data, sizeof(struct next_client_backend_init_response_packet_t), magic );
 
-                                bpf_xdp_adjust_tail( ctx, -( (int) sizeof(struct next_client_init_request_packet_t) - (int) sizeof(struct next_client_init_response_packet_t) ) );
+                                bpf_xdp_adjust_tail( ctx, -( (int) sizeof(struct next_client_backend_init_request_packet_t) - (int) sizeof(struct next_client_init_response_packet_t) ) );
 
                                 debug_printf( "sent response" );
                             }
