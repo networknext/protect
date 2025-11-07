@@ -676,7 +676,27 @@ SEC("client_backend_xdp") int client_backend_xdp_filter( struct xdp_md *ctx )
 
                             case NEXT_CLIENT_BACKEND_PACKET_PING:
                             {
-                                // ...
+                                if ( (void*)packet_data + sizeof(struct next_client_backend_ping_packet_t) > data_end )
+                                {
+                                    debug_printf( "client backend ping packet is too small" );
+                                    return XDP_DROP;
+                                }
+
+                                struct next_client_backend_ping_packet_t * request = (struct next_client_backend_ping_packet_t*) packet_data;
+
+                                // todo: we should get the client backend private key from the client backend state map
+                                __u8 client_backend_private_key[] = { 0x7a, 0xb9, 0x48, 0x82, 0x18, 0xc1, 0xee, 0xcb, 0x06, 0xa7, 0xbb, 0x08, 0x0d, 0xa9, 0x75, 0x81, 0xe7, 0xdc, 0xe0, 0xb7, 0xa1, 0xbf, 0x58, 0x47, 0x29, 0xe2, 0xb8, 0x84, 0xd9, 0xf9, 0x3c, 0x23 };                                
+
+                                int result = proton_secretbox_decrypt( (__u8*) &request->backend_token, sizeof(struct next_client_backend_token_t), 0, client_backend_private_key, PROTON_SECRETBOX_KEY_BYTES );
+                                if ( result != 0 )
+                                {
+                                    debug_printf( "could not encrypt backend token" );
+                                    return XDP_DROP;
+                                }
+
+                                // todo: send pong
+
+                                debug_printf( "send pong" );
                             }
                             break;
                             
