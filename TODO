@@ -36,15 +36,17 @@ DONE
 
     Promote the linux kernel module to its own open source project "proton"
 
-TODO
-
     On the client process packets and check against the basic packet filter.
 
     When a client init response packet is received, look up the client backend by address and port then check if the client backend is not initialized yet, and that the request id is the correct value
 
-    If it is the correct request id value and not initialized yet, try to decrypt the connect token, otherwise ignore the packet.
+    Store the backend token in the init data for that backend and transition to initialized.
 
-    If the connect token decrypts then transition the client to sending ping packets
+TODO
+
+    Define the ping packet and pong packets
+
+    -------------
 
     Client backend ping packet:
 
@@ -54,6 +56,32 @@ TODO
     -------------
 
     Implement XDP program to verify that the client backend token decrypts
+
+    -------------
+
+    Respond with a pong packet
+
+    -------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    -------------
+
+    Make sure packets from the client to the client backend have versioning
 
     -------------
 

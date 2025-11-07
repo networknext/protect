@@ -77,7 +77,7 @@ int main()
         return 1;
     }
 
-    next_printf( NEXT_LOG_LEVEL_INFO, "connecting" );
+    next_printf( NEXT_LOG_LEVEL_INFO, "connecting..." );
 
     bool previous_connected = false;
 

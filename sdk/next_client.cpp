@@ -290,6 +290,8 @@ void next_client_process_packet( next_client_t * client, next_address_t * from, 
 
         if ( packet_type == NEXT_CLIENT_BACKEND_PACKET_INIT_RESPONSE && packet_bytes == sizeof(next_client_init_response_packet_t) )
         {
+            const next_client_init_response_packet_t * packet = (const next_client_init_response_packet_t*) packet_data;
+
             for ( int i = 0; i < NEXT_MAX_CONNECT_TOKEN_BACKENDS; i++ )
             {
                 if ( client->connect_token.backend_addresses[i] != from_ipv4 || client->connect_token.backend_ports[i] != from_port )
@@ -298,12 +300,14 @@ void next_client_process_packet( next_client_t * client, next_address_t * from, 
                 if ( client->backend_init_data[i].initialized )
                     break;
 
-                // todo: check request id
+                if ( client->backend_init_data[i].request_id != packet->request_id )
+                    break;
 
                 client->backend_init_data[i].initialized = true;
                 client->backend_init_data[i].next_update_time = next_platform_time();
+                client->backend_init_data[i].backend_token = packet->backend_token;
 
-                next_printf( NEXT_LOG_LEVEL_INFO, "client initialized with client backend %d", i );
+                next_printf( NEXT_LOG_LEVEL_INFO, "initialized with client backend %d", i );
 
                 break;
             }
