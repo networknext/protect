@@ -779,6 +779,8 @@ SEC("client_backend_xdp") int client_backend_xdp_filter( struct xdp_md *ctx )
                                 const __u64 session_id = request->backend_token.session_id;
                                 const __u64 user_hash = request->backend_token.user_hash;
 
+                                struct next_client_backend_refresh_token_response_packet_t * response = (struct next_client_backend_refresh_token_response_packet_t*) packet_data;
+
                                 response->type = NEXT_CLIENT_BACKEND_PACKET_REFRESH_TOKEN_RESPONSE;
                                 response->request_id = request_id;
                                 response->backend_token.version = NEXT_CLIENT_BACKEND_TOKEN_VERSION;
