@@ -2,11 +2,9 @@ DONE
 
     Switch to packet struct when sending client init request packet
 
+    Remove config. We really don't need it. Client can configure fully with connect token, and the server can just read env vars or do its own config if it needs to.
+
 TODO
-
-    Fix up config by stripping out unused parts, get socket buffer sizes in, buyer private/public key etc.
-
-    -------------
 
     Implement the code that fails to connect after the connect timeout is reached
 
