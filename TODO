@@ -64,11 +64,9 @@ DONE
 
     After n pongs transition to selecting that client backend and transition to the connected state temporarily so we have some closure here.
 
-TODO
-
     Number of pings should be in connect token (10)
 
-    -------------
+TODO
 
     Switch to packet struct when sending client init request packet
 
