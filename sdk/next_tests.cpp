@@ -425,19 +425,16 @@ static bool equal_within_tolerance( float a, float b, float tolerance = 0.001f )
 
 void test_random_bytes()
 {
-    // todo: convert to hydrogen
-    /*
     const int BufferSize = 999;
     uint8_t buffer[BufferSize];
-    next_crypto_random_bytes( buffer, BufferSize );
+    next_random_bytes( buffer, BufferSize );
     for ( int i = 0; i < 100; ++i )
     {
         uint8_t next_buffer[BufferSize];
-        next_crypto_random_bytes( next_buffer, BufferSize );
+        next_random_bytes( next_buffer, BufferSize );
         next_check( memcmp( buffer, next_buffer, BufferSize ) != 0 );
         memcpy( buffer, next_buffer, BufferSize );
     }
-    */
 }
 
 void test_random_float()
