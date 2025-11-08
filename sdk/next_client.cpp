@@ -413,7 +413,7 @@ void next_client_process_packet( next_client_t * client, next_address_t * from, 
                 client->backend_init_data[i].pong_sequence = packet->ping_sequence + 1;
                 client->backend_init_data[i].num_pongs_received++;
 
-                if ( client->backend_init_data[i].num_pongs_received++ > 10 )       // todo: 10 value should be in connect token
+                if ( client->backend_init_data[i].num_pongs_received++ > client->connect_token.pongs_before_select )
                 {
                     client->state = NEXT_CLIENT_CONNECTED;
                     client->client_backend_address = *from;
