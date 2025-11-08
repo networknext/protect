@@ -30,6 +30,7 @@ struct next_client_t
     void * context;
     int state;
     uint16_t bound_port;
+    double init_start_time;
     next_connect_token_t connect_token;
     next_client_backend_init_data_t backend_init_data[NEXT_MAX_CONNECT_TOKEN_BACKENDS];
     next_address_t client_backend_address;
@@ -129,6 +130,7 @@ next_client_t * next_client_create( void * context, const char * connect_token_s
     client->context = context;
     client->connect_token = connect_token;
     client->state = NEXT_CLIENT_INITIALIZING;
+    client->init_start_time = next_platform_time();
     client->packet_received_callback = packet_received_callback;
 
     next_address_t bind_address;
@@ -216,6 +218,13 @@ void next_client_update_initialize( next_client_t * client )
     */
 
     double current_time = next_platform_time();
+
+    if ( client->init_start_time + client->connect_token.max_connect_seconds < current_time )
+    {
+        next_printf( NEXT_LOG_LEVEL_INFO, "client init timed out" );
+        client->state = NEXT_CLIENT_INIT_TIMED_OUT;
+        return;
+    }
 
     next_address_t from;
     next_address_load_ipv4( &from, client->connect_token.client_public_address, 0 );

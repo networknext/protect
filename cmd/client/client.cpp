@@ -83,6 +83,9 @@ int main()
 
     while ( !quit )
     {
+        if ( next_client_state( client ) <= NEXT_CLIENT_DISCONNECTED )
+            break;
+
         next_client_update( client );
 
         next_client_send_packet( client, packet_data, (int) sizeof(packet_data) );
@@ -102,7 +105,7 @@ int main()
 
     next_client_disconnect( client );
 
-    while ( next_client_state( client ) != NEXT_CLIENT_DISCONNECTED )
+    while ( next_client_state( client ) > NEXT_CLIENT_DISCONNECTED )
     {
         next_client_update( client );
     }
@@ -115,50 +118,3 @@ int main()
 
     return 0;
 }
-
-
-
-
-
-/*
-    hydro_sign_keypair keypair;
-    hydro_sign_keygen( &keypair );
-
-    char public_key_string[256];
-    char private_key_string[256];
-    next_base64_encode_data( keypair.pk, hydro_sign_PUBLICKEYBYTES, public_key_string, sizeof(public_key_string) );
-    next_base64_encode_data( keypair.sk, hydro_sign_SECRETKEYBYTES, private_key_string, sizeof(private_key_string) );
-
-    printf( "buyer public key base64 = %s\n", public_key_string );
-    printf( "buyer private key base64= %s\n", private_key_string );
-
-    printf( "const uint8_t buyer_public_key[] = { " );
-    for ( int i = 0; i < (int) hydro_sign_PUBLICKEYBYTES; i++ )
-    {
-        printf( "0x%02x", keypair.pk[i] );
-        if ( i != hydro_sign_PUBLICKEYBYTES - 1 )
-        {
-            printf( ", " );
-        }
-        else
-        {
-            printf( " };\n" );
-        }
-    }
-
-    printf( "const uint8_t buyer_private_key[] = { " );
-    for ( int i = 0; i < (int) hydro_sign_SECRETKEYBYTES; i++ )
-    {
-        printf( "0x%02x", keypair.sk[i] );
-        if ( i != hydro_sign_SECRETKEYBYTES - 1 )
-        {
-            printf( ", " );
-        }
-        else
-        {
-            printf( " };\n" );
-        }
-    }
-
-    return 0;
-*/

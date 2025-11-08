@@ -10,6 +10,7 @@
 
 struct next_client_t;
 
+#define NEXT_CLIENT_INIT_TIMED_OUT   -1
 #define NEXT_CLIENT_DISCONNECTED      0
 #define NEXT_CLIENT_INITIALIZING      1
 #define NEXT_CLIENT_CONNECTING        2
