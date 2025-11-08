@@ -40,6 +40,9 @@ file(GLOB SHARED_HEADERS ../lib/shared/*.h)
 add_library(shared ${SHARED_SOURCE} ${SHARED_HEADERS})
 target_include_directories(shared PRIVATE ../lib)
 add_dependencies(shared platform)
+if (UNIX)
+    target_link_libraries(shared hydrogen)
+endif()
 
 
 # client backend
