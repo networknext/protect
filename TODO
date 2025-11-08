@@ -72,7 +72,7 @@ TODO
 
     -------------
 
-    Fix up config by stripping out unused bits, get socket buffer sizes in, buyer private/public key etc.
+    Fix up config by stripping out unused parts, get socket buffer sizes in, buyer private/public key etc.
 
     -------------
 
