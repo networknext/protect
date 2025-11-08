@@ -16,9 +16,11 @@ DONE
 
     This will need to include retries (once per-second until we get a response...)
 
+    Implement the backend responding to the refresh backend token request with a new encrypted backend token
+
 TODO
 
-    Implement the backend responding to the refresh backend token request with a new encrypted backend token
+    Verify the client gets the refresh token response packet
 
     -------------
 

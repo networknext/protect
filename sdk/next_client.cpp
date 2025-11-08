@@ -423,6 +423,16 @@ void next_client_process_packet( next_client_t * client, next_address_t * from, 
                 break;
             }
         }
+        else if ( packet_type == NEXT_CLIENT_BACKEND_PACKET_REFRESH_TOKEN_RESPONSE && packet_bytes == sizeof(next_client_backend_refresh_token_response_packet_t) )
+        {
+            const next_client_backend_refresh_token_response_packet_t * packet = (const next_client_backend_refresh_token_response_packet_t*) packet_data;
+
+            // todo: endian fixup
+
+            next_printf( NEXT_LOG_LEVEL_INFO, "client received refresh token response packet" );
+
+            // ...
+        }
     }
 }
 
