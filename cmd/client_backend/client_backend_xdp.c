@@ -663,7 +663,7 @@ SEC("client_backend_xdp") int client_backend_xdp_filter( struct xdp_md *ctx )
                                 }
 
                                 int key = 0;
-                                struct client_backend_state * state = (struct client_backend_state*) bpf_map_lookup_elem( &client_backend_config_state, &key );
+                                struct client_backend_state * state = (struct client_backend_state*) bpf_map_lookup_elem( &client_backend_state_map, &key );
                                 if ( state == NULL )
                                 {
                                     debug_printf( "client backend state is null" );
@@ -734,7 +734,7 @@ SEC("client_backend_xdp") int client_backend_xdp_filter( struct xdp_md *ctx )
                                 }
 
                                 int key = 0;
-                                struct client_backend_state * state = (struct client_backend_state*) bpf_map_lookup_elem( &client_backend_config_state, &key );
+                                struct client_backend_state * state = (struct client_backend_state*) bpf_map_lookup_elem( &client_backend_state_map, &key );
                                 if ( state == NULL )
                                 {
                                     debug_printf( "client backend state is null" );
@@ -787,7 +787,7 @@ SEC("client_backend_xdp") int client_backend_xdp_filter( struct xdp_md *ctx )
                                 }
 
                                 int key = 0;
-                                struct client_backend_state * state = (struct client_backend_state*) bpf_map_lookup_elem( &client_backend_config_state, &key );
+                                struct client_backend_state * state = (struct client_backend_state*) bpf_map_lookup_elem( &client_backend_state_map, &key );
                                 if ( state == NULL )
                                 {
                                     debug_printf( "client backend state is null" );
