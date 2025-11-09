@@ -11,6 +11,40 @@
 
 #include <memory.h>
 
+#define NEXT_NUM_SERVER_FRAMES                      ( 10 * 1024 )
+
+struct next_server_send_packet_info_t
+{
+    uint64_t sequence;
+    int client_index;
+    int header_bytes;
+    size_t packet_size;
+    size_t max_packet_size;
+};
+
+struct next_server_send_buffer_t
+{
+    next_platform_mutex_t mutex;
+    size_t current_frame;
+    next_server_send_packet_info_t info[NEXT_NUM_SERVER_FRAMES];
+    uint8_t data[NEXT_MAX_PACKET_BYTES*NEXT_NUM_SERVER_FRAMES];
+};
+
+struct next_server_receive_packet_info_t
+{
+    int client_index;
+    int header_bytes;
+    uint64_t sequence;
+    size_t packet_size;
+};
+
+struct next_server_receive_buffer_t
+{
+    int current_frame;
+    next_server_receive_packet_info_t info[NEXT_NUM_SERVER_FRAMES];
+    uint8_t data[NEXT_MAX_PACKET_BYTES*NEXT_NUM_SERVER_FRAMES];
+};
+
 struct next_server_t
 {
     void * context;
@@ -21,6 +55,8 @@ struct next_server_t
     uint64_t match_id;
     next_platform_socket_t * socket;
     void (*packet_received_callback)( next_server_t * server, void * context, int client_index, const uint8_t * packet_data, int packet_bytes );
+    next_server_send_buffer_t send_buffer;
+    next_server_receive_buffer_t receive_buffer;
 };
 
 next_server_t * next_server_create( void * context, const char * bind_address_string, const char * public_address_string, void (*packet_received_callback)( next_server_t * client, void * context, int client_index, const uint8_t * packet_data, int packet_bytes ) )

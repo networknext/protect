@@ -50,9 +50,15 @@ DONE
 
 TODO
 
-    Finish updating the server so it has the zero copy packet send and receive interface
+    Update the server so it has the zero copy packet send and receive interface
 
-    Update the server so it sends packets to all connected clients
+    -------------
+
+    Use the zero copy interface to send packets to all connected clients
+
+    -------------
+
+    Use the zero copy interface to print logs when the server receives payload packets from clients
 
     -------------
 
@@ -60,13 +66,13 @@ TODO
 
     This is the simplest possible way to make it super easy to test during development.
 
-    This passthrough packet codepath must be disabled in the shipping build, so even if you know the server IP address, you cannot connect to it.
+    -------------
+
+    Extend the server so it uses AF_XDP to send and receive packets.
 
     -------------
 
-    Generalize everything so it works across big and little endian machines.
-
-    Do it by byte swapping so we don't have to do per-field serialization. Keep it simple.
+    Implememt endian fix up for packet structs
 
     -------------
 
@@ -80,8 +86,8 @@ TODO
 
     Implement the ping near relays state of client init
 
-    The trick here is that not only do we want the set of relays to ping, we also want, 
-
+    The trick here is that not only do we want the set of relays to ping, we also want...
+    
     1. more relays to ping than can fit in one response packet
 
     2. an estimate of best cost from each relay to the destination
