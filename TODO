@@ -26,10 +26,6 @@ DONE
 
 TODO
 
-    Read the client backend private key from env var when the client backend starts up
-
-    Stick the client backend private key in the client backend config map
-
     -------------
 
     Implement the client backend state map
@@ -41,6 +37,12 @@ TODO
     -------------
 
     Verify that the client can connect and refresh backend tokens without having them expire for 5 minutes+
+
+    -------------
+
+    Read the client backend private key from env var when the client backend starts up
+
+    Stick the client backend private key in the client backend config map
 
     -------------
 
@@ -62,6 +64,10 @@ TODO
 
     Fix the connect token so we never send the user hash over un-encrypted channels
 
+    This involves doing key exchange and switching over to more advanced crypto primitive
+
+    Add these primitives to proton and then upgrade the code in protect to do the key exchange at the same time as processing the connect token
+
     -------------
 
     If an IP address is passed in instead of a connect token, just go straight to "CONNECTED" state on the client and send and receive passthrough packets.
@@ -69,5 +75,21 @@ TODO
     This is the simplest possible way to make it super easy to test during development.
 
     This payload packet codepath must be disabled in the shipping build, so even if you know the server IP address, you cannot connect to it.
+
+    -------------
+
+    Implement the ping near relays state of client init
+
+    The trick here is that not only do we want the set of relays to ping, we also want, 
+
+    1. more relays to ping than can fit in one response packet
+
+    2. an estimate of best cost from each relay to the destination
+
+    This will allows us to quickly stop pinging relays that have demonstrated after 1 second that they are probably not suitable
+
+    Think of it sort of a progressive refinement
+
+    It also will let us in the common case very quickly decide, ok, these relays are fine, let's go.
 
     -------------
