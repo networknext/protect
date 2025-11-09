@@ -24,23 +24,21 @@ DONE
 
     Verify that the client sits and refreshes backend token post-init every 30 seconds
 
-TODO
-
     Implement the client backend state map
 
     Set the current time in the client backend state map once per-second
 
     Get the current time in XDP from the state map
 
-    -------------
-
-    Verify that the client can connect and refresh backend tokens without having them expire for 5 minutes+
-
-    -------------
+    Verify that the client can connect and refresh backend tokens without having them expire for 10 minutes
 
     Read the client backend private key from env var when the client backend starts up
 
+TODO
+
     Stick the client backend private key in the client backend config map
+
+    Update the XDP program so it gets client backend public and private keys from the config map
 
     -------------
 

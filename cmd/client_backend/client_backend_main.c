@@ -29,12 +29,11 @@ bool main_init( struct main_t * main, struct config_t * config, struct bpf_t * b
     main->port = config->port;
     main->public_address = config->public_address;
 
-    // set config for xdp program
-
     struct client_backend_config xdp_config;
     memset( &xdp_config, 0, sizeof(xdp_config) );
     xdp_config.port = htons( config->port );
     xdp_config.public_address = htonl( config->public_address );
+    memcpy( xdp_config.client_backend_private_key, config->client_backend_private_key, SECRETBOX_PRIVATE_KEY_BYTES );
 
 #ifdef __linux__
 

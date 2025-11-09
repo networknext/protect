@@ -16,10 +16,16 @@
 #define __u8 uint8_t
 #endif // #ifdef __linux__
 
+#define SIGN_PUBLIC_KEY_BYTES       32
+#define SIGN_PRIVATE_KEY_BYTES      64
+
+#define SECRETBOX_PRIVATE_KEY_BYTES 32
+
 struct client_backend_config
 {
-    __u32 public_address;                 // big endian
-    __u16 port;                           // big endian
+    __u32 public_address;                                               // big endian
+    __u16 port;                                                         // big endian
+    __u8 client_backend_private_key[SECRETBOX_PRIVATE_KEY_BYTES];
 };
 
 struct client_backend_state
