@@ -20,6 +20,7 @@ struct main_t
 #ifdef __linux__
     int state_fd;
     int config_fd;
+    int buyer_fd;
 #endif // #ifdef __linux__
 };
 
