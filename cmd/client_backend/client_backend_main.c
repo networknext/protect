@@ -76,7 +76,7 @@ int main_run( struct main_t * main )
     {
         #ifdef __linux__
         int key = 0;
-        client_backend_state state;
+        struct client_backend_state state;
         state.current_timestamp = time(NULL);
         int err = bpf_map_update_elem( main->state_fd, &key, &state, BPF_ANY );
         if ( err != 0 )
