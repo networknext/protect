@@ -38,15 +38,17 @@ DONE
 
     Update the XDP program so it gets client backend public and private keys from the config map
 
-TODO
-
     Implement the client backend buyer map
 
-    This map goes from buyer id to data for the buyer
+TODO
 
-    In the buyer struct, we will have the buyer public key, mock it up for now
+    Update XDP program to get buyer public key from map
 
-    Then, we can update the XDP program to get the buyer public key from the buyer map
+    First, verify that if we can't look up from buyer id then we fail with unknown buyer
+
+    Then mock up the buyer public key in client_backend_main.c for now to have the expected value we want
+
+    Verify that the client can init again
 
     -------------
 
