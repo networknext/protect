@@ -44,11 +44,23 @@ DONE
 
     First, verify that if we can't look up from buyer id then we fail with unknown buyer
 
-TODO
-
     Then mock up the buyer public key in client_backend_main.c for now to have the expected value we want
 
     Verify that the client can init again
+
+TODO
+
+    Finish updating the server so it has the zero copy packet send and receive interface
+
+    Update the server so it sends packets to all connected clients
+
+    -------------
+
+    If an IP address is passed in instead of a connect token, just go straight to "CONNECTED" state on the client and send and receive passthrough packets.
+
+    This is the simplest possible way to make it super easy to test during development.
+
+    This passthrough packet codepath must be disabled in the shipping build, so even if you know the server IP address, you cannot connect to it.
 
     -------------
 
@@ -63,20 +75,6 @@ TODO
     This involves doing key exchange and switching over to more advanced crypto primitive
 
     Add these primitives to proton and then upgrade the code in protect to do the key exchange at the same time as processing the connect token
-
-    -------------
-
-    If an IP address is passed in instead of a connect token, just go straight to "CONNECTED" state on the client and send and receive passthrough packets.
-
-    This is the simplest possible way to make it super easy to test during development.
-
-    This payload packet codepath must be disabled in the shipping build, so even if you know the server IP address, you cannot connect to it.
-
-    -------------
-
-    Finish updating the server so it has the zero copy packet send and receive interface
-
-    Update the server so it sends packets to all connected clients
 
     -------------
 
