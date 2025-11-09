@@ -3,6 +3,8 @@
     Licensed under the Network Next Source Available License 2.0
 */
 
+#pragma once
+
 #include "next.h"
 
 #ifndef NEXT_PLATFORM_PS5_H

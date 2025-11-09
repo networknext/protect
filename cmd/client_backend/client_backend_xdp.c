@@ -158,6 +158,14 @@ struct {
     __uint( pinning, LIBBPF_PIN_BY_NAME );
 } client_backend_config_map SEC(".maps");
 
+struct {
+    __uint( type, BPF_MAP_TYPE_ARRAY );
+    __type( key, __u32 );
+    __type( value, struct client_backend_state );
+    __uint( max_entries, 1 );
+    __uint( pinning, LIBBPF_PIN_BY_NAME );
+} client_backend_state_map SEC(".maps");
+
 #define DEBUG 1
 
 #if DEBUG

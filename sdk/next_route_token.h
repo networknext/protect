@@ -3,6 +3,8 @@
     Licensed under the Network Next Source Available License 2.0
 */
 
+#pragma once
+
 #ifndef NEXT_ROUTE_TOKEN_H
 #define NEXT_ROUTE_TOKEN_H
 

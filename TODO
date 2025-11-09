@@ -26,8 +26,6 @@ DONE
 
 TODO
 
-    -------------
-
     Implement the client backend state map
 
     Set the current time in the client backend state map once per-second

@@ -3,6 +3,8 @@
     Licensed under the Network Next Source Available License 2.0
 */
 
+#pragma once
+
 #ifndef NEXT_CONSTANTS_H
 #define NEXT_CONSTANTS_H
 
