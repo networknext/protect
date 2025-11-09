@@ -31,7 +31,7 @@ void packet_received_callback( next_client_t * client, void * context, const uin
     (void) packet_data;
     (void) packet_bytes;
 
-    next_printf( NEXT_LOG_LEVEL_INFO, "client received %d byte packet", packet_bytes );
+    next_info( "client received %d byte packet", packet_bytes );
 }
 
 int main()
@@ -40,7 +40,7 @@ int main()
 
     if ( next_init() != NEXT_OK )
     {
-        next_printf( NEXT_LOG_LEVEL_ERROR, "could not initialize network next" );
+        next_error( "could not initialize network next" );
         return 1;        
     }
 
@@ -63,7 +63,7 @@ int main()
         token.backend_token_refresh_seconds = 30;
         if ( !next_write_connect_token( &token, connect_token_string, buyer_private_key ) )
         {
-            next_printf( NEXT_LOG_LEVEL_ERROR, "failed to write connect token" );
+            next_error( "failed to write connect token" );
             return 1;        
         }
     }
@@ -71,11 +71,11 @@ int main()
     next_client_t * client = next_client_create( NULL, connect_token_string, buyer_public_key, packet_received_callback );
     if ( !client )
     {
-        next_printf( NEXT_LOG_LEVEL_ERROR, "could not create client" );
+        next_error( "could not create client" );
         return 1;
     }
 
-    next_printf( NEXT_LOG_LEVEL_INFO, "connecting..." );
+    next_info( "connecting..." );
 
     bool previous_connected = false;
 
@@ -95,14 +95,14 @@ int main()
         {
             if ( next_client_state( client ) == NEXT_CLIENT_CONNECTED )
             {
-                next_printf( NEXT_LOG_LEVEL_INFO, "connected" );
+                next_info( "connected" );
 
                 previous_connected = true;
             }
         }
     }
 
-    next_printf( NEXT_LOG_LEVEL_INFO, "disconnecting" );
+    next_info( "disconnecting" );
 
     next_client_disconnect( client );
 
@@ -111,7 +111,7 @@ int main()
         next_client_update( client );
     }
 
-    next_printf( NEXT_LOG_LEVEL_INFO, "disconnected" );
+    next_info( "disconnected" );
 
     next_client_destroy( client );
 

@@ -142,7 +142,7 @@ const char * next_address_to_string( const next_address_t * address, char * buff
         {
             if ( snprintf( buffer, NEXT_MAX_ADDRESS_STRING_LENGTH, "[%s]:%hu", address_string, address->port ) < 0 )
             {
-                next_printf( NEXT_LOG_LEVEL_ERROR, "address string truncated: [%s]:%hu", address_string, address->port );
+                next_error( "address string truncated: [%s]:%hu", address_string, address->port );
             }
             return buffer;
         }

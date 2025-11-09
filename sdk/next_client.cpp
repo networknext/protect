@@ -122,7 +122,7 @@ next_client_t * next_client_create( void * context, const char * connect_token_s
     next_connect_token_t connect_token;
     if ( !next_read_connect_token( &connect_token, connect_token_string, buyer_public_key ) )
     {
-        next_printf( NEXT_LOG_LEVEL_ERROR, "connect token is invalid" );
+        next_error( "connect token is invalid" );
         return NULL;
     }
 
@@ -137,20 +137,20 @@ next_client_t * next_client_create( void * context, const char * connect_token_s
 
     if ( num_backends_found == 0 )
     {
-        next_printf( NEXT_LOG_LEVEL_ERROR, "no backends found in connect token" );
+        next_error( "no backends found in connect token" );
         return NULL;
     }
 
     if ( connect_token.pings_per_second == 0 )
     {
-        next_printf( NEXT_LOG_LEVEL_ERROR, "pings per-second is zero in connect token" );
+        next_error( "pings per-second is zero in connect token" );
         return NULL;
     }
 
     next_client_t * client = (next_client_t*) next_malloc( context, sizeof(next_client_t) );
     if ( !client )
     {
-        next_printf( NEXT_LOG_LEVEL_ERROR, "could not allocate next_client_t" );
+        next_error( "could not allocate next_client_t" );
         return NULL;
     }
 
@@ -173,7 +173,7 @@ next_client_t * next_client_create( void * context, const char * connect_token_s
     // IMPORTANT: for many platforms it's best practice to bind to ipv6 and go dual stack on the client
     if ( next_platform_client_dual_stack() )
     {
-        next_printf( NEXT_LOG_LEVEL_INFO, "client socket is dual stack ipv4 and ipv6" );
+        next_info( "client socket is dual stack ipv4 and ipv6" );
         bind_address.type = NEXT_ADDRESS_IPV6;
     }
 
@@ -184,7 +184,7 @@ next_client_t * next_client_create( void * context, const char * connect_token_s
         int preferred_client_port = next_platform_preferred_client_port();
         if ( preferred_client_port != 0 )
         {
-            next_printf( NEXT_LOG_LEVEL_INFO, "client socket using preferred port %d", preferred_client_port );
+            next_info( "client socket using preferred port %d", preferred_client_port );
             bind_address.port = preferred_client_port;
         }
     }
@@ -192,13 +192,13 @@ next_client_t * next_client_create( void * context, const char * connect_token_s
     client->socket = next_platform_socket_create( client->context, &bind_address, NEXT_PLATFORM_SOCKET_NON_BLOCKING, 0.0f, NEXT_SOCKET_SEND_BUFFER_SIZE, NEXT_SOCKET_RECEIVE_BUFFER_SIZE );
     if ( client->socket == NULL )
     {
-        next_printf( NEXT_LOG_LEVEL_ERROR, "client could not create socket" );
+        next_error( "client could not create socket" );
         next_client_destroy( client );
         return NULL;
     }
 
     char address_string[NEXT_MAX_ADDRESS_STRING_LENGTH];
-    next_printf( NEXT_LOG_LEVEL_INFO, "client bound to %s", next_address_to_string( &bind_address, address_string ) );
+    next_info( "client bound to %s", next_address_to_string( &bind_address, address_string ) );
 
     client->bound_port = bind_address.port;
 
@@ -257,7 +257,7 @@ void next_client_update_initialize( next_client_t * client )
 
     if ( client->init_start_time + client->connect_token.max_connect_seconds < current_time )
     {
-        next_printf( NEXT_LOG_LEVEL_INFO, "client init timed out" );
+        next_info( "client init timed out" );
         client->state = NEXT_CLIENT_INIT_TIMED_OUT;
         return;
     }
@@ -303,7 +303,7 @@ void next_client_update_initialize( next_client_t * client )
         }
         else
         {
-            next_printf( NEXT_LOG_LEVEL_INFO, "sent ping packet to client backend %d", i );
+            next_info( "sent ping packet to client backend %d", i );
 
             next_client_backend_ping_packet_t packet;
             packet.type = NEXT_CLIENT_BACKEND_PACKET_PING; 
@@ -325,7 +325,7 @@ void next_client_process_packet( next_client_t * client, next_address_t * from, 
 
     if ( from->type != NEXT_ADDRESS_IPV4 )
     {
-        next_printf( NEXT_LOG_LEVEL_DEBUG, "ignored packet from non-ipv4 address" );
+        next_debug( "ignored packet from non-ipv4 address" );
         return;
     }
 
@@ -333,7 +333,7 @@ void next_client_process_packet( next_client_t * client, next_address_t * from, 
 
     if ( !next_basic_packet_filter( packet_data, packet_bytes ) )
     {
-        next_printf( NEXT_LOG_LEVEL_DEBUG, "basic packet filter dropped packet" );
+        next_debug( "basic packet filter dropped packet" );
         return;
     }
 
@@ -358,7 +358,7 @@ void next_client_process_packet( next_client_t * client, next_address_t * from, 
             if ( packet->request_id != client->refresh_backend_token_request_id )
                 return;
 
-            next_printf( NEXT_LOG_LEVEL_INFO, "client refreshed backend token" );
+            next_info( "client refreshed backend token" );
 
             client->backend_token = packet->backend_token;
             client->last_refresh_backend_token_time = next_platform_time();
@@ -393,7 +393,7 @@ void next_client_process_packet( next_client_t * client, next_address_t * from, 
                 client->backend_init_data[i].next_update_time = next_platform_time();
                 client->backend_init_data[i].backend_token = packet->backend_token;
 
-                next_printf( NEXT_LOG_LEVEL_INFO, "initialized with client backend %d", i );
+                next_info( "initialized with client backend %d", i );
 
                 break;
             }
@@ -418,7 +418,7 @@ void next_client_process_packet( next_client_t * client, next_address_t * from, 
                 if ( packet->ping_sequence < client->backend_init_data[i].pong_sequence )
                     break;
 
-                next_printf( NEXT_LOG_LEVEL_INFO, "received pong from client backend %d", i );
+                next_info( "received pong from client backend %d", i );
 
                 client->backend_init_data[i].pong_sequence = packet->ping_sequence + 1;
                 client->backend_init_data[i].num_pongs_received++;
@@ -429,7 +429,7 @@ void next_client_process_packet( next_client_t * client, next_address_t * from, 
                     client->client_backend_address = *from;
                     client->backend_token = client->backend_init_data[i].backend_token;
 
-                    next_printf( NEXT_LOG_LEVEL_INFO, "selected client backend %d", i );
+                    next_info( "selected client backend %d", i );
                 }
 
                 break;
@@ -465,7 +465,7 @@ void next_client_update_refresh_backend_token( next_client_t * client )
     if ( client->last_request_backend_token_refresh_time + 1.0 > current_time )
         return;
 
-    next_printf( NEXT_LOG_LEVEL_INFO, "request refresh backend token" );
+    next_info( "request refresh backend token" );
 
     next_client_backend_refresh_token_request_packet_t packet;
     packet.type = NEXT_CLIENT_BACKEND_PACKET_REFRESH_TOKEN_REQUEST;

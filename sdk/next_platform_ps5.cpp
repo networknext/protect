@@ -95,19 +95,19 @@ int next_platform_init()
 {
     if ( sceSysmoduleLoadModule( SCE_SYSMODULE_RANDOM ) != SCE_OK ) 
     {
-        next_printf( NEXT_LOG_LEVEL_ERROR, "failed to load random sysmodule" );
+        next_error( "failed to load random sysmodule" );
         return NEXT_ERROR;
     }
 
     if ( randombytes_set_implementation( &next_random_implementation ) != 0 )
     {
-        next_printf( NEXT_LOG_LEVEL_ERROR, "failed to setup random bytes implementation" );
+        next_error( "failed to setup random bytes implementation" );
         return NEXT_ERROR;
     }
 
     if ( ( handle_net = sceNetPoolCreate( "net", HEAP_SIZE_NET, 0 ) ) < 0 )
     {
-        next_printf( NEXT_LOG_LEVEL_ERROR, "failed to init network pool" );
+        next_error( "failed to init network pool" );
         return NEXT_ERROR;
     }
 
@@ -115,7 +115,7 @@ int next_platform_init()
 
     if ( sceNetCtlInit() != SCE_OK )
     {
-        next_printf( NEXT_LOG_LEVEL_WARN, "failed to init netctl library" );
+        next_warn( "failed to init netctl library" );
         return NEXT_OK;
     }
 
@@ -134,7 +134,7 @@ int next_platform_init()
     }
     else
     {
-        next_printf( NEXT_LOG_LEVEL_WARN, "failed to determine network connection type" );
+        next_warn( "failed to determine network connection type" );
     }
 
     return NEXT_OK;
@@ -372,7 +372,7 @@ next_platform_socket_t * next_platform_socket_create( void * context, next_addre
 
     if ( s->handle < 0 )
     {
-        next_printf( NEXT_LOG_LEVEL_ERROR, "failed to create socket" );
+        next_error( "failed to create socket" );
         next_platform_socket_destroy( s );
         return NULL;
     }
@@ -381,14 +381,14 @@ next_platform_socket_t * next_platform_socket_create( void * context, next_addre
 
     if ( sceNetSetsockopt( s->handle, SCE_NET_SOL_SOCKET, SCE_NET_SO_SNDBUF, (char*)( &send_buffer_size ), sizeof( int ) ) != 0 )
     {
-        next_printf( NEXT_LOG_LEVEL_ERROR, "failed to set socket send buffer size" );
+        next_error( "failed to set socket send buffer size" );
         next_platform_socket_destroy( s );
         return NULL;
     }
 
     if ( sceNetSetsockopt( s->handle, SCE_NET_SOL_SOCKET, SCE_NET_SO_RCVBUF, (char*)( &receive_buffer_size ), sizeof( int ) ) != 0 )
     {
-        next_printf( NEXT_LOG_LEVEL_ERROR, "failed to set socket receive buffer size" );
+        next_error( "failed to set socket receive buffer size" );
         next_platform_socket_destroy( s );
         return NULL;
     }
@@ -407,7 +407,7 @@ next_platform_socket_t * next_platform_socket_create( void * context, next_addre
 
         if ( sceNetBind( s->handle, (SceNetSockaddr*) &socket_address, sizeof( socket_address ) ) < 0 )
         {
-            next_printf( NEXT_LOG_LEVEL_ERROR, "failed to bind socket (ipv4)" );
+            next_error( "failed to bind socket (ipv4)" );
             next_platform_socket_destroy( s );
             return NULL;
         }
@@ -421,7 +421,7 @@ next_platform_socket_t * next_platform_socket_create( void * context, next_addre
         SceNetSocklen_t len = sizeof( sin );
         if ( sceNetGetsockname( s->handle, (SceNetSockaddr*)( &sin ), &len ) == -1 )
         {
-            next_printf( NEXT_LOG_LEVEL_ERROR, "failed to get socket port (ipv4)" );
+            next_error( "failed to get socket port (ipv4)" );
             next_platform_socket_destroy( s );
             return NULL;
         }
@@ -509,12 +509,12 @@ void next_platform_socket_send_packet( next_platform_socket_t * socket, const ne
         {
             char address_string[NEXT_MAX_ADDRESS_STRING_LENGTH];
             next_address_to_string( to, address_string );
-            next_printf( NEXT_LOG_LEVEL_DEBUG, "sendto (%s) failed: %s", address_string, strerror( sce_net_errno ) );
+            next_debug( "sendto (%s) failed: %s", address_string, strerror( sce_net_errno ) );
         }
     }
     else
     {
-        next_printf( NEXT_LOG_LEVEL_ERROR, "invalid address type. could not send packet" );
+        next_error( "invalid address type. could not send packet" );
     }
 }
 
@@ -537,7 +537,7 @@ int next_platform_socket_receive_packet( next_platform_socket_t * socket, next_a
             return 0;
         }
 
-        next_printf( NEXT_LOG_LEVEL_DEBUG, "recvfrom failed with error %d", sce_net_errno );
+        next_debug( "recvfrom failed with error %d", sce_net_errno );
         
         return 0;
     }

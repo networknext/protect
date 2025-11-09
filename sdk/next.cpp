@@ -47,7 +47,7 @@ void next_printf( const char * format, ... );
 
 static void default_assert_function( const char * condition, const char * function, const char * file, int line )
 {
-    next_printf( NEXT_LOG_LEVEL_ERROR, "assert failed: ( %s ), function %s, file %s, line %d\n", condition, function, file, line );
+    next_error( "assert failed: ( %s ), function %s, file %s, line %d\n", condition, function, file, line );
     fflush( stdout );
     #if defined(_MSC_VER)
         __debugbreak();
@@ -159,6 +159,54 @@ void next_printf( int level, const char * format, ... )
     char buffer[1024];
     vsnprintf( buffer, sizeof( buffer ), format, args );
     log_function( level, "%s", buffer );
+    va_end( args );
+}
+
+void next_info( const char * format, ... )
+{
+    if ( NEXT_LOG_LEVEL_INFO > log_level )
+        return;
+    va_list args;
+    va_start( args, format );
+    char buffer[1024];
+    vsnprintf( buffer, sizeof( buffer ), format, args );
+    log_function( NEXT_LOG_LEVEL_INFO, "%s", buffer );
+    va_end( args );
+}
+
+void next_warn( const char * format, ... )
+{
+    if ( NEXT_LOG_LEVEL_WARN > log_level )
+        return;
+    va_list args;
+    va_start( args, format );
+    char buffer[1024];
+    vsnprintf( buffer, sizeof( buffer ), format, args );
+    log_function( NEXT_LOG_LEVEL_WARN, "%s", buffer );
+    va_end( args );
+}
+
+void next_error( const char * format, ... )
+{
+    if ( NEXT_LOG_LEVEL_ERROR > log_level )
+        return;
+    va_list args;
+    va_start( args, format );
+    char buffer[1024];
+    vsnprintf( buffer, sizeof( buffer ), format, args );
+    log_function( NEXT_LOG_LEVEL_ERROR, "%s", buffer );
+    va_end( args );
+}
+
+void next_debug( const char * format, ... )
+{
+    if ( NEXT_LOG_LEVEL_DEBUG > log_level )
+        return;
+    va_list args;
+    va_start( args, format );
+    char buffer[1024];
+    vsnprintf( buffer, sizeof( buffer ), format, args );
+    log_function( NEXT_LOG_LEVEL_DEBUG, "%s", buffer );
     va_end( args );
 }
 
@@ -320,20 +368,20 @@ int next_init( void * context )
 
     if ( next_platform_init() != NEXT_OK )
     {
-        next_printf( NEXT_LOG_LEVEL_ERROR, "failed to initialize platform" );
+        next_error( "failed to initialize platform" );
         return NEXT_ERROR;
     }
 
-    next_printf( NEXT_LOG_LEVEL_INFO, "network next version is %s", NEXT_VERSION_FULL );
+    next_info( "network next version is %s", NEXT_VERSION_FULL );
 
     const char * platform_string = next_platform_string( next_platform_id() );
     const char * connection_string = next_connection_string( next_platform_connection_type() );
 
-    next_printf( NEXT_LOG_LEVEL_INFO, "platform is %s (%s)", platform_string, connection_string );
+    next_info( "platform is %s (%s)", platform_string, connection_string );
 
     if ( hydro_init() != 0 ) 
     {
-        next_printf( NEXT_LOG_LEVEL_ERROR, "failed to initialize hydrogen" );
+        next_error( "failed to initialize hydrogen" );
         return NEXT_ERROR;
     }
 
@@ -341,7 +389,7 @@ int next_init( void * context )
     if ( log_level_override )
     {
         log_level = atoi( log_level_override );
-        next_printf( NEXT_LOG_LEVEL_INFO, "log level overridden to %d", log_level );
+        next_info( "log level overridden to %d", log_level );
     }
 
     return NEXT_OK;
@@ -372,7 +420,7 @@ void next_enable_packet_tagging()
 {
     if ( next_platform_packet_tagging_can_be_enabled() )
     {
-        next_printf( NEXT_LOG_LEVEL_INFO, "enabled packet tagging" );
+        next_info( "enabled packet tagging" );
         next_packet_tagging_enabled = true;
     }
 }
@@ -381,7 +429,7 @@ void next_disable_packet_tagging()
 {
     if ( next_platform_packet_tagging_can_be_enabled() )
     {
-        next_printf( NEXT_LOG_LEVEL_INFO, "disabled packet tagging" );
+        next_info( "disabled packet tagging" );
         next_packet_tagging_enabled = false;
     }
 }

@@ -222,7 +222,7 @@ int next_platform_init()
 {
     if ( randombytes_set_implementation( &next_random_implementation ) != 0 )
     {
-        next_printf( NEXT_LOG_LEVEL_ERROR, "could not set random implementation" );
+        next_error( "could not set random implementation" );
         return NEXT_ERROR;
     }
 
@@ -232,13 +232,13 @@ int next_platform_init()
     WSADATA WsaData;
     if ( WSAStartup( MAKEWORD(2,2), &WsaData ) != NO_ERROR )
     {
-        next_printf( NEXT_LOG_LEVEL_ERROR, "WSAStartup failed" );
+        next_error( "WSAStartup failed" );
         return NEXT_ERROR;
     }
 
     if ( !BCRYPT_SUCCESS( BCryptOpenAlgorithmProvider( &bcrypt_algorithm_provider, BCRYPT_RNG_ALGORITHM, NULL, 0 ) ) )
     {
-        next_printf( NEXT_LOG_LEVEL_ERROR, "could not initialize bcrypt" );
+        next_error( "could not initialize bcrypt" );
         return NEXT_ERROR;
     }
 
@@ -421,7 +421,7 @@ next_platform_socket_t * next_platform_socket_create( void * context, next_addre
 
     if ( s->handle == INVALID_SOCKET )
     {
-        next_printf( NEXT_LOG_LEVEL_ERROR, "failed to create socket" );
+        next_error( "failed to create socket" );
         next_free( context, s );
         return NULL;
     }
@@ -441,7 +441,7 @@ next_platform_socket_t * next_platform_socket_create( void * context, next_addre
         int yes = 0;
         if ( setsockopt( s->handle, IPPROTO_IPV6, IPV6_V6ONLY, (char*)( &yes ), sizeof( yes ) ) != 0 )
         {
-            next_printf( NEXT_LOG_LEVEL_ERROR, "failed to clear socket ipv6 only" );
+            next_error( "failed to clear socket ipv6 only" );
             next_platform_socket_destroy( s );
             return NULL;
         }
@@ -451,14 +451,14 @@ next_platform_socket_t * next_platform_socket_create( void * context, next_addre
 
     if ( setsockopt( s->handle, SOL_SOCKET, SO_SNDBUF, (char*)( &send_buffer_size ), sizeof( int ) ) != 0 )
     {
-        next_printf( NEXT_LOG_LEVEL_ERROR, "failed to set socket send buffer size" );
+        next_error( "failed to set socket send buffer size" );
         next_platform_socket_destroy( s );
         return NULL;
     }
 
     if ( setsockopt( s->handle, SOL_SOCKET, SO_RCVBUF, (char*)( &receive_buffer_size ), sizeof( int ) ) != 0 )
     {
-        next_printf( NEXT_LOG_LEVEL_ERROR, "failed to set socket receive buffer size" );
+        next_error( "failed to set socket receive buffer size" );
         next_platform_socket_destroy( s );
         return NULL;
     }
@@ -478,7 +478,7 @@ next_platform_socket_t * next_platform_socket_create( void * context, next_addre
 
         if ( bind( s->handle, (sockaddr*) &socket_address, sizeof( socket_address ) ) < 0 )
         {
-            next_printf( NEXT_LOG_LEVEL_ERROR, "failed to bind socket (ipv6)" );
+            next_error( "failed to bind socket (ipv6)" );
             next_platform_socket_destroy( s );
             return NULL;
         }
@@ -496,7 +496,7 @@ next_platform_socket_t * next_platform_socket_create( void * context, next_addre
 
         if ( bind( s->handle, (sockaddr*) &socket_address, sizeof( socket_address ) ) < 0 )
         {
-            next_printf( NEXT_LOG_LEVEL_ERROR, "failed to bind socket (ipv4)" );
+            next_error( "failed to bind socket (ipv4)" );
             next_platform_socket_destroy( s );
             return NULL;
         }
@@ -512,7 +512,7 @@ next_platform_socket_t * next_platform_socket_create( void * context, next_addre
             socklen_t len = sizeof( sin );
             if ( getsockname( s->handle, (sockaddr*)( &sin ), &len ) == -1 )
             {
-                next_printf( NEXT_LOG_LEVEL_ERROR, "failed to get socket port (ipv6)" );
+                next_error( "failed to get socket port (ipv6)" );
                 next_platform_socket_destroy( s );
                 return NULL;
             }
@@ -524,7 +524,7 @@ next_platform_socket_t * next_platform_socket_create( void * context, next_addre
             socklen_t len = sizeof( sin );
             if ( getsockname( s->handle, (sockaddr*)( &sin ), &len ) == -1 )
             {
-                next_printf( NEXT_LOG_LEVEL_ERROR, "failed to get socket port (ipv4)" );
+                next_error( "failed to get socket port (ipv4)" );
                 next_platform_socket_destroy( s );
                 return NULL;
             }
@@ -620,7 +620,7 @@ void next_platform_socket_send_packet( next_platform_socket_t * socket, const ne
             next_address_to_string( &to, address_string );
             char error_string[256] = { 0 };
             strerror_s( error_string, sizeof(error_string), errno );
-            next_printf( NEXT_LOG_LEVEL_DEBUG, "sendto (%s) failed: %s", address_string, error_string );
+            next_debug( "sendto (%s) failed: %s", address_string, error_string );
         }
     }
     else
@@ -642,12 +642,12 @@ void next_platform_socket_send_packet( next_platform_socket_t * socket, const ne
                 next_address_to_string( &to, address_string );
                 char error_string[256] = { 0 };
                 strerror_s( error_string, sizeof(error_string), errno );
-                next_printf( NEXT_LOG_LEVEL_DEBUG, "sendto (%s) failed: %s", address_string, error_string );
+                next_debug( "sendto (%s) failed: %s", address_string, error_string );
             }
         }
         else
         {
-            next_printf( NEXT_LOG_LEVEL_ERROR, "invalid address type. could not send packet" );
+            next_error( "invalid address type. could not send packet" );
         }
     }
 }
@@ -673,7 +673,7 @@ int next_platform_socket_receive_packet( next_platform_socket_t * socket, next_a
         if ( error == WSAEWOULDBLOCK || error == WSAETIMEDOUT || error == WSAECONNRESET )
             return 0;
 
-        next_printf( NEXT_LOG_LEVEL_DEBUG, "recvfrom failed with error %d", error );
+        next_debug( "recvfrom failed with error %d", error );
 
         return 0;
     }

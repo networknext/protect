@@ -184,7 +184,7 @@ void next_route_manager_fallback_to_direct( next_route_manager_t * route_manager
 
     route_manager->fallback_to_direct = true;
 
-    next_printf( NEXT_LOG_LEVEL_INFO, "client fallback to direct" );
+    next_info( "client fallback to direct" );
 
     route_manager->route_data.previous_route = route_manager->route_data.current_route;
     route_manager->route_data.previous_route_session_id = route_manager->route_data.current_route_session_id;
@@ -203,7 +203,7 @@ void next_route_manager_direct_route( next_route_manager_t * route_manager, bool
 
     if ( !quiet )
     {
-        next_printf( NEXT_LOG_LEVEL_INFO, "client direct route" );
+        next_info( "client direct route" );
     }
 
     route_manager->route_data.previous_route = route_manager->route_data.current_route;
@@ -229,12 +229,12 @@ void next_route_manager_begin_next_route( next_route_manager_t * route_manager, 
     next_route_token_t route_token;
     if ( next_read_encrypted_route_token( &p, &route_token, client_secret_key ) != NEXT_OK )
     {
-        next_printf( NEXT_LOG_LEVEL_ERROR, "client received bad route token" );
+        next_error( "client received bad route token" );
         next_route_manager_fallback_to_direct( route_manager, NEXT_FLAGS_BAD_ROUTE_TOKEN );
         return;
     }
 
-    next_printf( NEXT_LOG_LEVEL_INFO, "client next route" );
+    next_info( "client next route" );
 
     route_manager->route_data.pending_route = true;
     route_manager->route_data.pending_route_start_time = next_platform_time();
@@ -293,14 +293,14 @@ void next_route_manager_continue_next_route( next_route_manager_t * route_manage
 
     if ( !route_manager->route_data.current_route )
     {
-        next_printf( NEXT_LOG_LEVEL_ERROR, "client has no route to continue" );
+        next_error( "client has no route to continue" );
         next_route_manager_fallback_to_direct( route_manager, NEXT_FLAGS_NO_ROUTE_TO_CONTINUE );
         return;
     }
 
     if ( route_manager->route_data.pending_route || route_manager->route_data.pending_continue )
     {
-        next_printf( NEXT_LOG_LEVEL_ERROR, "client previous update still pending" );
+        next_error( "client previous update still pending" );
         next_route_manager_fallback_to_direct( route_manager, NEXT_FLAGS_PREVIOUS_UPDATE_STILL_PENDING );
         return;
     }
@@ -309,7 +309,7 @@ void next_route_manager_continue_next_route( next_route_manager_t * route_manage
     next_continue_token_t continue_token;
     if ( next_read_encrypted_continue_token( &p, &continue_token, secret_key ) != NEXT_OK )
     {
-        next_printf( NEXT_LOG_LEVEL_ERROR, "client received bad continue token" );
+        next_error( "client received bad continue token" );
         next_route_manager_fallback_to_direct( route_manager, NEXT_FLAGS_BAD_CONTINUE_TOKEN );
         return;
     }
@@ -347,7 +347,7 @@ void next_route_manager_continue_next_route( next_route_manager_t * route_manage
     (void) packet_data;
     (void) packet_bytes;
 
-    next_printf( NEXT_LOG_LEVEL_INFO, "client continues route" );
+    next_info( "client continues route" );
 }
 
 void next_route_manager_update( next_route_manager_t * route_manager, int update_type, int num_tokens, uint8_t * tokens, const uint8_t * client_secret_key, const uint8_t * magic, const next_address_t * client_external_address )
@@ -411,7 +411,7 @@ bool next_route_manager_prepare_send_packet( next_route_manager_t * route_manage
 
     if ( *packet_bytes == 0 )
     {
-        next_printf( NEXT_LOG_LEVEL_ERROR, "client failed to write client to server packet header" );
+        next_error( "client failed to write client to server packet header" );
         return false;
     }
 
@@ -443,14 +443,14 @@ bool next_route_manager_process_server_to_client_packet( next_route_manager_t * 
         from_current_route = false;
         if ( next_read_header( packet_type, &packet_sequence, &packet_session_id, &packet_session_version, route_manager->route_data.previous_route_private_key, packet_data, packet_bytes ) != NEXT_OK )
         {
-            next_printf( NEXT_LOG_LEVEL_DEBUG, "client ignored server to client packet. could not read header" );
+            next_debug( "client ignored server to client packet. could not read header" );
             return false;
         }
     }
 
     if ( !route_manager->route_data.current_route && !route_manager->route_data.previous_route )
     {
-        next_printf( NEXT_LOG_LEVEL_DEBUG, "client ignored server to client packet. no current or previous route" );
+        next_debug( "client ignored server to client packet. no current or previous route" );
         return false;
     }
 
@@ -458,13 +458,13 @@ bool next_route_manager_process_server_to_client_packet( next_route_manager_t * 
     {
         if ( packet_session_id != route_manager->route_data.current_route_session_id )
         {
-            next_printf( NEXT_LOG_LEVEL_DEBUG, "client ignored server to client packet. session id mismatch (current route)" );
+            next_debug( "client ignored server to client packet. session id mismatch (current route)" );
             return false;
         }
 
         if ( packet_session_version != route_manager->route_data.current_route_session_version )
         {
-            next_printf( NEXT_LOG_LEVEL_DEBUG, "client ignored server to client packet. session version mismatch (current route)" );
+            next_debug( "client ignored server to client packet. session version mismatch (current route)" );
             return false;
         }
     }
@@ -472,13 +472,13 @@ bool next_route_manager_process_server_to_client_packet( next_route_manager_t * 
     {
         if ( packet_session_id != route_manager->route_data.previous_route_session_id )
         {
-            next_printf( NEXT_LOG_LEVEL_DEBUG, "client ignored server to client packet. session id mismatch (previous route)" );
+            next_debug( "client ignored server to client packet. session id mismatch (previous route)" );
             return false;
         }
 
         if ( packet_session_version != route_manager->route_data.previous_route_session_version )
         {
-            next_printf( NEXT_LOG_LEVEL_DEBUG, "client ignored server to client packet. session version mismatch (previous route)" );
+            next_debug( "client ignored server to client packet. session version mismatch (previous route)" );
             return false;
         }
     }
@@ -489,7 +489,7 @@ bool next_route_manager_process_server_to_client_packet( next_route_manager_t * 
 
     if ( payload_bytes > NEXT_MTU )
     {
-        next_printf( NEXT_LOG_LEVEL_DEBUG, "client ignored server to client packet. too large (%d>%d)", payload_bytes, NEXT_MTU );
+        next_debug( "client ignored server to client packet. too large (%d>%d)", payload_bytes, NEXT_MTU );
         return false;
     }
 
@@ -509,28 +509,28 @@ void next_route_manager_check_for_timeouts( next_route_manager_t * route_manager
 
     if ( route_manager->last_route_update_time > 0.0 && route_manager->last_route_update_time + NEXT_CLIENT_ROUTE_TIMEOUT < current_time )
     {
-        next_printf( NEXT_LOG_LEVEL_ERROR, "client route timed out" );
+        next_error( "client route timed out" );
         next_route_manager_fallback_to_direct( route_manager, NEXT_FLAGS_ROUTE_TIMED_OUT );
         return;
     }
 
     if ( route_manager->route_data.current_route && route_manager->route_data.current_route_expire_time <= current_time )
     {
-        next_printf( NEXT_LOG_LEVEL_ERROR, "client route expired" );
+        next_error( "client route expired" );
         next_route_manager_fallback_to_direct( route_manager, NEXT_FLAGS_ROUTE_EXPIRED );
         return;
     }
 
     if ( route_manager->route_data.pending_route && route_manager->route_data.pending_route_start_time + NEXT_ROUTE_REQUEST_TIMEOUT <= current_time )
     {
-        next_printf( NEXT_LOG_LEVEL_ERROR, "client route request timed out" );
+        next_error( "client route request timed out" );
         next_route_manager_fallback_to_direct( route_manager, NEXT_FLAGS_ROUTE_REQUEST_TIMED_OUT );
         return;
     }
 
     if ( route_manager->route_data.pending_continue && route_manager->route_data.pending_continue_start_time + NEXT_CONTINUE_REQUEST_TIMEOUT <= current_time )
     {
-        next_printf( NEXT_LOG_LEVEL_ERROR, "client continue request timed out" );
+        next_error( "client continue request timed out" );
         next_route_manager_fallback_to_direct( route_manager, NEXT_FLAGS_CONTINUE_REQUEST_TIMED_OUT );
         return;
     }

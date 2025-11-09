@@ -230,7 +230,7 @@ next_platform_socket_t * next_platform_socket_create( void * context, next_addre
 
     if ( socket->handle < 0 )
     {
-        next_printf( NEXT_LOG_LEVEL_ERROR, "failed to create socket" );
+        next_error( "failed to create socket" );
         next_free( context, socket );
         return NULL;
     }
@@ -242,7 +242,7 @@ next_platform_socket_t * next_platform_socket_create( void * context, next_addre
         int yes = 0;
         if ( setsockopt( socket->handle, IPPROTO_IPV6, IPV6_V6ONLY, (char*)( &yes ), sizeof( yes ) ) != 0 )
         {
-            next_printf( NEXT_LOG_LEVEL_ERROR, "failed to clear socket ipv6 only" );
+            next_error( "failed to clear socket ipv6 only" );
             next_platform_socket_destroy( socket );
             return NULL;
         }
@@ -252,13 +252,13 @@ next_platform_socket_t * next_platform_socket_create( void * context, next_addre
 
     if ( setsockopt( socket->handle, SOL_SOCKET, SO_SNDBUF, (char*)( &send_buffer_size ), sizeof( int ) ) != 0 )
     {
-        next_printf( NEXT_LOG_LEVEL_ERROR, "failed to set socket send buffer size" );
+        next_error( "failed to set socket send buffer size" );
         return NULL;
     }
 
     if ( setsockopt( socket->handle, SOL_SOCKET, SO_RCVBUF, (char*)( &receive_buffer_size ), sizeof( int ) ) != 0 )
     {
-        next_printf( NEXT_LOG_LEVEL_ERROR, "failed to set socket receive buffer size" );
+        next_error( "failed to set socket receive buffer size" );
         next_platform_socket_destroy( socket );
         return NULL;
     }
@@ -278,7 +278,7 @@ next_platform_socket_t * next_platform_socket_create( void * context, next_addre
 
         if ( bind( socket->handle, (sockaddr*) &socket_address, sizeof( socket_address ) ) < 0 )
         {
-            next_printf( NEXT_LOG_LEVEL_ERROR, "failed to bind socket (ipv6)" );
+            next_error( "failed to bind socket (ipv6)" );
             next_platform_socket_destroy( socket );
             return NULL;
         }
@@ -296,7 +296,7 @@ next_platform_socket_t * next_platform_socket_create( void * context, next_addre
 
         if ( bind( socket->handle, (sockaddr*) &socket_address, sizeof( socket_address ) ) < 0 )
         {
-            next_printf( NEXT_LOG_LEVEL_ERROR, "failed to bind socket (ipv4)" );
+            next_error( "failed to bind socket (ipv4)" );
             next_platform_socket_destroy( socket );
             return NULL;
         }
@@ -312,7 +312,7 @@ next_platform_socket_t * next_platform_socket_create( void * context, next_addre
             socklen_t len = sizeof( sin );
             if ( getsockname( socket->handle, (sockaddr*)( &sin ), &len ) == -1 )
             {
-                next_printf( NEXT_LOG_LEVEL_ERROR, "failed to get socket port (ipv6)" );
+                next_error( "failed to get socket port (ipv6)" );
                 next_platform_socket_destroy( socket );
                 return NULL;
             }
@@ -324,7 +324,7 @@ next_platform_socket_t * next_platform_socket_create( void * context, next_addre
             socklen_t len = sizeof( sin );
             if ( getsockname( socket->handle, (sockaddr*)( &sin ), &len ) == -1 )
             {
-                next_printf( NEXT_LOG_LEVEL_ERROR, "failed to get socket port (ipv4)" );
+                next_error( "failed to get socket port (ipv4)" );
                 next_platform_socket_destroy( socket );
                 return NULL;
             }
@@ -339,7 +339,7 @@ next_platform_socket_t * next_platform_socket_create( void * context, next_addre
         // non-blocking
         if ( fcntl( socket->handle, F_SETFL, O_NONBLOCK, 1 ) == -1 )
         {
-            next_printf( NEXT_LOG_LEVEL_ERROR, "failed to set socket to non-blocking" );
+            next_error( "failed to set socket to non-blocking" );
             next_platform_socket_destroy( socket );
             return NULL;
         }
@@ -352,7 +352,7 @@ next_platform_socket_t * next_platform_socket_create( void * context, next_addre
         tv.tv_usec = (int) ( timeout_seconds * 1000000.0 );
         if ( setsockopt( socket->handle, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof( tv ) ) < 0 )
         {
-            next_printf( NEXT_LOG_LEVEL_ERROR, "failed to set socket receive timeout" );
+            next_error( "failed to set socket receive timeout" );
             next_platform_socket_destroy( socket );
             return NULL;
         }
@@ -384,7 +384,7 @@ next_platform_socket_t * next_platform_socket_create( void * context, next_addre
             int tos = 46;
             if ( setsockopt( socket->handle, IPPROTO_IPV6, IPV6_TCLASS, (const char *)&tos, sizeof(tos) ) != 0 )
             {
-                next_printf( NEXT_LOG_LEVEL_DEBUG, "failed to enable dscp packet tagging (ipv6)" );
+                next_debug( "failed to enable dscp packet tagging (ipv6)" );
             }
         }
         else
@@ -392,7 +392,7 @@ next_platform_socket_t * next_platform_socket_create( void * context, next_addre
             int tos = 46;
             if ( setsockopt( socket->handle, IPPROTO_IP, IP_TOS, (const char *)&tos, sizeof(tos) ) != 0 )
             {
-                next_printf( NEXT_LOG_LEVEL_DEBUG, "failed to enable dscp packet tagging (ipv4)" );
+                next_debug( "failed to enable dscp packet tagging (ipv4)" );
             }
         }
     }
@@ -444,7 +444,7 @@ void next_platform_socket_send_packet( next_platform_socket_t * socket, const ne
         {
             char address_string[NEXT_MAX_ADDRESS_STRING_LENGTH];
             next_address_to_string( &to, address_string );
-            next_printf( NEXT_LOG_LEVEL_DEBUG, "sendto (%s) failed: %s", address_string, strerror( errno ) );
+            next_debug( "sendto (%s) failed: %s", address_string, strerror( errno ) );
         }
     }
     else
@@ -466,12 +466,12 @@ void next_platform_socket_send_packet( next_platform_socket_t * socket, const ne
             {
                 char address_string[NEXT_MAX_ADDRESS_STRING_LENGTH];
                 next_address_to_string( &to, address_string );
-                next_printf( NEXT_LOG_LEVEL_DEBUG, "sendto (%s) failed: %s", address_string, strerror( errno ) );
+                next_debug( "sendto (%s) failed: %s", address_string, strerror( errno ) );
             }
         }
         else
         {
-            next_printf( NEXT_LOG_LEVEL_ERROR, "invalid address. could not send packet" );
+            next_error( "invalid address. could not send packet" );
         }
     }
 }
@@ -495,7 +495,7 @@ int next_platform_socket_receive_packet( next_platform_socket_t * socket, next_a
             return 0;
         }
 
-        next_printf( NEXT_LOG_LEVEL_DEBUG, "recvfrom failed with error %d", errno );
+        next_debug( "recvfrom failed with error %d", errno );
         
         return 0;
     }

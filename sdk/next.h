@@ -301,6 +301,14 @@ NEXT_EXPORT_FUNC void next_log_function( void (*function)( int level, const char
 
 NEXT_EXPORT_FUNC void next_printf( int level, const char * format, ... );
 
+NEXT_EXPORT_FUNC void next_info( const char * format, ... );
+
+NEXT_EXPORT_FUNC void next_warn( const char * format, ... );
+
+NEXT_EXPORT_FUNC void next_error( const char * format, ... );
+
+NEXT_EXPORT_FUNC void next_debug( const char * format, ... );
+
 // ------------------------------------------
 
 NEXT_EXPORT_FUNC void next_allocator( void * (*malloc_function)( void * context, size_t bytes ), void (*free_function)( void * context, void * p ) );

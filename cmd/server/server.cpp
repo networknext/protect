@@ -31,14 +31,14 @@ int main()
 
     if ( next_init() != NEXT_OK )
     {
-        next_printf( NEXT_LOG_LEVEL_ERROR, "could not initialize network next" );
+        next_error( "could not initialize network next" );
         return 1;        
     }
 
     next_server_t * server = next_server_create( NULL, "0.0.0.0:40000", "127.0.0.1:40000", packet_received_callback );
     if ( !server )
     {
-        next_printf( NEXT_LOG_LEVEL_ERROR, "could not create server" );
+        next_error( "could not create server" );
         return 1;
     }
 
@@ -52,7 +52,7 @@ int main()
         next_server_update( server );
     }
 
-    next_printf( NEXT_LOG_LEVEL_INFO, "stopping" );
+    next_info( "stopping" );
 
     next_server_stop( server );
 
@@ -61,7 +61,7 @@ int main()
         next_server_update( server );
     }
 
-    next_printf( NEXT_LOG_LEVEL_INFO, "stopped" );
+    next_info( "stopped" );
 
     next_server_destroy( server );
 

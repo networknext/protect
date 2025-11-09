@@ -342,7 +342,7 @@ int next_write_packet( uint8_t packet_id, void * packet_object, uint8_t * packet
             NextUpgradeRequestPacket * packet = (NextUpgradeRequestPacket*) packet_object;
             if ( !packet->Serialize( stream ) )
             {
-                next_printf( NEXT_LOG_LEVEL_DEBUG, "failed to write upgrade request packet" );
+                next_debug( "failed to write upgrade request packet" );
                 return NEXT_ERROR;
             }
         }
@@ -353,7 +353,7 @@ int next_write_packet( uint8_t packet_id, void * packet_object, uint8_t * packet
             NextUpgradeResponsePacket * packet = (NextUpgradeResponsePacket*) packet_object;
             if ( !packet->Serialize( stream ) )
             {
-                next_printf( NEXT_LOG_LEVEL_DEBUG, "failed to write upgrade response packet" );
+                next_debug( "failed to write upgrade response packet" );
                 return NEXT_ERROR;
             }
         }
@@ -364,7 +364,7 @@ int next_write_packet( uint8_t packet_id, void * packet_object, uint8_t * packet
             NextUpgradeConfirmPacket * packet = (NextUpgradeConfirmPacket*) packet_object;
             if ( !packet->Serialize( stream ) )
             {
-                next_printf( NEXT_LOG_LEVEL_DEBUG, "failed to write upgrade confirm packet" );
+                next_debug( "failed to write upgrade confirm packet" );
                 return NEXT_ERROR;
             }
         }
@@ -375,7 +375,7 @@ int next_write_packet( uint8_t packet_id, void * packet_object, uint8_t * packet
             NextDirectPingPacket * packet = (NextDirectPingPacket*) packet_object;
             if ( !packet->Serialize( stream ) )
             {
-                next_printf( NEXT_LOG_LEVEL_DEBUG, "failed to write direct ping packet" );
+                next_debug( "failed to write direct ping packet" );
                 return NEXT_ERROR;
             }
         }
@@ -386,7 +386,7 @@ int next_write_packet( uint8_t packet_id, void * packet_object, uint8_t * packet
             NextDirectPongPacket * packet = (NextDirectPongPacket*) packet_object;
             if ( !packet->Serialize( stream ) )
             {
-                next_printf( NEXT_LOG_LEVEL_DEBUG, "failed to write direct pong packet" );
+                next_debug( "failed to write direct pong packet" );
                 return NEXT_ERROR;
             }
         }
@@ -397,7 +397,7 @@ int next_write_packet( uint8_t packet_id, void * packet_object, uint8_t * packet
             NextClientStatsPacket * packet = (NextClientStatsPacket*) packet_object;
             if ( !packet->Serialize( stream ) )
             {
-                next_printf( NEXT_LOG_LEVEL_DEBUG, "failed to write client stats packet" );
+                next_debug( "failed to write client stats packet" );
                 return NEXT_ERROR;
             }
         }
@@ -408,7 +408,7 @@ int next_write_packet( uint8_t packet_id, void * packet_object, uint8_t * packet
             NextRouteUpdatePacket * packet = (NextRouteUpdatePacket*) packet_object;
             if ( !packet->Serialize( stream ) )
             {
-                next_printf( NEXT_LOG_LEVEL_DEBUG, "failed to write route update packet" );
+                next_debug( "failed to write route update packet" );
                 return NEXT_ERROR;
             }
         }
@@ -419,7 +419,7 @@ int next_write_packet( uint8_t packet_id, void * packet_object, uint8_t * packet
             NextRouteAckPacket * packet = (NextRouteAckPacket*) packet_object;
             if ( !packet->Serialize( stream ) )
             {
-                next_printf( NEXT_LOG_LEVEL_DEBUG, "failed to write route ack packet" );
+                next_debug( "failed to write route ack packet" );
                 return NEXT_ERROR;
             }
         }
@@ -430,7 +430,7 @@ int next_write_packet( uint8_t packet_id, void * packet_object, uint8_t * packet
             NextClientRelayUpdatePacket * packet = (NextClientRelayUpdatePacket*) packet_object;
             if ( !packet->Serialize( stream ) )
             {
-                next_printf( NEXT_LOG_LEVEL_DEBUG, "failed to write client relay update packet" );
+                next_debug( "failed to write client relay update packet" );
                 return NEXT_ERROR;
             }
         }
@@ -441,7 +441,7 @@ int next_write_packet( uint8_t packet_id, void * packet_object, uint8_t * packet
             NextClientRelayAckPacket * packet = (NextClientRelayAckPacket*) packet_object;
             if ( !packet->Serialize( stream ) )
             {
-                next_printf( NEXT_LOG_LEVEL_DEBUG, "failed to write client relay ack packet" );
+                next_debug( "failed to write client relay ack packet" );
                 return NEXT_ERROR;
             }
         }
@@ -521,7 +521,7 @@ int next_read_packet( uint8_t packet_id, uint8_t * packet_data, int begin, int e
 
         if ( packet_bytes < int( NEXT_CRYPTO_SIGN_BYTES ) )
         {
-            next_printf( NEXT_LOG_LEVEL_DEBUG, "signed packet is too small to be valid" );
+            next_debug( "signed packet is too small to be valid" );
             return NEXT_ERROR;
         }
 
@@ -531,7 +531,7 @@ int next_read_packet( uint8_t packet_id, uint8_t * packet_data, int begin, int e
         next_crypto_sign_update( &state, packet_data + begin, packet_bytes - NEXT_CRYPTO_SIGN_BYTES );
         if ( next_crypto_sign_final_verify( &state, packet_data + end - NEXT_CRYPTO_SIGN_BYTES, sign_public_key ) != 0 )
         {
-            next_printf( NEXT_LOG_LEVEL_DEBUG, "signed packet did not verify" );
+            next_debug( "signed packet did not verify" );
             return NEXT_ERROR;
         }
     }
@@ -548,7 +548,7 @@ int next_read_packet( uint8_t packet_id, uint8_t * packet_data, int begin, int e
 
         if ( packet_bytes <= (int) ( 8 + NEXT_CRYPTO_AEAD_CHACHA20POLY1305_ABYTES ) )
         {
-            next_printf( NEXT_LOG_LEVEL_DEBUG, "encrypted packet is too small to be valid" );
+            next_debug( "encrypted packet is too small to be valid" );
             return NEXT_ERROR;
         }
 
@@ -570,7 +570,7 @@ int next_read_packet( uint8_t packet_id, uint8_t * packet_data, int begin, int e
                                                         additional, 1,
                                                         nonce, encrypt_private_key ) != 0 )
         {
-            next_printf( NEXT_LOG_LEVEL_DEBUG, "encrypted packet failed to decrypt" );
+            next_debug( "encrypted packet failed to decrypt" );
             return NEXT_ERROR;
         }
 
@@ -828,7 +828,7 @@ int next_read_backend_packet( uint8_t packet_id, uint8_t * packet_data, int begi
 
         if ( packet_bytes < int( NEXT_CRYPTO_SIGN_BYTES ) )
         {
-            next_printf( NEXT_LOG_LEVEL_DEBUG, "signed backend packet is too small to be valid" );
+            next_debug( "signed backend packet is too small to be valid" );
             return NEXT_ERROR;
         }
 
@@ -838,7 +838,7 @@ int next_read_backend_packet( uint8_t packet_id, uint8_t * packet_data, int begi
         next_crypto_sign_update( &state, packet_data + begin, packet_bytes - NEXT_CRYPTO_SIGN_BYTES );
         if ( next_crypto_sign_final_verify( &state, packet_data + end - NEXT_CRYPTO_SIGN_BYTES, sign_public_key ) != 0 )
         {
-            next_printf( NEXT_LOG_LEVEL_DEBUG, "signed backend packet did not verify" );
+            next_debug( "signed backend packet did not verify" );
             return NEXT_ERROR;
         }
     }

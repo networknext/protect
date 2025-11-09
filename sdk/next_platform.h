@@ -124,7 +124,7 @@ inline next_platform_mutex_helper_t::next_platform_mutex_helper_t( next_platform
 #if NEXT_SPIKE_TRACKING
     if ( !mutex->ok )
     {
-        next_printf( NEXT_LOG_LEVEL_ERROR, "bad mutex - %s:%d", file, line );
+        next_error( "bad mutex - %s:%d", file, line );
     }
 #endif // #if NEXT_SPIKE_TRACKING
 
@@ -140,7 +140,7 @@ inline next_platform_mutex_helper_t::~next_platform_mutex_helper_t()
     double mutex_duration = finish_time - start_time;
     if ( mutex_duration > 0.001 )
     {
-        next_printf( NEXT_LOG_LEVEL_WARN, "mutex spike %.2f milliseconds at %s:%d", mutex_duration, file, line );
+        next_warn( "mutex spike %.2f milliseconds at %s:%d", mutex_duration, file, line );
     }
 #endif // #if NEXT_SPIKE_TRACKING
     mutex = NULL;

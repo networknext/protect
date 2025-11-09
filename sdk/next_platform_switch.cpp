@@ -175,7 +175,7 @@ int next_platform_init()
     nn::Result result = nn::socket::Initialize( socket_config_with_memory );
     if ( result.IsFailure() )
     {
-        next_printf( NEXT_LOG_LEVEL_ERROR, "failed to initialize nintendo sockets" );
+        next_error( "failed to initialize nintendo sockets" );
         return NEXT_ERROR;
     }
 
@@ -187,7 +187,7 @@ int next_platform_init()
     result = nn::nifm::Initialize(); // it's valid to call this multiple times
     if ( result.IsFailure() )
     {
-        next_printf( NEXT_LOG_LEVEL_ERROR, "failed to initialize nintendo network connection manager" );
+        next_error( "failed to initialize nintendo network connection manager" );
         return NEXT_ERROR;
     }
 
@@ -303,7 +303,7 @@ int next_platform_socket_init( next_platform_socket_t * s, next_address_t * addr
 
     if ( s->handle == nn::socket::InvalidSocket )
     {
-        next_printf( NEXT_LOG_LEVEL_ERROR, "failed to create socket" );
+        next_error( "failed to create socket" );
         return NEXT_ERROR;
     }
 
@@ -311,13 +311,13 @@ int next_platform_socket_init( next_platform_socket_t * s, next_address_t * addr
 
     if ( nn::socket::SetSockOpt( s->handle, nn::socket::Level::Sol_Socket, nn::socket::Option::So_SndBuf, (void*)( &send_buffer_size ), nn::socket::SockLenT( sizeof( int ) ) ) != 0 )
     {
-        next_printf( NEXT_LOG_LEVEL_ERROR, "failed to set socket send buffer size" );
+        next_error( "failed to set socket send buffer size" );
         return NEXT_ERROR;
     }
 
     if ( nn::socket::SetSockOpt( s->handle, nn::socket::Level::Sol_Socket, nn::socket::Option::So_RcvBuf, (void*)( &receive_buffer_size ), nn::socket::SockLenT( sizeof( int ) ) ) != 0 )
     {
-        next_printf( NEXT_LOG_LEVEL_ERROR, "failed to set socket receive buffer size" );
+        next_error( "failed to set socket receive buffer size" );
         return NEXT_ERROR;
     }
 
@@ -325,7 +325,7 @@ int next_platform_socket_init( next_platform_socket_t * s, next_address_t * addr
 
     if ( address->type == NEXT_ADDRESS_IPV6 )
     {
-        next_printf( NEXT_LOG_LEVEL_ERROR, "switch doesn't support ipv6!" );
+        next_error( "switch doesn't support ipv6!" );
         return NEXT_ERROR;
     }
     else
@@ -340,7 +340,7 @@ int next_platform_socket_init( next_platform_socket_t * s, next_address_t * addr
         socket_address.sin_len = sizeof( socket_address );
         if ( nn::socket::Bind( s->handle, (nn::socket::SockAddr*)( &socket_address ), nn::socket::SockLenT( sizeof( socket_address ) ) ) < 0 )
         {
-            next_printf( NEXT_LOG_LEVEL_ERROR, "failed to bind socket (ipv4): %d", int( nn::socket::GetLastError() ) );
+            next_error( "failed to bind socket (ipv4): %d", int( nn::socket::GetLastError() ) );
             return NEXT_ERROR;
         }
     }
@@ -353,7 +353,7 @@ int next_platform_socket_init( next_platform_socket_t * s, next_address_t * addr
         nn::socket::SockLenT len = sizeof( addr );
         if ( nn::socket::GetSockName( s->handle, (nn::socket::SockAddr*)( &addr ), &len ) == -1 )
         {
-            next_printf( NEXT_LOG_LEVEL_ERROR, "failed to get socket port (ipv4)" );
+            next_error( "failed to get socket port (ipv4)" );
             return NEXT_ERROR;
         }
         address->port = next_platform_ntohs( addr.sin_port );
@@ -456,7 +456,7 @@ void next_platform_socket_send_packet( next_platform_socket_t * socket, const ne
 
     if ( to->type == NEXT_ADDRESS_IPV6 )
     {
-        next_printf( NEXT_LOG_LEVEL_ERROR, "switch doesn't support ipv6" );
+        next_error( "switch doesn't support ipv6" );
     }
     else if ( to->type == NEXT_ADDRESS_IPV4 )
     {
@@ -471,12 +471,12 @@ void next_platform_socket_send_packet( next_platform_socket_t * socket, const ne
         int result = int( nn::socket::SendTo( socket->handle, (const void*)( packet_data ), packet_bytes, nn::socket::MsgFlag::Msg_None, (nn::socket::SockAddr*)( &socket_address ), nn::socket::SockLenT( sizeof( socket_address ) ) ) );
         if ( result < 0 )
         {
-            next_printf( NEXT_LOG_LEVEL_DEBUG, "sendto failed: %d", int( nn::socket::GetLastError() ) );
+            next_debug( "sendto failed: %d", int( nn::socket::GetLastError() ) );
         }
     }
     else
     {
-        next_printf( NEXT_LOG_LEVEL_ERROR, "invalid address type. could not send packet" );
+        next_error( "invalid address type. could not send packet" );
     }
 }
 
@@ -520,7 +520,7 @@ int next_platform_socket_receive_packet( next_platform_socket_t * socket, next_a
             next_platform_socket_cleanup( socket );
         }
 
-        next_printf( NEXT_LOG_LEVEL_DEBUG, "recvfrom failed with error %d", int( err ) );
+        next_debug( "recvfrom failed with error %d", int( err ) );
         
         return 0;
     }

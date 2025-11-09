@@ -32,14 +32,14 @@ next_server_t * next_server_create( void * context, const char * bind_address_st
     next_address_t bind_address;
     if ( next_address_parse( &bind_address, bind_address_string ) != NEXT_OK )
     {
-        next_printf( NEXT_LOG_LEVEL_ERROR, "server could not parse bind address" );
+        next_error( "server could not parse bind address" );
         return NULL;
     }
 
     next_address_t public_address;
     if ( next_address_parse( &public_address, public_address_string ) != NEXT_OK )
     {
-        next_printf( NEXT_LOG_LEVEL_ERROR, "server could not parse public address" );
+        next_error( "server could not parse public address" );
         return NULL;
     }
 
@@ -55,13 +55,13 @@ next_server_t * next_server_create( void * context, const char * bind_address_st
     server->socket = next_platform_socket_create( server->context, &bind_address, NEXT_PLATFORM_SOCKET_NON_BLOCKING, 0.0f, NEXT_SOCKET_SEND_BUFFER_SIZE, NEXT_SOCKET_RECEIVE_BUFFER_SIZE );
     if ( server->socket == NULL )
     {
-        next_printf( NEXT_LOG_LEVEL_ERROR, "server could not create socket" );
+        next_error( "server could not create socket" );
         next_server_destroy( server );
         return NULL;
     }
 
     char address_string[NEXT_MAX_ADDRESS_STRING_LENGTH];
-    next_printf( NEXT_LOG_LEVEL_INFO, "server started on %s", next_address_to_string( &bind_address, address_string ) );
+    next_info( "server started on %s", next_address_to_string( &bind_address, address_string ) );
 
     server->bind_address = bind_address;
     server->public_address = public_address;
@@ -69,8 +69,8 @@ next_server_t * next_server_create( void * context, const char * bind_address_st
     server->server_id = next_hash_string( public_address_string );
     server->match_id = next_random_uint64();
 
-    next_printf( NEXT_LOG_LEVEL_INFO, "server id is %016" PRIx64, server->server_id );
-    next_printf( NEXT_LOG_LEVEL_INFO, "match id is %016" PRIx64, server->match_id );
+    next_info( "server id is %016" PRIx64, server->server_id );
+    next_info( "match id is %016" PRIx64, server->match_id );
 
     return server;    
 }
