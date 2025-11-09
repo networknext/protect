@@ -79,9 +79,9 @@ target_include_directories(client_backend PRIVATE ../lib)
 add_dependencies(client_backend platform shared)
 find_package(Threads REQUIRED)
 if (APPLE)
-	target_link_libraries(client_backend hydrogen platform shared Threads::Threads)
+	target_link_libraries(client_backend platform shared Threads::Threads)
 elseif (UNIX)
-	target_link_libraries(client_backend hydrogen platform shared bpf xdp Threads::Threads)
+	target_link_libraries(client_backend platform shared bpf xdp Threads::Threads)
 endif()
 
 

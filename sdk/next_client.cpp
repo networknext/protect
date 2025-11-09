@@ -358,10 +358,11 @@ void next_client_process_packet( next_client_t * client, next_address_t * from, 
             if ( packet->request_id != client->refresh_backend_token_request_id )
                 return;
 
-            next_printf( NEXT_LOG_LEVEL_INFO, "client received refresh token response packet" );
+            next_printf( NEXT_LOG_LEVEL_INFO, "client refreshed backend token" );
 
             client->backend_token = packet->backend_token;
             client->last_refresh_backend_token_time = next_platform_time();
+            client->refresh_backend_token_request_id = next_random_uint64();
         }
     }
     else if ( client->state == NEXT_CLIENT_INITIALIZING )
@@ -529,5 +530,4 @@ uint64_t next_client_server_id( next_client_t * client )
 {
     next_assert( client );
     return client->server_id;
-
 }

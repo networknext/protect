@@ -60,6 +60,7 @@ int main()
         token.pings_per_second = 10;
         token.pongs_before_select = 10;
         token.max_connect_seconds = 30;
+        token.backend_token_refresh_seconds = 30;
         if ( !next_write_connect_token( &token, connect_token_string, buyer_private_key ) )
         {
             next_printf( NEXT_LOG_LEVEL_ERROR, "failed to write connect token" );

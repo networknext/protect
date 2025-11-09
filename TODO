@@ -18,19 +18,13 @@ DONE
 
     Implement the backend responding to the refresh backend token request with a new encrypted backend token
 
-TODO
-
     Verify the client gets the refresh token response packet
-
-    -------------
 
     Implement the client processing the refresh token response, stashing the updated backend token and setting the next refresh to n seconds in future
 
-    -------------
-
     Verify that the client sits and refreshes backend token post-init every 30 seconds
 
-    -------------
+TODO
 
     Read the client backend private key from env var when the client backend starts up
 

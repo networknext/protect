@@ -746,9 +746,6 @@ SEC("client_backend_xdp") int client_backend_xdp_filter( struct xdp_md *ctx )
                             
                             case NEXT_CLIENT_BACKEND_PACKET_REFRESH_TOKEN_REQUEST:
                             {
-                                // todo
-                                debug_printf( "received refresh token request packet" );
-
                                 if ( (void*)packet_data + sizeof(struct next_client_backend_refresh_token_request_packet_t) > data_end )
                                 {
                                     debug_printf( "client backend refresh token request packet is too small" );
@@ -803,9 +800,6 @@ SEC("client_backend_xdp") int client_backend_xdp_filter( struct xdp_md *ctx )
                                 reflect_packet( data, sizeof(struct next_client_backend_refresh_token_response_packet_t), magic );
 
                                 bpf_xdp_adjust_tail( ctx, -( (int) sizeof(struct next_client_backend_refresh_token_request_packet_t) - (int) sizeof(struct next_client_backend_refresh_token_response_packet_t) ) );
-
-                                // todo
-                                debug_printf( "sent refresh token response packet" );
 
                                 return XDP_TX;
                             }

@@ -1029,6 +1029,7 @@ void test_connect_token()
     }        
     input_token.pings_per_second = 10;
     input_token.max_connect_seconds = 30;
+    input_token.backend_token_refresh_seconds = 30;
 
     char connect_token_string[NEXT_MAX_CONNECT_TOKEN_BYTES];
     memset( connect_token_string, 0, sizeof(connect_token_string) );
