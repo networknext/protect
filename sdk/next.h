@@ -38,10 +38,13 @@
 
 #endif // !NEXT_DEVELOPMENT
 
+#define NEXT_MAX_CLIENTS                                       1024
+
 #define NEXT_MTU                                               1200
 
 #define NEXT_MAX_PACKET_BYTES                                  1384
 
+// todo: use bool instead from now on?
 #define NEXT_OK                                                   0
 #define NEXT_ERROR                                               -1
 

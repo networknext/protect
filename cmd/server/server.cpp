@@ -33,14 +33,24 @@ int main()
         return 1;
     }
 
-    uint8_t packet_data[1024];
-    memset( packet_data, 0, sizeof(packet_data) );
-
     while ( !quit )
     {
-        // todo: rework to send packets to all connected clients with new zero copy interface
-
         next_server_update( server );
+
+        for ( int i = 0; i < NEXT_MAX_CLIENTS; i++ )
+        {
+            if ( next_server_client_connected( server, i ) )
+            {
+                uint64_t sequence;
+                uint8_t * packet_data = next_server_start_packet( server, i, &sequence );
+                if ( packet_data )
+                {
+                    next_server_finish_packet( server, packet_data, 100 );
+                }
+            }
+        }
+
+        next_server_send_packets( server );
     }
 
     next_info( "stopping" );
@@ -50,11 +60,6 @@ int main()
     while ( next_server_state( server ) != NEXT_SERVER_STOPPED )
     {
         next_server_update( server );
-
-        // todo: zero copy process packets
-
-        // todo: zero copy send packets
-
         next_server_send_packets( server );
     }
 

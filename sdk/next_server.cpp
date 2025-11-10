@@ -11,10 +11,6 @@
 
 #include <memory.h>
 
-#define NEXT_MAX_CLIENTS                                  1024
-
-#define NEXT_NUM_SERVER_FRAMES                   ( 10 * 1024 )
-
 struct next_server_send_packet_info_t
 {
     uint64_t sequence;
@@ -282,7 +278,7 @@ uint8_t * next_server_start_packet( struct next_server_t * server, int client_in
     return packet_data;
 }
 
-void next_server_finish_packet( struct next_server_t * server, uint8_t * packet_data, int packet_bytes )
+void next_server_finish_packet_internal( struct next_server_t * server, uint8_t * packet_data, int packet_bytes )
 {
     next_assert( server );
 
@@ -317,6 +313,14 @@ void next_server_finish_packet( struct next_server_t * server, uint8_t * packet_
     packet_info->packet_size = packet_bytes + NEXT_HEADER_BYTES;
 
     // todo: we should write the header here
+}
+
+void next_server_finish_packet( struct next_server_t * server, uint8_t * packet_data, int packet_bytes )
+{
+    next_assert( server );
+    next_assert( packet_bytes >= 0 );
+    next_assert( packet_bytes <= NEXT_MTU );
+    next_server_finish_packet_internal( server, packet_data - 8, packet_bytes + 8 );
 }
 
 void next_server_abort_packet( struct next_server_t * server, uint8_t * packet_data )

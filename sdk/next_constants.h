@@ -10,6 +10,13 @@
 
 #include "next.h"
 
+#define NEXT_NUM_SERVER_FRAMES                              ( 10 * 1024 )
+
+
+
+
+// old below. needs pass over...
+
 #define NEXT_SERVER_BACKEND_PORT                                  "40000"
 #define NEXT_SERVER_READY_TIMEOUT                                    20.0
 #define NEXT_SERVER_INIT_TIMEOUT                                     15.0

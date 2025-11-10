@@ -50,11 +50,13 @@ DONE
 
     Bring across the zero copy send packet data structures and functions
 
-TODO
-
     Generalize packet send so there is next_server_send_packet (payload) and there is next_server_send_packet_internal
 
-    -------------
+    Write the direct packet with a direct packet header and the sequence number
+
+    Decision is to have sequence numbers that don't map one-to-one to game packets, so if we have some holes, but that's OK because we can check what is sent (payload) vs. received in that case.
+
+TODO
 
     Use the zero copy interface to send packets to all connected clients
 
