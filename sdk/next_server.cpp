@@ -328,49 +328,6 @@ void next_server_abort_packet( struct next_server_t * server, uint8_t * packet_d
 void next_server_send_packets( struct next_server_t * server )
 {
     next_assert( server );
-    (void) server;
-}
-
-
-
-#if 0
-
-void net_server_finish_packet( struct net_server_t * server, WriteStream & stream )
-{
-}
-
-void net_server_abort_packet( struct net_server_t * server, WriteStream & stream )
-{
-    core_assert( server );
-
-    stream.Flush();
-
-    uint8_t * packet_data = stream.GetData();
-
-    const int packet_size = stream.GetBytesProcessed();
-
-    core_assert( packet_data );
-    core_assert( packet_size > 0 );
-    core_assert( packet_size <= NET_MAX_PACKET_BYTES );
-
-    const size_t offset = ( packet_data - server->send_buffer.data );
-
-    core_assert( offset >= 0 );
-    core_assert( ( offset % NET_MAX_PACKET_BYTES ) == 0 );
-   
-    const int frame = (int) ( offset / NET_MAX_PACKET_BYTES );
-
-    core_assert( frame >= 0 );  
-    core_assert( frame < NET_NUM_SERVER_FRAMES );  
-
-    net_server_send_packet_info_t * packet_info = server->send_buffer.info + frame;
-
-    packet_info->packet_size = 0;
-}
-
-void net_server_send_packets( struct net_server_t * server )
-{
-    core_assert( server );
 
     const int num_packets = (int) server->send_buffer.current_frame;
 
@@ -378,46 +335,27 @@ void net_server_send_packets( struct net_server_t * server )
 
     for ( int i = 0; i < num_packets; i++ )
     {
-        uint8_t * packet_data = server->send_buffer.data + i*NET_MAX_PACKET_BYTES;
+        uint8_t * packet_data = server->send_buffer.data + i*NEXT_MAX_PACKET_BYTES;
 
-        net_server_send_packet_info_t * platform_restrict packet_info = server->send_buffer.info + i;
-
-        core_assert( packet_info->magic_1 == NET_SERVER_SEND_PACKET_INFO_MAGIC );
-        core_assert( packet_info->magic_2 == NET_SERVER_SEND_PACKET_INFO_MAGIC );
+        // todo: next_restrict
+        next_server_send_packet_info_t * __restrict__ packet_info = server->send_buffer.info + i;
 
         const int packet_bytes = (int) packet_info->packet_size;
 
         if ( packet_bytes > 0 )
         {
-            core_assert( packet_data );
-            core_assert( packet_bytes <= NET_MAX_PACKET_BYTES );
+            next_assert( packet_data );
+            next_assert( packet_bytes <= NET_MAX_PACKET_BYTES );
 
             const int client_index = packet_info->client_index;
 
-            core_assert( client_index >= 0 );
-            core_assert( client_index < NET_MAX_CLIENTS );
+            next_assert( client_index >= 0 );
+            next_assert( client_index < NET_MAX_CLIENTS );
             
             if ( server->client_connected[client_index] )
             {
-#if NET_DEVELOPMENT
-                if ( server->config.network_simulator )
-                {
-                    net_simulator_send_packet( server->config.network_simulator, &server->address, &server->client_address[client_index], packet_data, (int) packet_info->packet_size );
-                    server->counters[NET_SERVER_COUNTER_PACKETS_SENT_SIMULATOR]++;
-                }
-                else
-#endif // #if NET_DEVELOPMENT
-                {
-                    net_socket_send_packet( server->socket, &server->client_address[client_index], packet_data, (int) packet_info->packet_size );
-                    server->counters[NET_SERVER_COUNTER_PACKETS_SENT]++;
-                }
-
-                const int wire_header_bytes = 16 + 8 + 8 + 1;
-
-                net_endpoint_packet_sent( server->client_endpoint[client_index], packet_info->endpoint_sequence, wire_header_bytes + packet_bytes );
+                next_platform_socket_send_packet( server->socket, &server->client_address[client_index], packet_data, (int) packet_info->packet_size );
             }
         }
     }    
 }
-
-#endif // #if 0
