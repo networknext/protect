@@ -26,12 +26,12 @@
 
 #include "proton.h"
 
-#define NEXT_CLIENT_BACKEND_PACKET_INIT_REQUEST                 0
-#define NEXT_CLIENT_BACKEND_PACKET_INIT_RESPONSE                1
-#define NEXT_CLIENT_BACKEND_PACKET_PING                         2
-#define NEXT_CLIENT_BACKEND_PACKET_PONG                         3
-#define NEXT_CLIENT_BACKEND_PACKET_REFRESH_TOKEN_REQUEST        4
-#define NEXT_CLIENT_BACKEND_PACKET_REFRESH_TOKEN_RESPONSE       5
+#define NEXT_PACKET_CLIENT_BACKEND_INIT_REQUEST                 0
+#define NEXT_PACKET_CLIENT_BACKEND_INIT_RESPONSE                1
+#define NEXT_PACKET_CLIENT_BACKEND_PING                         2
+#define NEXT_PACKET_CLIENT_BACKEND_PONG                         3
+#define NEXT_PACKET_CLIENT_BACKEND_REFRESH_TOKEN_REQUEST        4
+#define NEXT_PACKET_CLIENT_BACKEND_REFRESH_TOKEN_RESPONSE       5
 
 #define ADVANCED_PACKET_FILTER                                  0
 

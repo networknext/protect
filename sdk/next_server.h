@@ -9,15 +9,13 @@
 #define NEXT_SERVER_H
 
 #include "next_address.h"
+#include "next_packets.h"
 
 struct next_server_t;
 
 #define NEXT_SERVER_STOPPED    0
 #define NEXT_SERVER_RUNNING    1
 #define NEXT_SERVER_STOPPING   2
-
-// todo: move to next_packets.h or whatever
-#define NEXT_PACKET_DIRECT 0
 
 next_server_t * next_server_create( void * context, const char * bind_address, const char * public_address );
 

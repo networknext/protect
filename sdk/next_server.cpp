@@ -7,6 +7,7 @@
 #include "next_config.h"
 #include "next_constants.h"
 #include "next_platform.h"
+#include "next_packet_filter.h"
 #include "next_hash.h"
 
 #include <memory.h>
@@ -14,10 +15,9 @@
 
 struct next_server_send_packet_info_t
 {
-    uint64_t sequence;
     next_address_t to;
     size_t packet_size;
-    size_t max_packet_size;
+    uint8_t packet_type;
 };
 
 struct next_server_send_buffer_t
@@ -31,8 +31,6 @@ struct next_server_send_buffer_t
 struct next_server_receive_packet_info_t
 {
     int client_index;
-    int header_bytes;
-    uint64_t sequence;
     size_t packet_size;
 };
 
@@ -227,9 +225,9 @@ uint8_t * next_server_start_packet_internal( struct next_server_t * server, next
 
     next_assert( packet_info );
 
-    memset( packet_info, 0, sizeof(next_server_send_packet_info_t) );
-
     packet_info->to = *to;
+    packet_info->packet_size = 0;
+    packet_info->packet_type = packet_type;
 
     return packet_data;
 }
@@ -285,7 +283,27 @@ void next_server_finish_packet_internal( struct next_server_t * server, uint8_t 
 
     packet_info->packet_size = packet_bytes + NEXT_HEADER_BYTES;
 
-    // todo: we should write the header here
+    // write the packet header
+
+    packet_data -= 18;
+
+    packet_data[0] = packet_info->packet_type;
+
+    uint8_t to_address_data[32];
+    next_address_data( &packet_info->to, to_address_data );
+
+    uint8_t from_address_data[32];
+    next_address_data( &server->public_address, from_address_data );
+
+    uint8_t * a = packet_data + 1;
+    uint8_t * b = packet_data + 3;
+
+    uint8_t magic[8];
+    memset( magic, 0, sizeof(magic) );
+
+    next_generate_pittle( a, from_address_data, to_address_data, packet_bytes );
+    next_generate_chonkle( b, magic, from_address_data, to_address_data, packet_bytes );
+
 }
 
 void next_server_finish_packet( struct next_server_t * server, uint8_t * packet_data, int packet_bytes )

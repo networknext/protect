@@ -76,8 +76,6 @@
 #define NEXT_PLATFORM_GDK                                        10
 #define NEXT_PLATFORM_MAX                                        10
 
-#define NEXT_MAX_TAGS                                             8
-
 #if defined(_WIN32)
 #define NOMINMAX
 #endif

@@ -130,7 +130,6 @@ next_client_t * next_client_create( void * context, const char * connect_token_s
     if ( next_address_parse( &direct_address, connect_token_string ) )
     {
         direct = true;
-
         char string_buffer[NEXT_MAX_ADDRESS_STRING_LENGTH];
         next_info( "client direct connection to %s", next_address_to_string( &direct_address, string_buffer ) );
     }
@@ -223,6 +222,7 @@ next_client_t * next_client_create( void * context, const char * connect_token_s
     {
         client->direct = true;
         client->direct_address = direct_address;
+        client->state = NEXT_CLIENT_CONNECTED;
     }
     else
     {
@@ -337,7 +337,7 @@ void next_client_update_initialize( next_client_t * client )
         if ( !client->backend_init_data[i].initialized )
         {
             next_client_backend_init_request_packet_t packet;
-            packet.type = NEXT_CLIENT_BACKEND_PACKET_INIT_REQUEST;
+            packet.type = NEXT_PACKET_CLIENT_BACKEND_INIT_REQUEST;
             packet.sdk_version_major = NEXT_VERSION_MAJOR_INT;
             packet.sdk_version_major = NEXT_VERSION_MINOR_INT;
             packet.sdk_version_major = NEXT_VERSION_PATCH_INT;
@@ -351,7 +351,7 @@ void next_client_update_initialize( next_client_t * client )
             next_info( "sent ping packet to client backend %d", i );
 
             next_client_backend_ping_packet_t packet;
-            packet.type = NEXT_CLIENT_BACKEND_PACKET_PING; 
+            packet.type = NEXT_PACKET_CLIENT_BACKEND_PING; 
             packet.sdk_version_major = NEXT_VERSION_MAJOR_INT;
             packet.sdk_version_major = NEXT_VERSION_MINOR_INT;
             packet.sdk_version_major = NEXT_VERSION_PATCH_INT;
@@ -392,11 +392,18 @@ void next_client_process_packet( next_client_t * client, next_address_t * from, 
 
     const uint8_t packet_type = packet_data[0];
 
+    // todo
+    next_info( "client received packet type %d", packet_type );
+
     if ( client->state == NEXT_CLIENT_CONNECTED )
     {
         // common case: client is connected
 
-        if ( packet_type == NEXT_CLIENT_BACKEND_PACKET_REFRESH_TOKEN_RESPONSE && packet_bytes == sizeof(next_client_backend_refresh_token_response_packet_t) )
+        if ( packet_type == NEXT_PACKET_DIRECT )// && next_address_equal( from, &client->direct_address ) )
+        {
+            next_info( "client received direct packet from server (%d bytes)", packet_bytes );
+        }
+        else if ( packet_type == NEXT_PACKET_CLIENT_BACKEND_REFRESH_TOKEN_RESPONSE && packet_bytes == sizeof(next_client_backend_refresh_token_response_packet_t) )
         {
             const next_client_backend_refresh_token_response_packet_t * packet = (const next_client_backend_refresh_token_response_packet_t*) packet_data;
 
@@ -417,7 +424,7 @@ void next_client_process_packet( next_client_t * client, next_address_t * from, 
         const uint32_t from_ipv4 = next_address_ipv4( from );
         const uint16_t from_port = next_platform_htons( from->port );
 
-        if ( packet_type == NEXT_CLIENT_BACKEND_PACKET_INIT_RESPONSE && packet_bytes == sizeof(next_client_backend_init_response_packet_t) )
+        if ( packet_type == NEXT_PACKET_CLIENT_BACKEND_INIT_RESPONSE && packet_bytes == sizeof(next_client_backend_init_response_packet_t) )
         {
             const next_client_backend_init_response_packet_t * packet = (const next_client_backend_init_response_packet_t*) packet_data;
 
@@ -443,7 +450,7 @@ void next_client_process_packet( next_client_t * client, next_address_t * from, 
                 break;
             }
         }
-        else if ( packet_type == NEXT_CLIENT_BACKEND_PACKET_PONG && packet_bytes == sizeof(next_client_backend_pong_packet_t) )
+        else if ( packet_type == NEXT_PACKET_CLIENT_BACKEND_PONG && packet_bytes == sizeof(next_client_backend_pong_packet_t) )
         {
             const next_client_backend_pong_packet_t * packet = (const next_client_backend_pong_packet_t*) packet_data;
 
@@ -485,6 +492,9 @@ void next_client_process_packet( next_client_t * client, next_address_t * from, 
 
 void next_client_update_refresh_backend_token( next_client_t * client )
 {
+    if ( client->direct )
+        return;
+
     if ( client->state <= NEXT_CLIENT_INITIALIZING )
         return;
 
@@ -499,7 +509,7 @@ void next_client_update_refresh_backend_token( next_client_t * client )
     next_info( "request refresh backend token" );
 
     next_client_backend_refresh_token_request_packet_t packet;
-    packet.type = NEXT_CLIENT_BACKEND_PACKET_REFRESH_TOKEN_REQUEST;
+    packet.type = NEXT_PACKET_CLIENT_BACKEND_REFRESH_TOKEN_REQUEST;
     packet.sdk_version_major = NEXT_VERSION_MAJOR_INT;
     packet.sdk_version_major = NEXT_VERSION_MINOR_INT;
     packet.sdk_version_major = NEXT_VERSION_PATCH_INT;
@@ -530,6 +540,7 @@ void next_client_send_packet( next_client_t * client, const uint8_t * packet_dat
         return;
 
     // todo: send payload packet
+    
     (void) client;
     (void) packet_data;
     (void) packet_bytes;
