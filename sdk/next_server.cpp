@@ -248,18 +248,29 @@ uint8_t * next_server_start_packet( struct next_server_t * server, int client_in
     uint64_t sequence = ++server->client_payload_sequence[client_index];
     next_platform_mutex_release( &server->client_payload_mutex );
 
-    uint8_t * packet_data = next_server_start_packet_internal( server, &server->client_address[client_index], NEXT_PACKET_DIRECT );
-    if ( !packet_data )
+    if ( server->client_direct[client_index] )
+    {
+        // direct packet
+
+        uint8_t * packet_data = next_server_start_packet_internal( server, &server->client_address[client_index], NEXT_PACKET_DIRECT );
+        if ( !packet_data )
+            return NULL;
+
+        // todo: endian fix up
+        memcpy( packet_data, (char*)&sequence, 8 );
+
+        packet_data += 8;
+
+        *out_sequence = sequence;
+
+        return packet_data;
+    }
+    else
+    {
+        // todo: server to client packet
+
         return NULL;
-
-    // todo: endian fix up
-    memcpy( packet_data, (char*)&sequence, 8 );
-
-    packet_data += 8;
-
-    *out_sequence = sequence;
-
-    return packet_data;
+    }
 }
 
 void next_server_finish_packet_internal( struct next_server_t * server, uint8_t * packet_data, int packet_bytes )

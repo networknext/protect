@@ -45,8 +45,8 @@ int main()
     }
 
     /*
-    char connect_token_string[NEXT_MAX_CONNECT_TOKEN_BYTES];
-    memset( connect_token_string, 0, sizeof(connect_token_string) );
+    char connect[NEXT_MAX_CONNECT_TOKEN_BYTES];
+    memset( connect, 0, sizeof(connect) );
     {
         next_connect_token_t token;
         memset( &token, 0, sizeof(token) );
@@ -62,7 +62,7 @@ int main()
         token.pongs_before_select = 10;
         token.max_connect_seconds = 30;
         token.backend_token_refresh_seconds = 30;
-        if ( !next_write_connect_token( &token, connect_token_string, buyer_private_key ) )
+        if ( !next_write_connect_token( &token, connect, buyer_private_key ) )
         {
             next_error( "failed to write connect token" );
             return 1;        
