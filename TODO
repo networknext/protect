@@ -72,7 +72,7 @@ TODO
 
     -------------
 
-    Implememt endian fix up for packet structs
+    Implement endian fix up for packet structs
 
     -------------
 
@@ -87,7 +87,7 @@ TODO
     Implement the ping near relays state of client init
 
     The trick here is that not only do we want the set of relays to ping, we also want...
-    
+
     1. more relays to ping than can fit in one response packet
 
     2. an estimate of best cost from each relay to the destination

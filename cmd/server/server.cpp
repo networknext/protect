@@ -16,15 +16,6 @@ void interrupt_handler( int signal )
     (void) signal; quit = 1;
 }
 
-void packet_received_callback( next_server_t * server, void * context, int client_index, const uint8_t * packet_data, int packet_bytes )
-{
-    (void) server;
-    (void) context;
-    (void) client_index;
-    (void) packet_data;
-    (void) packet_bytes;
-}
-
 int main()
 {
     signal( SIGINT, interrupt_handler ); signal( SIGTERM, interrupt_handler );
@@ -35,7 +26,7 @@ int main()
         return 1;        
     }
 
-    next_server_t * server = next_server_create( NULL, "0.0.0.0:40000", "127.0.0.1:40000", packet_received_callback );
+    next_server_t * server = next_server_create( NULL, "0.0.0.0:40000", "127.0.0.1:40000" );
     if ( !server )
     {
         next_error( "could not create server" );
@@ -59,6 +50,12 @@ int main()
     while ( next_server_state( server ) != NEXT_SERVER_STOPPED )
     {
         next_server_update( server );
+
+        // todo: zero copy process packets
+
+        // todo: zero copy send packets
+
+        next_server_send_packets( server );
     }
 
     next_info( "stopped" );
