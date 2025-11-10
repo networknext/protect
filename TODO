@@ -48,15 +48,23 @@ DONE
 
     Verify that the client can init again
 
+    Bring across the zero copy send packet data structures and functions
+
 TODO
-
-    Update the server so it has the zero copy packet send and receive interface
-
-    -------------
 
     Use the zero copy interface to send packets to all connected clients
 
     -------------
+
+    Mock client 0 being connected and verify that we can send packets to it
+
+    -------------
+
+    Generalize packet send so there is next_server_send_packet (payload) and there is next_server_send_packet_internal
+
+    -------------
+
+    Bring across zero copy receive packet functions
 
     Use the zero copy interface to print logs when the server receives payload packets from clients
 
@@ -68,7 +76,44 @@ TODO
 
     -------------
 
-    Extend the server so it uses AF_XDP to send and receive packets.
+    Extend the server so it uses AF_XDP to send and receive packets on linux
+
+    -------------
+
+    Implement a server XDP program that does the packet filtering and checks for the server before passing down to userspace
+
+    -------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     -------------
 
