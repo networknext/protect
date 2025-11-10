@@ -12,15 +12,29 @@ DONE
 
     This lets us send packets to addresses (not client slots...) for internal packets while negotiating connection for example.
 
+    If an IP address is passed in instead of a connect token, just go straight to "CONNECTED" state on the client and send and receive passthrough packets.
+
+    Implement direct mode on client.
+
+    Unify all packet types in next_packets.h
+
+    Handle NEXT_PACKET_DIRECT and pass to user via callback
+
+    Verify client sees 100 byte packets sent to it from server
+
 TODO
+
+    Direct packets don't even need sequence numbers. Just pass them through...
+
+    -------------
+
+    Implement the client sending direct payload packets to the server
+
+    -------------
 
     Bring across zero copy receive packet functions
 
     Use the zero copy interface to print logs when the server receives payload packets from clients
-
-    -------------
-
-    If an IP address is passed in instead of a connect token, just go straight to "CONNECTED" state on the client and send and receive passthrough packets.
 
     -------------
 
