@@ -22,15 +22,11 @@ DONE
 
     Verify client sees 100 byte packets sent to it from server
 
-TODO
-
     Client should receive sequence number when a payload packet comes in
-
-    -------------
 
     Implement the client sending direct payload packets to the server
 
-    -------------
+TODO
 
     Bring across zero copy receive packet functions
 

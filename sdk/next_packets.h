@@ -80,6 +80,14 @@ struct next_client_backend_refresh_token_response_packet_t
     struct next_client_backend_token_t backend_token;
 };
 
+struct next_direct_packet_t
+{
+    uint8_t type;
+    uint8_t prefix[17];
+    uint64_t sequence;
+    uint8_t payload[NEXT_MTU];
+};
+
 #pragma pack(pop)
 
 #endif // #ifndef NEXT_PACKETS_H

@@ -50,6 +50,8 @@ struct next_client_t
     uint64_t session_id;
     uint64_t server_id;
 
+    uint64_t send_sequence;
+
     next_platform_socket_t * socket;
 
     void (*packet_received_callback)( next_client_t * client, void * context, const uint8_t * packet_data, int packet_bytes, uint64_t sequence );
@@ -477,15 +479,25 @@ void next_client_update( next_client_t * client )
 void next_client_send_packet( next_client_t * client, const uint8_t * packet_data, int packet_bytes )
 {
     next_assert( client );
+    next_assert( packet_data );
+    next_assert( packet_bytes > 0 );
+    next_assert( packet_bytes <= NEXT_MTU );
 
     if ( client->state != NEXT_CLIENT_CONNECTED )
         return;
 
-    // todo: send payload packet
-
-    (void) client;
-    (void) packet_data;
-    (void) packet_bytes;
+    if ( client->direct )
+    {
+        next_direct_packet_t packet;
+        packet.type = NEXT_PACKET_DIRECT;
+        packet.sequence = ++client->send_sequence;
+        memcpy( packet.payload, packet_data, packet_bytes );
+        next_client_send_packet_internal( client, &client->direct_address, (uint8_t*) &packet, NEXT_HEADER_BYTES + 8 + packet_bytes );
+    }
+    else
+    {
+        // todo: client to server packet
+    }
 }
 
 void next_client_disconnect( next_client_t * client )
