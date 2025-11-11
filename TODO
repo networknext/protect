@@ -38,7 +38,21 @@ TODO
 
     There needs to be an actual handshake to pick a client slot (index)
 
-    Start with a version of this using direct packets (debug only)
+    Start with a version of this using direct packets.
+
+    -------------
+
+    A fork in the road... do we make direct packets a production feature, for example just like netcode, but in XDP
+
+    This way we could have customers set some servers in the fleet as direct, and others as protected, *for example* pro play would be protected only.
+
+    It doesn't seem that difficult to incorporate parts of netcode.io into a new versions for secure direct connection
+
+    The alternative is saying, look the direct connection is a debug only feature and in production you must run relays, even if those relays are sitting in the same datacenters as your servers.
+
+    I don't know which is the correct thing to do, but I do know that it's less work and simpler just to do the debug only direct connection...
+
+    So maybe, just in the name of simplicity, do this.
 
     -------------
 
