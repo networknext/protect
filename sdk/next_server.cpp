@@ -383,12 +383,8 @@ void next_server_receive_packets( next_server_t * server )
 
         const uint8_t packet_type = packet_data[0];
 
-        if ( packet_type != NEXT_PACKET_DIRECT )
+        if ( packet_type == NEXT_PACKET_DIRECT )
         {  
-            next_server_process_packet_internal( server, &from, packet_data, packet_bytes );
-        }
-        else
-        {
             if ( packet_bytes < NEXT_HEADER_BYTES + 8 )
                 continue;
 
@@ -412,6 +408,10 @@ void next_server_receive_packets( next_server_t * server )
             server->receive_buffer.packet_bytes[index] = packet_bytes;
 
             server->receive_buffer.current_frame++;
+        }
+        else
+        {
+            next_server_process_packet_internal( server, &from, packet_data, packet_bytes );            
         }
     }
 }

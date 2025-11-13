@@ -30,11 +30,11 @@ struct next_client_receive_buffer_t
 {
     int current_frame;
     bool processing_packets;
-    int client_index[NEXT_NUM_SERVER_FRAMES];
-    uint64_t sequence[NEXT_NUM_SERVER_FRAMES];
-    uint8_t * packet_data[NEXT_NUM_SERVER_FRAMES];
-    size_t packet_bytes[NEXT_NUM_SERVER_FRAMES];
-    uint8_t data[NEXT_MAX_PACKET_BYTES*NEXT_NUM_SERVER_FRAMES];
+    next_address_t from[NEXT_NUM_CLIENT_FRAMES];
+    uint64_t sequence[NEXT_NUM_CLIENT_FRAMES];
+    uint8_t * packet_data[NEXT_NUM_CLIENT_FRAMES];
+    size_t packet_bytes[NEXT_NUM_CLIENT_FRAMES];
+    uint8_t data[NEXT_MAX_PACKET_BYTES*NEXT_NUM_CLIENT_FRAMES];
 };
 
 struct next_client_t
@@ -66,6 +66,8 @@ struct next_client_t
     next_platform_socket_t * socket;
 
     void (*packet_received_callback)( next_client_t * client, void * context, const uint8_t * packet_data, int packet_bytes, uint64_t sequence );
+
+    next_client_receive_buffer_t receive_buffer;
 };
 
 next_client_t * next_client_create( void * context, const char * connect_token_string, const uint8_t * buyer_public_key, void (*packet_received_callback)( next_client_t * client, void * context, const uint8_t * packet_data, int packet_bytes, uint64_t sequence ) )
@@ -476,9 +478,23 @@ void next_client_update_refresh_backend_token( next_client_t * client )
     client->last_request_backend_token_refresh_time = current_time;
 }
 
+void next_client_update_process_packets( next_client_t * client )
+{
+    const int num_packets = client->receive_buffer.current_frame;
+
+    for ( int i = 0; i < num_packets; i++ )
+    {
+        next_client_process_packet( client, &client->receive_buffer.from[i], client->receive_buffer.packet_data[i], client->receive_buffer.packet_bytes[i] );
+    }
+
+    client->receive_buffer.current_frame = 0;
+}
+
 void next_client_update( next_client_t * client )
 {
     next_assert( client );
+
+    next_client_update_process_packets( client );
 
     next_client_update_direct( client );
 
@@ -537,15 +553,39 @@ uint64_t next_client_server_id( next_client_t * client )
 
 void next_client_receive_packets( next_client_t * client )
 {
-    next_assert( client );
-    while ( true )
-    {
-        uint8_t packet_data[NEXT_MAX_PACKET_BYTES];
-        next_address_t from;
-        int packet_bytes = next_platform_socket_receive_packet( client->socket, &from, packet_data, sizeof(packet_data) );
-        if ( packet_bytes == 0 )
-            return;
+    next_assert( server );
 
-        next_client_process_packet( client, &from, packet_data, packet_bytes );
+    while ( 1 )
+    {
+        if ( client->receive_buffer.current_frame >= NEXT_NUM_CLIENT_FRAMES )
+            break;
+
+        uint8_t * packet_data = client->receive_buffer.data + NEXT_MAX_PACKET_BYTES * client->receive_buffer.current_frame;
+
+        struct next_address_t from;
+        int packet_bytes = next_platform_socket_receive_packet( client->socket, &from, packet_data, NEXT_MAX_PACKET_BYTES );
+        if ( packet_bytes == 0 )
+            break;
+
+        const uint8_t packet_type = packet_data[0];
+
+        const int index = client->receive_buffer.current_frame;
+
+        if ( packet_type == NEXT_PACKET_DIRECT )
+        {
+            if ( packet_bytes < NEXT_HEADER_BYTES + 8 )
+                continue;
+
+            uint64_t sequence;
+            memcpy( (char*) &sequence, packet_data + NEXT_HEADER_BYTES, 8 );
+            // todo: endian fixup
+
+            client->receive_buffer.sequence[index] = sequence;
+        }
+
+        client->receive_buffer.from[index] = from;
+        client->receive_buffer.packet_data[index] = packet_data;
+        client->receive_buffer.packet_bytes[index] = packet_bytes;
+        client->receive_buffer.current_frame++;
     }
 }
