@@ -10,7 +10,8 @@
 
 #include "next.h"
 
-#define NEXT_NUM_SERVER_FRAMES                              ( 10 * 1024 )
+#define NEXT_NUM_SERVER_FRAMES                  ( 10 * NEXT_MAX_CLIENTS )
+#define NEXT_NUM_CLIENT_FRAMES                                   ( 1024 )
 
 
 

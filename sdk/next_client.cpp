@@ -26,6 +26,17 @@ struct next_client_backend_init_data_t
     next_client_backend_token_t backend_token;
 };
 
+struct next_client_receive_buffer_t
+{
+    int current_frame;
+    bool processing_packets;
+    int client_index[NEXT_NUM_SERVER_FRAMES];
+    uint64_t sequence[NEXT_NUM_SERVER_FRAMES];
+    uint8_t * packet_data[NEXT_NUM_SERVER_FRAMES];
+    size_t packet_bytes[NEXT_NUM_SERVER_FRAMES];
+    uint8_t data[NEXT_MAX_PACKET_BYTES*NEXT_NUM_SERVER_FRAMES];
+};
+
 struct next_client_t
 {
     void * context;

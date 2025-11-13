@@ -23,10 +23,6 @@ struct next_server_send_buffer_t
     uint8_t data[NEXT_MAX_PACKET_BYTES*NEXT_NUM_SERVER_FRAMES];
 };
 
-struct next_server_receive_packet_info_t
-{
-};
-
 struct next_server_receive_buffer_t
 {
     int current_frame;
@@ -35,7 +31,6 @@ struct next_server_receive_buffer_t
     uint64_t sequence[NEXT_NUM_SERVER_FRAMES];
     uint8_t * packet_data[NEXT_NUM_SERVER_FRAMES];
     size_t packet_bytes[NEXT_NUM_SERVER_FRAMES];
-    next_server_receive_packet_info_t info[NEXT_NUM_SERVER_FRAMES];
     uint8_t data[NEXT_MAX_PACKET_BYTES*NEXT_NUM_SERVER_FRAMES];
 };
 
@@ -378,10 +373,6 @@ void next_server_receive_packets( next_server_t * server )
     {
         if ( server->receive_buffer.current_frame >= NEXT_NUM_SERVER_FRAMES )
             break;
-
-        next_server_receive_packet_info_t * packet_info = server->receive_buffer.info + server->receive_buffer.current_frame;
-
-        memset( packet_info, 0, sizeof(next_server_receive_packet_info_t) );
 
         uint8_t * packet_data = server->receive_buffer.data + NEXT_MAX_PACKET_BYTES * server->receive_buffer.current_frame;
 
