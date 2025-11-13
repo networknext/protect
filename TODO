@@ -2,15 +2,15 @@ DONE
 
     Implement the server zero copy packet receive interface on the server
 
-TODO
-
     Actually read the sequence number for the direct packet and then adjust the packet data and packet bytes
 
     Verify that the server sees the packets sent from the client and the correct sequence number and packet bytes
 
-    -------------
+TODO
 
-    Really we should have the same zero copy thing on the client. This will allow greater flexibility wrt. packet receiving and possibly we can do packet receives on a background thread with minimal effort.
+    Do the same thing when receiving packets on the client (internally...)
+
+    This will allow greater flexibility wrt. packet receiving and possibly we can do packet receives on a background thread with minimal effort.
 
     -------------
 
