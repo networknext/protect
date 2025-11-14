@@ -775,7 +775,7 @@ static bool parse_kernel_route( struct nlmsghdr * msg_ptr, next_ifforward4_t * o
     struct rtmsg * route_entry = (struct rtmsg *)( NLMSG_DATA( msg_ptr ) );
 
     if ( route_entry->rtm_table != RT_TABLE_MAIN )
-        return NEXT_ERROR;
+        return false;
 
     out->forward_mask = ( 1 << route_entry->rtm_dst_len ) - 1;
 
