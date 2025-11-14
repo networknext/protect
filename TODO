@@ -36,8 +36,25 @@ TODO
 
     -------------
 
+    Another thing to consider is that we need the ip2location results as input to the query for near relays
 
+    We currently don't have anything setup to do the ip2location
 
+    We should probably solve this first?
+
+    I can't do the ip2location lookup inside the XDP program, but what I could do is have ip2location results cached inside a bpf map, and then only drop down to the userspace socket (AF_XDP?) if the ip address is not in the cache.
+
+    This should all be done inside the client backend, because we'll have multiple instances of these across the world (close to players) and we don't want them relying on a sub-service that's somewhere else.
+
+    So the client backend will need some loop where it periodically refreshes and downloads the ip2location database from some central location (or more likely, from multiple ones...)
+
+    -------------
+
+    We have a similar pattern when performaning autodetect for servers.
+
+    We won't be able to do this autodetect (whois) inside the XDP program, but we can have a cache in an XDP map, and then in the bpf program, just return the cached value, otherwise forward packet to userspace socket.
+
+    -------------
 
 
 
