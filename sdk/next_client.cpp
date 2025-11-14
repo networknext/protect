@@ -144,6 +144,7 @@ next_client_t * next_client_create( void * context, const char * connect_token_s
     memset( &bind_address, 0, sizeof(bind_address) );
     bind_address.type = NEXT_ADDRESS_IPV4;
 
+
     // todo: dummy the client on port 30000 for easy testing
     bind_address.port = 30000;
 
@@ -328,7 +329,7 @@ void next_client_update_initialize( next_client_t * client )
             packet.sdk_version_major = NEXT_VERSION_PATCH_INT;
             packet.connect_token = client->connect_token;
             packet.request_id = client->backend_init_data[i].request_id;
-            // todo: endian fixup
+            next_endian_fix( &packet );
             next_client_send_packet_internal( client, &to, (uint8_t*) &packet, sizeof(next_client_backend_init_request_packet_t) );
         }
         else
@@ -343,7 +344,7 @@ void next_client_update_initialize( next_client_t * client )
             packet.request_id = client->backend_init_data[i].request_id;
             packet.ping_sequence = client->backend_init_data[i].ping_sequence++;
             packet.backend_token = client->backend_init_data[i].backend_token;
-            // todo: endian fixup
+            next_endian_fix( &packet );
             next_client_send_packet_internal( client, &to, (uint8_t*) &packet, sizeof(next_client_backend_ping_packet_t) );
         }
     }
@@ -369,6 +370,7 @@ void next_client_process_packet( next_client_t * client, next_address_t * from, 
 
 #if NEXT_ADVANCED_PACKET_FILTER
 
+
     // todo: advanced packet filter
 
 #endif // #if NEXT_ADVANCED_PACKET_FILTER
@@ -387,7 +389,7 @@ void next_client_process_packet( next_client_t * client, next_address_t * from, 
             {
                 uint64_t sequence;
                 memcpy( (uint8_t*) &sequence, packet_data + 18, 8 );
-                // todo: endian fixup
+                next_endian_fix( &sequence );
                 client->packet_received_callback( client, client->context, packet_data + 18 + 8, packet_bytes - ( 18 + 8 ), sequence );
             }
         }
@@ -416,7 +418,7 @@ void next_client_process_packet( next_client_t * client, next_address_t * from, 
         {
             const next_client_backend_init_response_packet_t * packet = (const next_client_backend_init_response_packet_t*) packet_data;
 
-            // todo: endian fixup
+            next_endian_fix( packet );
 
             for ( int i = 0; i < NEXT_MAX_CONNECT_TOKEN_BACKENDS; i++ )
             {
@@ -442,7 +444,7 @@ void next_client_process_packet( next_client_t * client, next_address_t * from, 
         {
             const next_client_backend_pong_packet_t * packet = (const next_client_backend_pong_packet_t*) packet_data;
 
-            // todo: endian fixup
+            next_endian_fix( packet );
 
             for ( int i = 0; i < NEXT_MAX_CONNECT_TOKEN_BACKENDS; i++ )
             {
@@ -503,7 +505,7 @@ void next_client_update_refresh_backend_token( next_client_t * client )
     packet.sdk_version_major = NEXT_VERSION_PATCH_INT;
     packet.request_id = client->refresh_backend_token_request_id;
     packet.backend_token = client->backend_token;
-    // todo: endian fixup
+    next_endian_fix( &packet );
     next_client_send_packet_internal( client, &client->client_backend_address, (uint8_t*) &packet, sizeof(next_client_backend_refresh_token_request_packet_t) );
 
     client->last_request_backend_token_refresh_time = current_time;
@@ -558,7 +560,7 @@ void next_client_send_packet( next_client_t * client, const uint8_t * packet_dat
     }
     else
     {
-        // todo: client to server packet
+        // client to server packet
     }
 }
 
@@ -628,7 +630,7 @@ void next_client_receive_packets( next_client_t * client )
 
             uint64_t sequence;
             memcpy( (char*) &sequence, packet_data + NEXT_HEADER_BYTES, 8 );
-            // todo: endian fixup
+            next_endian_fix( &sequence );
 
             client->receive_buffer.sequence[index] = sequence;
         }

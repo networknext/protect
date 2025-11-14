@@ -40,4 +40,6 @@ bool next_write_connect_token( next_connect_token_t * token, char * output, cons
 
 bool next_read_connect_token( next_connect_token_t * token, const char * input, const uint8_t * public_key );
 
+void next_endian_fix( next_connect_token_t * token );
+
 #endif // #ifndef NEXT_ROUTE_TOKEN_H

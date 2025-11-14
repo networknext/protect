@@ -31,4 +31,6 @@ int next_write_client_backend_token( next_client_backend_token_t * token, uint8_
 
 bool next_read_client_backend_token( next_client_backend_token_t * token, const uint8_t * input, int input_bytes, const uint8_t * private_key );
 
+void next_endian_fix( next_client_backend_token_t * token );
+
 #endif // #ifndef NEXT_ROUTE_TOKEN_H

@@ -30,3 +30,14 @@ bool next_read_client_backend_token( next_client_backend_token_t * token, const 
     int decrypt_result = hydro_secretbox_decrypt( (uint8_t*) token + sizeof(token->crypto_header), input, input_bytes, 0, context, private_key );
     return decrypt_result == 0;
 }
+
+void next_endian_fix( next_client_backend_token_t * token )
+{
+    next_assert( token );
+    next_endian_fix( &token->version );
+    next_endian_fix( &token->expire_timestamp );
+    next_endian_fix( &token->buyer_id );
+    next_endian_fix( &token->server_id );
+    next_endian_fix( &token->session_id );
+    next_endian_fix( &token->user_hash );
+}

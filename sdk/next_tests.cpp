@@ -13,8 +13,6 @@
 #include "next_base64.h"
 #include "next_hash.h"
 #include "next_replay_protection.h"
-#include "next_route_token.h"
-#include "next_continue_token.h"
 #include "next_header.h"
 #include "next_packet_filter.h"
 #include "next_packet_loss_tracker.h"

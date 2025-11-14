@@ -10,13 +10,11 @@
 #include "next_hash.h"
 #include "next_config.h"
 #include "next_replay_protection.h"
-#include "next_route_token.h"
 #include "next_header.h"
 #include "next_packet_filter.h"
 #include "next_packet_loss_tracker.h"
 #include "next_out_of_order_tracker.h"
 #include "next_jitter_tracker.h"
-#include "next_route_manager.h"
 #include "next_hydrogen.h"
 
 #include <stdio.h>

@@ -376,7 +376,7 @@ struct next_client_stats_t
     bool next;
     bool upgraded;
     bool multipath;
-    bool reported;
+     bool reported;
     bool fallback_to_direct;
     float direct_rtt;
     float direct_jitter;

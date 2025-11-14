@@ -54,3 +54,20 @@ bool next_read_connect_token( next_connect_token_t * token, const char * input, 
     
     return true;
 }
+
+void next_endian_fix( next_connect_token_t * token )
+{
+    next_assert( token );
+    next_endian_fix( &token->version );
+    next_endian_fix( &token->expire_timestamp );
+    next_endian_fix( &token->buyer_id );
+    next_endian_fix( &token->server_id );
+    next_endian_fix( &token->session_id );
+    next_endian_fix( &token->user_hash );
+    next_endian_fix( &token->client_public_address );
+    for ( int i = 0; i < NEXT_MAX_CONNECT_TOKEN_BACKENDS; i++ )
+    {
+        next_endian_fix( &token->backend_addresses[i] );
+        next_endian_fix( &token->backend_ports[i] );
+    }
+}
