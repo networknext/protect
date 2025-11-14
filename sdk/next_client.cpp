@@ -14,6 +14,7 @@
 #include "next_platform.h"
 
 #include <memory.h>
+#include <atomic>
 
 struct next_client_backend_init_data_t
 {
@@ -65,10 +66,16 @@ struct next_client_t
 
     next_platform_socket_t * socket;
 
+    next_platform_thread_t * thread;
+    next_platform_mutex_t mutex;
+    std::atomic<bool> quit;
+
     void (*packet_received_callback)( next_client_t * client, void * context, const uint8_t * packet_data, int packet_bytes, uint64_t sequence );
 
     next_client_receive_buffer_t receive_buffer;
 };
+
+static void next_client_thread_function( void * data );
 
 next_client_t * next_client_create( void * context, const char * connect_token_string, const uint8_t * buyer_public_key, void (*packet_received_callback)( next_client_t * client, void * context, const uint8_t * packet_data, int packet_bytes, uint64_t sequence ) )
 {
@@ -126,7 +133,7 @@ next_client_t * next_client_create( void * context, const char * connect_token_s
         return NULL;
     }
 
-    memset( client, 0, sizeof(next_client_t) );
+    memset( (char*) client, 0, sizeof(next_client_t) );
     
     const uint64_t current_time = next_platform_time();
 
@@ -187,6 +194,21 @@ next_client_t * next_client_create( void * context, const char * connect_token_s
         client->refresh_backend_token_request_id = next_random_uint64();
     }
 
+    if ( !next_platform_mutex_create( &client->mutex ) )
+    {
+        next_error( "client could not create mutex" );
+        next_client_destroy( client );
+        return NULL;
+    }
+
+    client->thread = next_platform_thread_create( NULL, next_client_thread_function, client );
+    if ( !client->thread )
+    {
+        next_error( "client could not create thread" );
+        next_client_destroy( client );
+        return NULL;
+    }
+
     return client;    
 }
 
@@ -195,10 +217,21 @@ void next_client_destroy( next_client_t * client )
     // IMPORTANT: Please call disconnect and wait for the client to disconnect before destroying the client
     next_assert( client->state == NEXT_CLIENT_DISCONNECTED );
 
+    if ( client->thread )
+    {
+        next_platform_mutex_acquire( &client->mutex );
+        client->quit = true;
+        next_platform_mutex_release( &client->mutex );
+        next_platform_thread_join( client->thread );
+        next_platform_thread_destroy( client->thread );
+    }
+
     if ( client->socket )
     {
         next_platform_socket_destroy( client->socket );
     }
+
+    next_platform_mutex_destroy( &client->mutex );
 
     next_clear_and_free( client->context, client, sizeof(next_client_t) );
 }
@@ -549,6 +582,20 @@ uint64_t next_client_server_id( next_client_t * client )
 {
     next_assert( client );
     return client->server_id;
+}
+
+static void next_client_thread_function( void * data )
+{
+    next_info( "thread function" );
+
+    next_client_t * client = (next_client_t*) data;
+
+    while ( !client->quit )
+    {
+        // ...
+
+        next_platform_sleep( 0.001 );
+    }
 }
 
 void next_client_receive_packets( next_client_t * client )
