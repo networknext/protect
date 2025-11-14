@@ -280,6 +280,20 @@ float next_random_float()
     return float(double_value);
 }
 
+uint8_t next_random_uint8()
+{
+    uint8_t value;
+    hydro_random_buf( &value, sizeof(value) );
+    return value;
+}
+
+uint16_t next_random_uint16()
+{
+    uint16_t value;
+    hydro_random_buf( (uint8_t*)&value, sizeof(value) );
+    return value;
+}
+
 uint32_t next_random_uint32()
 {
     uint32_t value;

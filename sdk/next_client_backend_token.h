@@ -22,6 +22,8 @@ struct next_client_backend_token_t
     uint64_t server_id;
     uint64_t session_id;
     uint64_t user_hash;
+    uint32_t client_address;                        // big endian ipv4
+    uint16_t client_port;                           // big endian port #
 };
 #pragma pack(pop)
 

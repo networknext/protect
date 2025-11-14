@@ -88,6 +88,8 @@ struct next_client_backend_token_t
     __u64 server_id;
     __u64 session_id;
     __u64 user_hash;
+    __u32 client_address;                                                 // big endian ipv4
+    __u16 client_port;                                                    // big endian port #
 };
 
 struct next_client_backend_init_request_packet_t
@@ -677,6 +679,12 @@ SEC("client_backend_xdp") int client_backend_xdp_filter( struct xdp_md *ctx )
                                     return XDP_DROP;
                                 }
 
+                                if ( request->client_public_address != ip->saddr )
+                                {
+                                    debug_printf( "connect token client address mismatch" );
+                                    return XDP_DROP;
+                                }
+
                                 int key = 0;
                                 struct client_backend_state * state = (struct client_backend_state*) bpf_map_lookup_elem( &client_backend_state_map, &key );
                                 if ( state == NULL )
@@ -709,6 +717,8 @@ SEC("client_backend_xdp") int client_backend_xdp_filter( struct xdp_md *ctx )
                                 response->backend_token.server_id = server_id;
                                 response->backend_token.session_id = session_id;
                                 response->backend_token.user_hash = user_hash;
+                                response->backend_token.client_address = ip->saddr;
+                                response->backend_token.client_port = udp->source;
 
                                 int result = proton_secretbox_encrypt( (__u8*) &response->backend_token, sizeof(struct next_client_backend_token_t), 0, config->client_backend_private_key, PROTON_SECRETBOX_KEY_BYTES );
                                 if ( result != 0 )
@@ -739,6 +749,18 @@ SEC("client_backend_xdp") int client_backend_xdp_filter( struct xdp_md *ctx )
                                 if ( result != 0 )
                                 {
                                     debug_printf( "could not decrypt backend token" );
+                                    return XDP_DROP;
+                                }
+
+                                if ( request->backend_token.client_address != ip->saddr )
+                                {
+                                    debug_printf( "client address mismatch" );
+                                    return XDP_DROP;
+                                }
+
+                                if ( request->backend_token.client_port != udp->source )
+                                {
+                                    debug_printf( "client port mismatch" );
                                     return XDP_DROP;
                                 }
 
@@ -789,6 +811,18 @@ SEC("client_backend_xdp") int client_backend_xdp_filter( struct xdp_md *ctx )
                                 if ( result != 0 )
                                 {
                                     debug_printf( "could not decrypt backend token" );
+                                    return XDP_DROP;
+                                }
+
+                                if ( request->backend_token.client_address != ip->saddr )
+                                {
+                                    debug_printf( "client address mismatch" );
+                                    return XDP_DROP;
+                                }
+
+                                if ( request->backend_token.client_port != udp->source )
+                                {
+                                    debug_printf( "client port mismatch" );
                                     return XDP_DROP;
                                 }
 

@@ -1057,6 +1057,8 @@ void test_client_backend_token()
     input_token.server_id = next_random_uint64();
     input_token.session_id = next_random_uint64();
     input_token.user_hash = next_random_uint64();
+    input_token.client_address = next_random_uint32();
+    input_token.client_port = next_random_uint16();
 
     next_check( next_write_client_backend_token( &input_token, buffer, key ) == sizeof(next_client_backend_token_t) );
 
