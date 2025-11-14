@@ -6,6 +6,7 @@ import (
 	"os/exec"
 	"os/signal"
 	"syscall"
+	"runtime"
 )
 
 var cmd *exec.Cmd
@@ -106,7 +107,11 @@ func help() {
 }
 
 func client_backend() {
-	bash("cd dist && sudo CLIENT_BACKEND_PUBLIC_ADDRESS=45.250.253.243:40000 CLIENT_BACKEND_PRIVATE_KEY=otPzITpGBQbhk0F4u19zjobra/ez4F5YGDekxQI+HFw= ./client_backend")
+	if runtime.GOOS == "linux" {
+		bash("cd dist && sudo CLIENT_BACKEND_PUBLIC_ADDRESS=45.250.253.243:40000 CLIENT_BACKEND_PRIVATE_KEY=otPzITpGBQbhk0F4u19zjobra/ez4F5YGDekxQI+HFw= ./client_backend")
+	} else {
+		bash("cd dist && CLIENT_BACKEND_PUBLIC_ADDRESS=45.250.253.243:40000 CLIENT_BACKEND_PRIVATE_KEY=otPzITpGBQbhk0F4u19zjobra/ez4F5YGDekxQI+HFw= ./client_backend")
+	}
 }
 
 func client() {

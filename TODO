@@ -18,19 +18,21 @@ DONE
 
 TODO
 
-    Implement the ping near relays state of client init
+    Design the ping near relay
 
-    The trick here is that not only do we want the set of relays to ping, we also want...
+    Requirements:
 
-    1. more relays to ping than can fit in one response packet
+        1. Can have more relays to ping than can fit in one response packet
 
-    2. an estimate of best cost from each relay to the destination
+        2. Pass down lowest cost from each relay so we can self direct the optimization to give up early on relays that don't make sense
 
-    This will allows us to quickly stop pinging relays that have demonstrated after 1 second that they are probably not suitable
+        3. The common case should be fast. If we have a lot of good relays with no packet loss and low jitter, we can stop after just one second.
 
-    Think of it sort of a progressive refinement
+        4. If we don't have any good relays that we can communicate across we can retry until we reach the connect timeout. The worst can be slower, but taking its time to connect.
 
-    It also will let us in the common case very quickly decide, ok, these relays are fine, let's go.
+        5. The client doesn't connect until it finds the route through the relays, so we don't have the first 10 seconds of the match being unaccelerated.
+
+    I can mock up and test everything above with the sha256 hash, so the relay ping/pongs are compatible with the current fleet, so I can have a LOT of relays that I can ping.
 
     -------------
 
