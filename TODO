@@ -16,13 +16,19 @@ DONE
 
     Pump the receive packets once on main thread as will, right before we actually process them (to catch any packets in the last millisecond intra...)
 
+    Ignore any init that doesn't come from the client public address in the connect token
+
+    Extend the client backend token so it tracks client address and port
+
+    Ignore any client backend requests that don't come from the client IP and port in the client backend token
+
 TODO
 
-    Ignore any requests that don't come from the correct ip/port in the client backend token
+    Implement endian fix up for packet structs
 
     -------------
 
-    Implement endian fix up for packet structs
+    Implement rate limiting in XDP x requests per-y seconds keyed on IP address
 
     -------------
 
@@ -38,7 +44,7 @@ TODO
 
     -------------
 
-    Implement a server XDP program that does the packet filtering and checks for the server before passing down to userspace
+    Implement a server XDP program that does the packet filtering before passing down packets to userspace
 
     -------------
 
@@ -55,5 +61,13 @@ TODO
     -------------
 
     Implement the client ping near relay design
+
+    -------------
+
+    Implement requesting a route and sending packets across it
+
+    -------------
+
+    Double this route and implement multipath
 
     -------------

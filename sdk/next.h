@@ -157,7 +157,7 @@
 #define NEXT_ENABLE_MEMORY_CHECKS 0
 #endif // #if !defined(NEXT_ENABLE_MEMORY_CHECKS)
 
-#if !defined (NEXT_LITTLE_ENDIAN ) && !defined( NEXT_BIG_ENDIAN )
+#if !defined ( NEXT_LITTLE_ENDIAN ) && !defined( NEXT_BIG_ENDIAN )
 
   #ifdef __BYTE_ORDER__
     #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
@@ -333,6 +333,39 @@ NEXT_EXPORT_FUNC uint64_t next_random_uint64();
 NEXT_EXPORT_FUNC void next_random_bytes( uint8_t * data, size_t bytes );
 
 NEXT_EXPORT_FUNC uint64_t next_protocol_version();
+
+// -----------------------------------------
+
+inline void next_endian_fix( uint16_t * value )
+{
+#if NEXT_BIG_ENDIAN
+    *value = ( *value & 0x00ff ) << 8 | ( *value & 0xff00 ) >> 8;
+#endif // #if NEXT_BIG_ENDIAN
+}
+
+inline void next_endian_fix( uint32_t * value )
+{
+#if NEXT_BIG_ENDIAN
+#ifdef __GNUC__
+    *value = __builtin_bswap32( *value );
+#else // #ifdef __GNUC__
+    *value = ( *value & 0x000000ff ) << 24 | ( *value & 0x0000ff00 ) << 8 | ( *value & 0x00ff0000 ) >> 8 | ( *value & 0xff000000 ) >> 24;
+#endif // #ifdef __GNUC__
+#endif // #if NEXT_BIG_ENDIAN
+}
+
+inline void next_endian_fix( uint64_t * value )
+{
+#if NEXT_BIG_ENDIAN
+#ifdef __GNUC__
+    *value = __builtin_bswap64( value );
+#else // #ifdef __GNUC__
+    *value = ( *value & 0x00000000FFFFFFFF ) << 32 | ( *value & 0xFFFFFFFF00000000 ) >> 32;
+    *value = ( *value & 0x0000FFFF0000FFFF ) << 16 | ( *value & 0xFFFF0000FFFF0000 ) >> 16;
+    *value = ( *value & 0x00FF00FF00FF00FF ) << 8  | ( *value & 0xFF00FF00FF00FF00 ) >> 8;
+#endif // #ifdef __GNUC__
+#endif // #if NEXT_BIG_ENDIAN
+}
 
 // -----------------------------------------
 
