@@ -90,4 +90,38 @@ struct next_direct_packet_t
 
 #pragma pack(pop)
 
+inline void next_endian_fix( next_client_backend_init_request_packet_t * packet )
+{
+
+}
+
+inline void next_endian_fix( next_client_backend_init_response_packet_t * packet )
+{
+
+}
+
+inline void next_endian_fix( next_client_backend_ping_packet_t * packet )
+{
+
+}
+
+inline void next_endian_fix( next_client_backend_pong_packet_t * packet )
+{
+
+}
+
+inline void next_endian_fix( next_client_backend_refresh_token_request_packet_t * packet )
+{
+}
+
+inline void next_endian_fix( next_client_backend_refresh_token_response_packet_t * packet )
+{
+
+}
+
+inline void next_endian_fix( next_direct_packet_t * packet )
+{
+    
+}
+
 #endif // #ifndef NEXT_PACKETS_H

@@ -416,7 +416,7 @@ void next_client_process_packet( next_client_t * client, next_address_t * from, 
 
         if ( packet_type == NEXT_PACKET_CLIENT_BACKEND_INIT_RESPONSE && packet_bytes == sizeof(next_client_backend_init_response_packet_t) )
         {
-            const next_client_backend_init_response_packet_t * packet = (const next_client_backend_init_response_packet_t*) packet_data;
+            next_client_backend_init_response_packet_t * packet = (next_client_backend_init_response_packet_t*) packet_data;
 
             next_endian_fix( packet );
 
@@ -442,7 +442,7 @@ void next_client_process_packet( next_client_t * client, next_address_t * from, 
         }
         else if ( packet_type == NEXT_PACKET_CLIENT_BACKEND_PONG && packet_bytes == sizeof(next_client_backend_pong_packet_t) )
         {
-            const next_client_backend_pong_packet_t * packet = (const next_client_backend_pong_packet_t*) packet_data;
+            next_client_backend_pong_packet_t * packet = (next_client_backend_pong_packet_t*) packet_data;
 
             next_endian_fix( packet );
 
