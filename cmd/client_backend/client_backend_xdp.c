@@ -757,7 +757,10 @@ SEC("client_backend_xdp") int client_backend_xdp_filter( struct xdp_md *ctx )
 
                                 struct next_client_backend_init_request_packet_t * request = (struct next_client_backend_init_request_packet_t*) packet_data;
 
-                                struct client_backend_buyer * buyer = (struct client_backend_buyer*) bpf_map_lookup_elem( &client_backend_buyer_map, &request->connect_token.buyer_id );
+                                const uint64_t buyer_id = request->connect_token.buyer_id;
+                                endian_fix( &buyer_id );
+
+                                struct client_backend_buyer * buyer = (struct client_backend_buyer*) bpf_map_lookup_elem( &client_backend_buyer_map, &buyer_id );
                                 if ( buyer == NULL )
                                 {
                                     debug_printf( "unknown buyer" );
@@ -774,6 +777,8 @@ SEC("client_backend_xdp") int client_backend_xdp_filter( struct xdp_md *ctx )
                                     debug_printf( "connect token did not verify" );
                                     return XDP_DROP;
                                 }
+
+                                endian_fix( request );
 
                                 if ( request->connect_token.version != 0 )
                                 {
@@ -804,7 +809,6 @@ SEC("client_backend_xdp") int client_backend_xdp_filter( struct xdp_md *ctx )
                                 }         
 
                                 const __u64 request_id = request->request_id;
-                                const __u64 buyer_id = request->connect_token.buyer_id;
                                 const __u64 server_id = request->connect_token.server_id;
                                 const __u64 session_id = request->connect_token.session_id;
                                 const __u64 user_hash = request->connect_token.user_hash;
@@ -821,6 +825,8 @@ SEC("client_backend_xdp") int client_backend_xdp_filter( struct xdp_md *ctx )
                                 response->backend_token.user_hash = user_hash;
                                 response->backend_token.client_address = ip->saddr;
                                 response->backend_token.client_port = udp->source;
+
+                                endian_fix( response );
 
                                 int result = proton_secretbox_encrypt( (__u8*) &response->backend_token, sizeof(struct next_client_backend_token_t), 0, config->client_backend_private_key, PROTON_SECRETBOX_KEY_BYTES );
                                 if ( result != 0 )
@@ -853,6 +859,8 @@ SEC("client_backend_xdp") int client_backend_xdp_filter( struct xdp_md *ctx )
                                     debug_printf( "could not decrypt backend token" );
                                     return XDP_DROP;
                                 }
+
+                                endian_fix( request );
 
                                 if ( request->backend_token.client_address != ip->saddr )
                                 {
@@ -891,6 +899,8 @@ SEC("client_backend_xdp") int client_backend_xdp_filter( struct xdp_md *ctx )
                                 response->request_id = request_id;
                                 response->ping_sequence = ping_sequence;
 
+                                endian_fix( response );
+
                                 reflect_packet( data, sizeof(struct next_client_backend_pong_packet_t), magic );
 
                                 bpf_xdp_adjust_tail( ctx, -( (int) sizeof(struct next_client_backend_ping_packet_t) - (int) sizeof(struct next_client_backend_pong_packet_t) ) );
@@ -915,6 +925,8 @@ SEC("client_backend_xdp") int client_backend_xdp_filter( struct xdp_md *ctx )
                                     debug_printf( "could not decrypt backend token" );
                                     return XDP_DROP;
                                 }
+
+                                endian_fix( request );
 
                                 if ( request->backend_token.client_address != ip->saddr )
                                 {
@@ -960,6 +972,8 @@ SEC("client_backend_xdp") int client_backend_xdp_filter( struct xdp_md *ctx )
                                 response->backend_token.server_id = server_id;
                                 response->backend_token.session_id = session_id;
                                 response->backend_token.user_hash = user_hash;
+
+                                endian_fix( response );
 
                                 result = proton_secretbox_encrypt( (__u8*) &response->backend_token, sizeof(struct next_client_backend_token_t), 0, config->client_backend_private_key, PROTON_SECRETBOX_KEY_BYTES );
                                 if ( result != 0 )

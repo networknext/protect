@@ -22,13 +22,13 @@ DONE
 
     Ignore any client backend requests that don't come from the client IP and port in the client backend token
 
-TODO
-
     Implement endian fix up for packet structs
 
-    -------------
+    Pass over the packet processing in XDP and call endian_fix as needed
 
-    Implement rate limiting in XDP x requests per-y seconds keyed on IP address
+TODO
+
+    *** Good stopping point here ***
 
     -------------
 
@@ -45,6 +45,14 @@ TODO
     -------------
 
     Implement a server XDP program that does the packet filtering before passing down packets to userspace
+
+    -------------
+
+    *** Good stopping point here ***
+
+    -------------
+
+    Implement rate limiting in XDP x requests per-y seconds keyed on IP address
 
     -------------
 
