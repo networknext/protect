@@ -46,18 +46,45 @@
 #include "client_backend_shared.h"
 
 #if defined(__BYTE_ORDER__) && defined(__ORDER_LITTLE_ENDIAN__) && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+#define NEXT_LITTLE_ENDIAN 1
+#elif defined(__BYTE_ORDER__) && defined(__ORDER_BIG_ENDIAN__) && __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+#define NEXT_BIG_ENDIAN 1
+#else
+#error "Endianness detection needs to be set up for your compiler?!"
+#endif
+
+#if NEXT_LITTLE_ENDIAN 
 #define bpf_ntohl(x)        __builtin_bswap32(x)
 #define bpf_htonl(x)        __builtin_bswap32(x)
 #define bpf_ntohs(x)        __builtin_bswap16(x)
 #define bpf_htons(x)        __builtin_bswap16(x)
-#elif defined(__BYTE_ORDER__) && defined(__ORDER_BIG_ENDIAN__) && __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+#else // #if NEXT_LITTLE_ENDIAN
 #define bpf_ntohl(x)        (x)
 #define bpf_htonl(x)        (x)
 #define bpf_ntohs(x)        (x)
 #define bpf_htons(x)        (x)
-#else
-# error "Endianness detection needs to be set up for your compiler?!"
-#endif
+#endif // #if NEXT_LITTLE_ENDIAN
+
+void endian_fix( uint16_t * value )
+{
+#if NEXT_BIG_ENDIAN
+    __builtin_bswap16( *value );
+#endif // #if NEXT_BIG_ENDIAN
+}
+
+void endian_fix( uint32_t * value )
+{
+#if NEXT_BIG_ENDIAN
+    __builtin_bswap32( *value );
+#endif // #if NEXT_BIG_ENDIAN
+}
+
+void endian_fix( uint64_t * value )
+{
+#if NEXT_BIG_ENDIAN
+    __builtin_bswap64( *value );
+#endif // #if NEXT_BIG_ENDIAN
+}
 
 #pragma pack(push,1)
 
