@@ -26,17 +26,31 @@ DONE
 
     Pass over the packet processing in XDP and call endian_fix as needed
 
+    Big decision point.
+
+    We could just make the direct a debug only feature, and implement it in an insecure way.
+
+    This would mean simply taking the first packet sent and assigning a slot, or even just removing slots and just letting the packets through.
+
+    The alternative is to support a secure direct with a netcode like connect token and slot negotiation.
+
+    I think its better to leave the slot negotiation to the higher level, thus if we have this sort of insecure direct that's fine
+    
+    If we need a secure direct in the future, we can have a direct connect token that enables direct connection negotiation with the server.
+
+    But it's not possible to have secure connect without a connect token, so for now I vote just to make it like the simplest possible direct connection for a LAN and local testing situation.
+
+    Decision: implement an insecure direct that is development only and keep it as simple as possible. If a future customer wants secure direct, we can add that feature then.
+
+    Connection via next is secure and always goes through relays. Without a connect token, nobody can connect to a server.
+
 TODO
+    
+    Implement simplest possible direct connection -> client index slot on the server.
 
-    *** Good stopping point here ***
+    Implement a tiemout on the server for direct connections (10 seconds).
 
-    -------------
-
-    Implement handshake to pick a client slot (index)
-
-    Implement timeouts on the server side for client slots
-
-    Fix up all the hacked code to actually use client slot system when sending/receiving packets etc.
+    Implement a timeout on the direct client (5 seconds).
 
     -------------
 
@@ -49,6 +63,38 @@ TODO
     -------------
 
     *** Good stopping point here ***
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     -------------
 

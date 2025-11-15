@@ -32,6 +32,7 @@ struct next_client_receive_buffer_t
     int current_frame;
     bool processing_packets;
     next_address_t from[NEXT_NUM_CLIENT_FRAMES];
+    double receive_time[NEXT_NUM_CLIENT_FRAMES];
     uint64_t sequence[NEXT_NUM_CLIENT_FRAMES];
     uint8_t * packet_data[NEXT_NUM_CLIENT_FRAMES];
     size_t packet_bytes[NEXT_NUM_CLIENT_FRAMES];
@@ -69,6 +70,8 @@ struct next_client_t
     next_platform_thread_t * thread;
     next_platform_mutex_t mutex;
     std::atomic<bool> quit;
+
+    double last_packet_receive_time;
 
     void (*packet_received_callback)( next_client_t * client, void * context, const uint8_t * packet_data, int packet_bytes, uint64_t sequence );
 
@@ -184,6 +187,7 @@ next_client_t * next_client_create( void * context, const char * connect_token_s
         client->direct = true;
         client->direct_address = direct_address;
         client->state = NEXT_CLIENT_CONNECTED;
+        client->last_packet_receive_time = current_time;
     }
     else
     {
@@ -268,6 +272,23 @@ void next_client_update_direct( next_client_t * client )
         return;
 
     // ...
+}
+
+void next_client_update_timeout( next_client_t * client )
+{
+    if ( client->direct )
+    {
+        if ( client->last_packet_receive_time + NEXT_DIRECT_TIMEOUT < next_platform_time() )
+        {
+            next_warn( "client connection timed out" );
+            client->state = NEXT_CLIENT_CONNECTION_TIMED_OUT;
+            return;
+        }
+    }
+    else
+    {
+        // todo: next timeout
+    }
 }
 
 void next_client_update_initialize( next_client_t * client )
@@ -536,6 +557,8 @@ void next_client_update( next_client_t * client )
     next_client_update_initialize( client );
 
     next_client_update_refresh_backend_token( client );
+
+    next_client_update_timeout( client );
 }
 
 void next_client_send_packet( next_client_t * client, const uint8_t * packet_data, int packet_bytes )
@@ -588,13 +611,12 @@ uint64_t next_client_server_id( next_client_t * client )
 
 static void next_client_thread_function( void * data )
 {
-    next_info( "thread function" );
-
     next_client_t * client = (next_client_t*) data;
 
     while ( !client->quit )
     {
         next_client_receive_packets( client );
+
         next_platform_sleep( 0.001 );
     }
 }
@@ -617,6 +639,8 @@ void next_client_receive_packets( next_client_t * client )
         if ( packet_bytes == 0 )
             break;
 
+        double receive_time = next_platform_time();
+
         const uint8_t packet_type = packet_data[0];
 
         const int index = client->receive_buffer.current_frame;
@@ -634,6 +658,7 @@ void next_client_receive_packets( next_client_t * client )
         }
 
         client->receive_buffer.from[index] = from;
+        client->receive_buffer.receive_time[index] = receive_time;
         client->receive_buffer.packet_data[index] = packet_data;
         client->receive_buffer.packet_bytes[index] = packet_bytes;
         client->receive_buffer.current_frame++;

@@ -369,43 +369,6 @@ inline void next_endian_fix( uint64_t * value )
 
 // -----------------------------------------
 
-struct next_client_stats_t
-{
-    int platform_id;
-    int connection_type;
-    bool next;
-    bool upgraded;
-    bool multipath;
-     bool reported;
-    bool fallback_to_direct;
-    float direct_rtt;
-    float direct_jitter;
-    float direct_packet_loss;
-    float direct_max_packet_loss_seen;
-    float next_rtt;
-    float next_jitter;
-    float next_packet_loss;
-    uint64_t packets_sent_client_to_server;
-    uint64_t packets_sent_server_to_client;
-    uint64_t packets_lost_client_to_server;
-    uint64_t packets_lost_server_to_client;
-    uint64_t packets_out_of_order_client_to_server;
-    uint64_t packets_out_of_order_server_to_client;
-    float jitter_client_to_server;
-    float jitter_server_to_client;
-    float delta_time_min;
-    float delta_time_max;
-    float delta_time_avg;
-    float game_rtt;
-    float game_jitter;
-    float game_packet_loss;
-    float bandwidth_kbps_up;
-    float bandwidth_kbps_down;
-    uint32_t flags;
-};
-
-// -----------------------------------------
-
 NEXT_EXPORT_FUNC bool next_packet_tagging_can_be_enabled();
 
 NEXT_EXPORT_FUNC void next_enable_packet_tagging();
