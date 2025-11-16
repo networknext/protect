@@ -7,7 +7,7 @@ build: build/Makefile
 .PHONY: clean
 clean: build/Makefile
 	cd build && make clean --no-print-directory
-	find build/ -not -name "CMakeLists.txt" -delete
+	find build/* -not -name "CMakeLists.txt" -delete
 	rm -rf dist/*
 
 build/Makefile: build/CMakeLists.txt
