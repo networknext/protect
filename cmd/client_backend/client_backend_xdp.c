@@ -756,7 +756,7 @@ SEC("client_backend_xdp") int client_backend_xdp_filter( struct xdp_md *ctx )
 
                                 struct next_client_backend_init_request_packet_t * request = (struct next_client_backend_init_request_packet_t*) packet_data;
 
-                                const __u64 buyer_id = request->connect_token.buyer_id;
+                                __u64 buyer_id = request->connect_token.buyer_id;
                                 endian_fix_u64( &buyer_id );
 
                                 struct client_backend_buyer * buyer = (struct client_backend_buyer*) bpf_map_lookup_elem( &client_backend_buyer_map, &buyer_id );
@@ -785,7 +785,7 @@ SEC("client_backend_xdp") int client_backend_xdp_filter( struct xdp_md *ctx )
                                     return XDP_DROP;
                                 }
 
-                                if ( request->client_public_address != ip->saddr )
+                                if ( request->connect_token.client_public_address != ip->saddr )
                                 {
                                     debug_printf( "connect token client address mismatch" );
                                     return XDP_DROP;
