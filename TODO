@@ -16,25 +16,15 @@ DONE
 
     SSH back into the linux box
 
+    Implement the server XDP program skeleton
+
+    This program should look at any UDP ports at 1024 and above and pass down to userspace only if they pass the packet filter
+
 TODO
-
-    Implement the server XDP program
-
-    This program should look at any UDP ports above 1000 and pass down to userspace only if they pass the packet filters and packet type tests
-
-    Initially we can allow direct #if ALLOW_DIRECT but this should be off by default in future. Anytime the XDP program is run it is production ready.
-
-    -------------
 
     Extend the server so it uses AF_XDP to send and receive packets on linux.
 
-    -------------
-
-    Implement a server XDP program that does the packet filtering before passing down packets to userspace
-
-    -------------
-
-    Disable packet filtering #ifdef __linux__, it's done in XDP
+    Disable packet filtering on the server #ifdef __linux__, it's done in XDP.
 
     -------------
 

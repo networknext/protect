@@ -10,6 +10,24 @@
 #include "next_packet_filter.h"
 #include "next_hash.h"
 
+#ifdef __linux__
+
+#include <ifaddrs.h>
+#include <bpf/bpf.h>
+#include <bpf/libbpf.h>
+#include <xdp/xsk.h>
+#include <xdp/libxdp.h>
+#include <sys/resource.h>
+#include <stdlib.h>
+#include <arpa/inet.h>
+#include <linux/ip.h>
+#include <linux/udp.h>
+#include <net/if.h>
+#include <linux/if_link.h>
+#include <linux/if_ether.h>
+
+#endif // #ifdef __linux
+
 #include <memory.h>
 #include <stdio.h>
 
@@ -58,6 +76,17 @@ struct next_server_t
     next_server_receive_buffer_t receive_buffer;
 
     next_server_process_packets_t process_packets;
+
+#ifdef __linux__
+
+    void * buffer;
+    struct xsk_umem * umem;
+    struct xsk_ring_prod send_queue;
+    struct xsk_ring_cons complete_queue;
+    struct xsk_ring_prod fill_queue;
+    struct xsk_socket * xsk;
+
+#endif // #ifdef __linux__
 };
 
 void next_server_destroy( next_server_t * server );
@@ -88,6 +117,37 @@ next_server_t * next_server_create( void * context, const char * bind_address_st
     memset( server, 0, sizeof( next_server_t) );
     
     server->context = context;
+
+#if __linux__
+
+    // allow unlimited locking of memory, so all memory needed for packet buffers can be locked
+
+    struct rlimit rlim = { RLIM_INFINITY, RLIM_INFINITY };
+
+    if ( setrlimit( RLIMIT_MEMLOCK, &rlim ) ) 
+    {
+        next_error( "server could not setrlimit" );
+        return NULL;
+    }
+
+    const int buffer_size = NEXT_SERVER_NUM_FRAMES * FRAME_SIZE;
+
+    if ( posix_memalign( &server->buffer, getpagesize(), buffer_size ) ) 
+    {
+        next_error( "server could allocate buffer" );
+        return NULL;
+    }
+
+    // allocate umem
+
+    ret = xsk_umem__create( &server->umem, server->buffer, buffer_size, &server->fill_queue, &server->complete_queue, &server->fill_queue );
+    if ( ret ) 
+    {
+        next_error( "server could not create umem" );
+        return NULL;
+    }
+
+#endif // #if __linux__
 
     server->socket = next_platform_socket_create( server->context, &bind_address, NEXT_PLATFORM_SOCKET_NON_BLOCKING, 0.0f, NEXT_SOCKET_SEND_BUFFER_SIZE, NEXT_SOCKET_RECEIVE_BUFFER_SIZE );
     if ( server->socket == NULL )
@@ -138,6 +198,22 @@ void next_server_destroy( next_server_t * server )
     {
         next_platform_socket_destroy( server->socket );
     }
+
+#ifdef __linux__
+
+    if ( server->xsk )
+    {
+        xsk_socket__delete( server->xsk );
+    }
+
+    if ( server->umem )
+    {
+        xsk_umem__delete( server->umem );
+    }
+
+    free( server->buffer );
+
+#endif // #ifdef __linux__
 
     next_clear_and_free( server->context, server, sizeof(next_server_t) );
 }
