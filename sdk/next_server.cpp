@@ -231,10 +231,10 @@ void next_server_destroy( next_server_t * server )
     next_assert( server );
     next_assert( server->state == NEXT_SERVER_STOPPED );        // IMPORTANT: Please stop the server and wait until state is NEXT_SERVER_STOPPED before destroying it
 
-#ifndef __linux_
     next_platform_mutex_destroy( &server->send_buffer.mutex );
-#endif // #ifndef __linux__
+#ifndef __linux_
     next_platform_mutex_destroy( &server->client_payload_mutex );
+#endif // #ifndef __linux__
 
     if ( server->socket )
     {
