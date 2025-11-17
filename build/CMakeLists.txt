@@ -163,7 +163,11 @@ enable_language(CXX)
 add_executable(server ../cmd/server/server.cpp)
 target_include_directories(server PRIVATE ../sdk)
 add_dependencies(server next)
-target_link_libraries(server next)
+if (LINUX)
+    target_link_libraries(server next xdp)
+else()
+    target_link_libraries(server next)
+endif()
 
 
 # test
