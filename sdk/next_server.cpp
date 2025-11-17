@@ -540,6 +540,7 @@ uint8_t * next_server_start_packet( struct next_server_t * server, int client_in
 #ifdef __linux__
 
     // todo: AF_XDP
+    return NULL;
 
 #else // #ifdef __linux__
 
