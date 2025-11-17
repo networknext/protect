@@ -400,8 +400,8 @@ next_server_t * next_server_create( void * context, const char * bind_address_st
 
     memset( &xsk_config, 0, sizeof(xsk_config) );
 
-    xsk_config.rx_size = XSK_RING_PROD__DEFAULT_NUM_DESCS;
-    xsk_config.tx_size = XSK_RING_PROD__DEFAULT_NUM_DESCS;
+    xsk_config.rx_size = NEXT_SERVER_XDP_RECEIVE_QUEUE_SIZE;
+    xsk_config.tx_size = NEXT_SERVER_XDP_SEND_QUEUE_SIZE;
     xsk_config.xdp_flags = XDP_ZEROCOPY;                                            // force zero copy mode
     xsk_config.bind_flags = XDP_USE_NEED_WAKEUP;                                    // manually wake up the driver when it needs to do work to send packets
     xsk_config.libbpf_flags = XSK_LIBBPF_FLAGS__INHIBIT_PROG_LOAD;
@@ -756,6 +756,84 @@ uint8_t * next_server_start_packet_internal( struct next_server_t * server, next
 
 #endif // #ifdef __linux__
 }
+
+// todo: xdp send logic
+
+#if 0
+
+void socket_update( struct socket_t * socket, int queue_id )
+{
+    // don't do anything if we don't have enough free packets to send a batch
+
+    if ( socket->num_frames < SEND_BATCH_SIZE )
+        return;
+
+    // queue packets to send
+
+    int send_index;
+    int result = xsk_ring_prod__reserve( &socket->send_queue, SEND_BATCH_SIZE, &send_index );
+    if ( result == 0 ) 
+    {
+        return;
+    }
+
+    int num_packets = 0;
+    uint64_t packet_address[SEND_BATCH_SIZE];
+    int packet_length[SEND_BATCH_SIZE];
+
+    while ( true )
+    {
+        uint64_t frame = socket_alloc_frame( socket );
+
+        assert( frame != INVALID_FRAME );   // this should never happen
+
+        uint8_t * packet = socket->buffer + frame;
+
+        packet_address[num_packets] = frame;
+        packet_length[num_packets] = client_generate_packet( packet, PAYLOAD_BYTES, socket->counter + num_packets );
+
+        num_packets++;
+
+        if ( num_packets == SEND_BATCH_SIZE )
+            break;
+    }
+
+    for ( int i = 0; i < num_packets; i++ )
+    {
+        struct xdp_desc * desc = xsk_ring_prod__tx_desc( &socket->send_queue, send_index + i );
+        desc->addr = packet_address[i];
+        desc->len = packet_length[i];
+    }
+
+    xsk_ring_prod__submit( &socket->send_queue, num_packets );
+
+    // send queued packets
+
+    if ( xsk_ring_prod__needs_wakeup( &socket->send_queue ) )
+        sendto( xsk_socket__fd( socket->xsk ), NULL, 0, MSG_DONTWAIT, NULL, 0 );
+
+    // mark completed sent packet frames as free to be reused
+
+    uint32_t complete_index;
+
+    unsigned int completed = xsk_ring_cons__peek( &socket->complete_queue, XSK_RING_CONS__DEFAULT_NUM_DESCS, &complete_index );
+
+    if ( completed > 0 ) 
+    {
+        for ( int i = 0; i < completed; i++ )
+        {
+            socket_free_frame( socket, *xsk_ring_cons__comp_addr( &socket->complete_queue, complete_index++ ) );
+        }
+
+        xsk_ring_cons__release( &socket->complete_queue, completed );
+
+        __sync_fetch_and_add( &socket->sent_packets, completed );
+
+        socket->counter += completed;
+    }
+}
+
+#endif // #if 0
 
 uint8_t * next_server_start_packet( struct next_server_t * server, int client_index, uint64_t * out_sequence )
 {

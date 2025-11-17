@@ -50,13 +50,67 @@ DONE
 
     Actually, ended up using "ip neigh show" instead of "arp -a" because the latter takes several seconds and ip is instant.
 
+    Bring across frame allocator protected by a mutex
+
 TODO
 
-    ... Study docs on sending packets with AF_XDP ...
-
-    -------------
-
     Implement send with AF_XDP
+
+    First, reserve n packets in the send queue. I believe we don't have to actually transmit all that we reserve.
+
+        int send_index;
+        int result = xsk_ring_prod__reserve( &socket->send_queue, SEND_BATCH_SIZE, &send_index );
+        if ( result == 0 ) 
+        {
+            return;
+        }
+
+    For each packet sent, allocate a frame in the umem and save the address and length of the packet.
+
+        uint64_t frame = socket_alloc_frame( socket );
+
+    For each packet not aborted (not zero length), fill the tx desc:
+
+        struct xdp_desc * desc = xsk_ring_prod__tx_desc( &socket->send_queue, send_index + i );
+        desc->addr = packet_address[i];
+        desc->len = packet_length[i];
+
+    Submit the send queue:
+
+        xsk_ring_prod__submit( &socket->send_queue, num_packets );
+
+    Wakeup the driver to do work:
+
+        if ( xsk_ring_prod__needs_wakeup( &socket->send_queue ) )
+            sendto( xsk_socket__fd( socket->xsk ), NULL, 0, MSG_DONTWAIT, NULL, 0 );
+
+    Free any aborted frames (immediate).
+
+    Free any completed frames.
+
+        // mark completed sent packet frames as free to be reused
+
+        uint32_t complete_index;
+
+        unsigned int completed = xsk_ring_cons__peek( &socket->complete_queue, XSK_RING_CONS__DEFAULT_NUM_DESCS, &complete_index );
+
+        if ( completed > 0 ) 
+        {
+            for ( int i = 0; i < completed; i++ )
+            {
+                socket_free_frame( socket, *xsk_ring_cons__comp_addr( &socket->complete_queue, complete_index++ ) );
+            }
+
+            xsk_ring_cons__release( &socket->complete_queue, completed );
+
+            __sync_fetch_and_add( &socket->sent_packets, completed );
+
+            socket->counter += completed;
+        }
+
+    This *should* be it!
+
+    The main question is around, how large is the send queue by default, and should I just guess with a large-ish number, or provide the user with the ability to have multiple swings at it, or?
 
     -------------
 
