@@ -228,7 +228,7 @@ next_server_t * next_server_create( void * context, const char * bind_address_st
     }
 
     char address_string[NEXT_MAX_ADDRESS_STRING_LENGTH];
-    next_info( "server started on %s", next_address_to_string( &bind_address, address_string ) );
+    next_info( "server started on %s (xdp)", next_address_to_string( &public_address, address_string ) );
 
 #else // #if __linux __
 
@@ -241,7 +241,7 @@ next_server_t * next_server_create( void * context, const char * bind_address_st
     }
 
     char address_string[NEXT_MAX_ADDRESS_STRING_LENGTH];
-    next_info( "server started on %s (AF_XDP)", next_address_to_string( &public_address, address_string ) );
+    next_info( "server started on %s", next_address_to_string( &bind_address, address_string ) );
 
 #endif // #if __linux__
 
