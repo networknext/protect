@@ -140,8 +140,8 @@ next_server_t * next_server_create( void * context, const char * bind_address_st
 
     // allocate umem
 
-    ret = xsk_umem__create( &server->umem, server->buffer, buffer_size, &server->fill_queue, &server->complete_queue, NULL );
-    if ( ret ) 
+    int result = xsk_umem__create( &server->umem, server->buffer, buffer_size, &server->fill_queue, &server->complete_queue, NULL );
+    if ( result ) 
     {
         next_error( "server could not create umem" );
         return NULL;
