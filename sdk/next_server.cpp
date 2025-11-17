@@ -246,12 +246,12 @@ next_server_t * next_server_create( void * context, const char * bind_address_st
     }
 
     next_info( "server ethernet address is %02x.%02x.%02x.%02x.%02x.%02x", 
-        server->ethernet_address[5], 
-        server->ethernet_address[4], 
-        server->ethernet_address[3], 
-        server->ethernet_address[2], 
-        server->ethernet_address[1], 
-        server->ethernet_address[0] 
+        server->server_ethernet_address[5], 
+        server->server_ethernet_address[4], 
+        server->server_ethernet_address[3], 
+        server->server_ethernet_address[2], 
+        server->server_ethernet_address[1], 
+        server->server_ethernet_address[0] 
     );
 
     // todo: look up the gateway ethernet address for the network interface
