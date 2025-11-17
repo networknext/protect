@@ -128,12 +128,12 @@ static bool get_interface_mac_address( const char * interface_name, uint8_t * ma
         return false;
     }
 
-    mac_address[5] = (uint8_t) strtol( mac_address_string[0], mac_address_string[2], 16 );
-    mac_address[4] = (uint8_t) strtol( mac_address_string[3], mac_address_string[5], 16 );
-    mac_address[3] = (uint8_t) strtol( mac_address_string[6], mac_address_string[8], 16 );
-    mac_address[2] = (uint8_t) strtol( mac_address_string[9], mac_address_string[11], 16 );
-    mac_address[1] = (uint8_t) strtol( mac_address_string[12], mac_address_string[14], 16 );
-    mac_address[0] = (uint8_t) strtol( mac_address_string[15], mac_address_string[17], 16 );
+    mac_address[5] = (uint8_t) strtol( mac_address_string + 0, mac_address_string + 2, 16 );
+    mac_address[4] = (uint8_t) strtol( mac_address_string + 3, mac_address_string + 5, 16 );
+    mac_address[3] = (uint8_t) strtol( mac_address_string + 6, mac_address_string + 8, 16 );
+    mac_address[2] = (uint8_t) strtol( mac_address_string + 9, mac_address_string + 11, 16 );
+    mac_address[1] = (uint8_t) strtol( mac_address_string + 12, mac_address_string + 14, 16 );
+    mac_address[0] = (uint8_t) strtol( mac_address_string + 15, mac_address_string + 17, 16 );
 
     fclose( file );
 
