@@ -198,21 +198,17 @@ static bool get_gateway_mac_address( const char * interface_name, uint8_t * mac_
     char ip_buffer[1024];
     while ( fgets( ip_buffer, sizeof(ip_buffer), file ) != NULL )
     {
-        if ( strlen( ip_buffer ) > 0 && strstr( ip_buffer, gateway_ip_string ) && strstr( ip_buffer, interface_name ) )
+        if ( strlen( ip_buffer ) > 0 && strstr( ip_buffer, gateway_ip_string ) && strstr( ip_buffer, interface_name ) && strstr( ip_buffer, "REACHABLE" ) )
         {
-            // todo
-            printf( "%s\n", ip_buffer );
-            /*
-            char * p = strstr( ip_buffer, " at " );
+            char * p = strstr( ip_buffer, " lladdr " );
             if ( p )
             {
-                p += 4;
+                p += 8;
                 found_mac_address = true;
                 strncpy( mac_address_string, p, 17 );
                 mac_address_string[17] = 0;
                 break;
             }
-            */
         }
     }
     pclose( file );
