@@ -190,11 +190,31 @@ static bool get_gateway_mac_address( const char * interface_name, uint8_t * mac_
 
     // now look up in the arp cache to find the ethernet address corresponding to the gateway IP address (it should also be tied to our interface name)
 
-    // ...
-
-    printf( "%s\n", gateway_ip_string );
+    file = popen( "arp -a", "r" );
+    char arp_buffer[1024];
+    while ( fgets( arp_buffer, sizeof(arp_buffer), file ) != NULL )
+    {
+        if ( strlen( arp_buffer ) > 0 && strstr( arp_buffer, gateway_ip_string ) && strstr( arp_buffer, interface_name ) )
+        {
+            printf( "%s\n", buffer );
+            /*
+            char * token = strtok( netstat_buffer, " " );
+            if ( token )
+            {
+                token = strtok( NULL, " " );
+                if ( token )
+                {
+                    gateway_ip_string = token;
+                    break;
+                }
+            }
+            */
+        }
+    }
+    pclose( file );
 
     // todo
+    printf( "%s\n", gateway_ip_string );
     fflush( stdout );
 
     return true;
