@@ -183,7 +183,7 @@ static bool get_gateway_mac_address( const char * interface_name, uint8_t * mac_
     // parse the address and make sure it's a valid ipv4
 
     next_address_t address;
-    if ( !next_address_parse( &gateway_ip_string ) || address.type != NEXT_ADDRESS_IPV4 )
+    if ( !next_address_parse( &address, gateway_ip_string ) || address.type != NEXT_ADDRESS_IPV4 )
     {
         return false;
     }
