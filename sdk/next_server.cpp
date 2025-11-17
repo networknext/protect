@@ -161,21 +161,24 @@ static bool get_gateway_mac_address( const char * interface_name, uint8_t * mac_
         if ( strlen( buffer ) > 0 && strstr( buffer, "UG" ) && strstr( buffer, interface_name ) )
         {
             char * p = buffer;
-            while ( p != '\0' && p != '\t' )
+            while ( *p != '\0' && *p != '\t' )
             {
                 p++;
             }
             if ( *p == '\t' )
             {
                 char * q = p;
-                while ( q != '\0' && q != '\t' )
+                while ( *q != '\0' && *q != '\t' )
                 {
                     q++;
                 }
                 if ( *q == '\t' )
                     *q = '\0';
+
                 printf( "%s", p );
+                
                 found_gateway_ip = true;
+                break;
             }
         }
     }
