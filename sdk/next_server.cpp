@@ -161,7 +161,7 @@ next_server_t * next_server_create( void * context, const char * bind_address_st
             if ( iap->ifa_addr && ( iap->ifa_flags & IFF_UP ) && iap->ifa_addr->sa_family == AF_INET )
             {
                 struct sockaddr_in * sa = (struct sockaddr_in*) iap->ifa_addr;
-                if ( ntohl( sa->sin_addr.s_addr ) == public_address_ipv4 )
+                if ( sa->sin_addr.s_addr == public_address_ipv4 )
                 {
                     strncpy( interface_name, iap->ifa_name, sizeof(interface_name) );
                     found = true;
