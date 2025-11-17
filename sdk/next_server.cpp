@@ -147,6 +147,32 @@ static bool get_interface_mac_address( const char * interface_name, uint8_t * ma
     return true;
 }
 
+static bool get_gateway_mac_address( const char * interface_name, uint8_t * mac_address )
+{
+    // todo
+    memset( mac_address, 0, 6 );
+
+    // todo
+    printf( "----------------------------\n" );
+
+    FILE * file = popen( "netstat -rn", "r" );
+    char buffer[1024];
+    while ( fgets( buffer, sizeof(buffer), file ) != NULL )
+    {
+        if ( strlen( buffer ) > 0 )
+        {
+            printf( "%s", buffer );
+        }
+    }
+    pclose( file );
+
+    // todo
+    printf( "----------------------------\n" );
+    fflush( stdeout );
+
+    return true;
+}
+
 #endif // #ifdef __linux__
 
 next_server_t * next_server_create( void * context, const char * bind_address_string, const char * public_address_string )
@@ -254,7 +280,23 @@ next_server_t * next_server_create( void * context, const char * bind_address_st
         server->server_ethernet_address[0] 
     );
 
-    // todo: look up the gateway ethernet address for the network interface
+    // look up the gateway ethernet address for the network interface
+
+    if ( !get_gateway_mac_address( interface_name ) )
+    {
+        next_error( "server could not get gateway mac address" );
+        next_server_destroy( server );
+        return NULL;
+    }
+
+    next_info( "gateway ethernet address is %02x.%02x.%02x.%02x.%02x.%02x", 
+        server->gateway_ethernet_address[5], 
+        server->gateway_ethernet_address[4], 
+        server->gateway_ethernet_address[3], 
+        server->gateway_ethernet_address[2], 
+        server->gateway_ethernet_address[1], 
+        server->gateway_ethernet_address[0] 
+    );
 
     // allow unlimited locking of memory, so all memory needed for packet buffers can be locked
 
