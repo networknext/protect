@@ -168,7 +168,7 @@ static bool get_gateway_mac_address( const char * interface_name, uint8_t * mac_
 
     // todo
     printf( "----------------------------\n" );
-    fflush( stdeout );
+    fflush( stdout );
 
     return true;
 }
@@ -282,7 +282,7 @@ next_server_t * next_server_create( void * context, const char * bind_address_st
 
     // look up the gateway ethernet address for the network interface
 
-    if ( !get_gateway_mac_address( interface_name ) )
+    if ( !get_gateway_mac_address( interface_name, server->gateway_ethernet_address ) )
     {
         next_error( "server could not get gateway mac address" );
         next_server_destroy( server );
