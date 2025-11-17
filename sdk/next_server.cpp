@@ -78,6 +78,15 @@ struct next_server_t
 
 #ifdef __linux__
 
+    uint8_t server_ethernet_address[ETH_ALEN];
+    uint8_t gateway_ethernet_address[ETH_ALEN];
+
+    uint32_t server_address_big_endian;
+    uint16_t server_port_big_endian;
+
+    uint32_t client_address_big_endian[NEXT_MAX_CLIENTS];
+    uint16_t client_port_big_endian[NEXT_MAX_CLIENTS];
+
     void * buffer;
     struct xsk_umem * umem;
     struct xsk_ring_cons receive_queue;
