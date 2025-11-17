@@ -122,7 +122,7 @@ static bool get_interface_mac_address( const char * interface_name, uint8_t * ma
 
     char mac_address_string[18];
 
-    if ( fgets( mac_address, sizeof(mac_address_string), file ) == NULL ) 
+    if ( fgets( mac_address_string, sizeof(mac_address_string), file ) == NULL ) 
     {
         fclose( file );
         return false;
