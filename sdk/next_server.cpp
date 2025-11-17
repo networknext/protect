@@ -430,7 +430,7 @@ next_server_t * next_server_create( void * context, const char * bind_address_st
         server->frames[j] = j * NEXT_SERVER_FRAME_SIZE;
     }
 
-    server->num_free_frames = NUM_FRAMES;
+    server->num_free_frames = NEXT_NUM_SERVER_FRAMES;
 
     // save the server public address and port in network order (big endian)
 
