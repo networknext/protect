@@ -234,6 +234,8 @@ next_server_t * next_server_create( void * context, const char * bind_address_st
         }
     }
 
+    next_info( "server network interface is %s", interface_name );
+
     // look up the ethernet address of the network interface
 
     if ( !get_interface_mac_address( interface_name, server->server_ethernet_address ) )
@@ -242,6 +244,15 @@ next_server_t * next_server_create( void * context, const char * bind_address_st
         next_server_destroy( server );
         return NULL;
     }
+
+    next_info( "server ethernet address is %02x.%02x.%02x.%02x.%02x.%02x", 
+        server->ethernet_address[5], 
+        server->ethernet_address[4], 
+        server->ethernet_address[3], 
+        server->ethernet_address[2], 
+        server->ethernet_address[1], 
+        server->ethernet_address[0] 
+    );
 
     // todo: look up the gateway ethernet address for the network interface
 
