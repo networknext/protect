@@ -756,7 +756,7 @@ SEC("client_backend_xdp") int client_backend_xdp_filter( struct xdp_md *ctx )
 
                                 struct next_client_backend_init_request_packet_t * request = (struct next_client_backend_init_request_packet_t*) packet_data;
 
-                                const uint64_t buyer_id = request->connect_token.buyer_id;
+                                const __u64 buyer_id = request->connect_token.buyer_id;
                                 endian_fix_u64( &buyer_id );
 
                                 struct client_backend_buyer * buyer = (struct client_backend_buyer*) bpf_map_lookup_elem( &client_backend_buyer_map, &buyer_id );
@@ -908,7 +908,7 @@ SEC("client_backend_xdp") int client_backend_xdp_filter( struct xdp_md *ctx )
                             }
                             break;
                             
-                            case NEXT_CLIENT_BACKEND_PACKET_REFRESH_TOKEN_REQUEST:
+                            case NEXT_PACKET_CLIENT_BACKEND_REFRESH_TOKEN_REQUEST:
                             {
                                 if ( (void*)packet_data + sizeof(struct next_client_backend_refresh_token_request_packet_t) > data_end )
                                 {
@@ -963,7 +963,7 @@ SEC("client_backend_xdp") int client_backend_xdp_filter( struct xdp_md *ctx )
 
                                 struct next_client_backend_refresh_token_response_packet_t * response = (struct next_client_backend_refresh_token_response_packet_t*) packet_data;
 
-                                response->type = NEXT_CLIENT_BACKEND_PACKET_REFRESH_TOKEN_RESPONSE;
+                                response->type = NEXT_PACKET_CLIENT_BACKEND_REFRESH_TOKEN_RESPONSE;
                                 response->request_id = request_id;
                                 response->backend_token.version = NEXT_CLIENT_BACKEND_TOKEN_VERSION;
                                 response->backend_token.expire_timestamp = current_timestamp + NEXT_CLIENT_BACKEND_TOKEN_EXPIRE_SECONDS;
