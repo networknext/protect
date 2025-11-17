@@ -443,6 +443,29 @@ void next_server_receive_packets( next_server_t * server )
         if ( packet_bytes == 0 )
             break;
 
+#ifndef __linux__
+
+        // basic packet filter
+
+        if ( !next_basic_packet_filter( packet_data, packet_bytes ) )
+        {
+            next_debug( "basic packet filter dropped packet" );
+            continue;
+        }
+
+#if NEXT_ADVANCED_PACKET_FILTER
+
+        // todo: advanced packet filter
+
+#endif // #if NEXT_ADVANCED_PACKET_FILTER
+
+        // IMPORTANT: On Linux the server XDP program does packet filtering for us already.
+        // Just drop any packets smaller than 18 bytes (out of an abundance of caution...)
+        if ( packet_bytes < 18 )
+            continue;
+
+#endif // #ifndef __linux__
+
         const uint8_t packet_type = packet_data[0];
 
         if ( packet_type == NEXT_PACKET_DIRECT )
