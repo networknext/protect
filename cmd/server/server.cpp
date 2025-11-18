@@ -36,6 +36,8 @@ int main()
 
     while ( !quit )
     {
+        // todo
+        /*
         next_server_receive_packets( server );
 
         next_server_process_packets_t * packets = next_server_process_packets_begin( server );
@@ -47,13 +49,14 @@ int main()
         }
 
         next_server_process_packets_end( server );
+        */
 
         next_server_update( server );
 
+        next_server_send_packets_begin( server );
+
         for ( int i = 0; i < NEXT_MAX_CLIENTS; i++ )
         {
-            next_server_send_packets_begin( server );
-
             if ( next_server_client_connected( server, i ) )
             {
                 uint64_t sequence;

@@ -972,16 +972,18 @@ void next_server_send_packets_end( struct next_server_t * server )
 
     // dummy packet descriptors for packets that were not sent
 
+#if 0
     for ( int i = /*server->num_send_packets*/0; i < NEXT_XDP_MAX_SEND_PACKETS; i++ )
     {
         struct xdp_desc * desc = xsk_ring_prod__tx_desc( &server->send_queue, server->xdp_send_queue_index + i );
         desc->addr = 0;
         desc->len = 0;
     }
+#endif
 
     // submit send queue to driver
 
-    xsk_ring_prod__submit( &server->send_queue, NEXT_XDP_MAX_SEND_PACKETS );
+    xsk_ring_prod__submit( &server->send_queue, 0 ); // NEXT_XDP_MAX_SEND_PACKETS );
 
     // actually send the packets
 
