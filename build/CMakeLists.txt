@@ -88,7 +88,7 @@ endif()
 # server xdp
 
 add_custom_command(
-    COMMENT "Generating sdk/next_server_xdp.h"
+    COMMENT "Generating next_server_xdp.h"
     OUTPUT ../sdk/next_server_xdp.h
     COMMAND bash -c "mkdir -p next_server_xdp"
     COMMAND bash -c "cp ../cmd/server_xdp/Makefile next_server_xdp"
