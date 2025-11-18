@@ -990,7 +990,7 @@ void next_server_send_packets_end( struct next_server_t * server )
 
     if ( num_completed > 0 ) 
     {
-        for ( int i = 0; i < completed; i++ )
+        for ( int i = 0; i < num_completed; i++ )
         {
             uint64_t frame = *xsk_ring_cons__comp_addr( &server->complete_queue, complete_index++ );
 
