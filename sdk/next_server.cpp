@@ -1248,7 +1248,7 @@ void next_server_process_packets_end( struct next_server_t * server )
         packet_address[num_packets] = frame;
 
         struct xdp_desc * desc = xsk_ring_prod__tx_desc( &server->send_queue, server->send_index + i );
-        desc->addr = NULL; // packet_address[i];
+        desc->addr = 0; // packet_address[i];
         desc->len = 0; // packet_length[i];
 
         num_packets++;
