@@ -26,6 +26,8 @@
 #include <linux/if_link.h>
 #include <linux/if_ether.h>
 
+#include "next_server_xdp.h"
+
 #endif // #ifdef __linux
 
 #include <memory.h>
