@@ -329,6 +329,11 @@ static void reflect_packet( void * data, int payload_bytes, __u8 * magic )
 
 SEC("server_xdp") int server_xdp_filter( struct xdp_md *ctx ) 
 { 
+    // todo
+    return XDP_PASS;
+
+#if 0
+
     void * data = (void*) (long) ctx->data; 
 
     void * data_end = (void*) (long) ctx->data_end; 
@@ -353,10 +358,6 @@ SEC("server_xdp") int server_xdp_filter( struct xdp_md *ctx )
 
                 if ( (void*)udp + sizeof(struct udphdr) <= data_end )
                 {
-                    // IMPORTANT: Leave any system UDP packets alone
-                    if ( udp->dest < 1024 )
-                        return XDP_PASS;
-
                     int key = 0;
                     struct server_xdp_config * config = (struct server_xdp_config*) bpf_map_lookup_elem( &server_xdp_config_map, &key );
                     if ( config == NULL )
@@ -365,7 +366,7 @@ SEC("server_xdp") int server_xdp_filter( struct xdp_md *ctx )
                         return XDP_PASS;
                     }
 
-                    if ( ip->daddr == config->public_address )
+                    if ( ip->daddr == config->public_address && udp->dest == config->port )
                     {
                         __u8 * packet_data = (unsigned char*) (void*)udp + sizeof(struct udphdr);
 
@@ -603,6 +604,8 @@ SEC("server_xdp") int server_xdp_filter( struct xdp_md *ctx )
     }
 
     return XDP_PASS;
+
+#endif // #if 0
 }
 
 char _license[] SEC("license") = "GPL";
