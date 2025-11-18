@@ -955,32 +955,30 @@ void next_server_send_packets_end( struct next_server_t * server )
 
     // setup descriptors for packets that were sent
 
-    /*
-    for ( int i = 0; i < server->num_send_packets; i++ )
-    {
-        struct xdp_desc * desc = xsk_ring_prod__tx_desc( &server->send_queue, server->xdp_send_queue_index + i );
-        desc->addr = server->sent;
-        desc->len = 0;
-    }
-    */
-
-    // dummy packet descriptors for packets that were not sent
-
     for ( int i = 0; i < NEXT_XDP_MAX_SEND_PACKETS; i++ )
     {
         struct xdp_desc * desc = xsk_ring_prod__tx_desc( &server->send_queue, server->xdp_send_queue_index + i );
 
         uint64_t frame = next_server_alloc_frame( server );
 
-        next_assert( frame != INVALID_FRAME );
+        next_assert( frame != INVALID_FRAME );          // this should never happen
         if ( frame == INVALID_FRAME )
         {
             printf( "invalid frame\n" );
             exit(0);
         }
 
+        uint8_t * packet_data = server->buffer + frame * NEXT_SERVER_FRAME_SIZE;
+
+        uint32_t client_address_big_endian = 0;
+        uint32_t client_port_big_endian = 0;
+
+        int payload_bytes = 100;
+
+        int packet_bytes = generate_packet_header( packet_data, server->server_ethernet_address, server->gateway_ethernet_address, server->server_address_big_endian, client_address_big_endian, server->server_port_big_endian, client_port_big_endian, payload_bytes );
+
         desc->addr = frame;
-        desc->len = 10;
+        desc->len = packet_bytes;
     }
 
     // submit send queue to driver
