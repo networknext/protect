@@ -80,6 +80,11 @@ struct next_server_t
 
 #ifdef __linux__
 
+    int interface_index;
+    struct xdp_program * program;
+    bool attached_native;
+    bool attached_skb;
+
     uint8_t server_ethernet_address[ETH_ALEN];
     uint8_t gateway_ethernet_address[ETH_ALEN];
 
@@ -319,6 +324,13 @@ next_server_t * next_server_create( void * context, const char * bind_address_st
                 if ( sa->sin_addr.s_addr == public_address_ipv4 )
                 {
                     strncpy( interface_name, iap->ifa_name, sizeof(interface_name) );
+                    server->interface_index = if_nametoindex( iap->ifa_name );
+                    if ( !server->interface_index ) 
+                    {
+                        next_error( "server if_nametoindex failed" );
+                        next_server_destroy( server );
+                        return NULL;
+                    }
                     found = true;
                     break;
                 }
@@ -531,8 +543,8 @@ next_server_t * next_server_create( void * context, const char * bind_address_st
 
     next_info( "loading server_xdp..." );
 
-    bpf->program = xdp_program__open_file( "server_xdp.o", "server_xdp", NULL );
-    if ( libxdp_get_error( bpf->program ) ) 
+    server->program = xdp_program__open_file( "server_xdp.o", "server_xdp", NULL );
+    if ( libxdp_get_error( server->program ) ) 
     {
         next_error( "could not load server_xdp program" );
         next_server_destroy( server );
@@ -543,18 +555,18 @@ next_server_t * next_server_create( void * context, const char * bind_address_st
 
     next_info( "attaching server_xdp to network interface" );
 
-    int ret = xdp_program__attach( bpf->program, bpf->interface_index, XDP_MODE_NATIVE, 0 );
+    int ret = xdp_program__attach( server->program, server->interface_index, XDP_MODE_NATIVE, 0 );
     if ( ret == 0 )
     {
-        bpf->attached_native = true;
+        server->attached_native = true;
     } 
     else
     {
         next_info( "falling back to skb mode..." );
-        ret = xdp_program__attach( bpf->program, bpf->interface_index, XDP_MODE_SKB, 0 );
+        ret = xdp_program__attach( server->program, server->interface_index, XDP_MODE_SKB, 0 );
         if ( ret == 0 )
         {
-            bpf->attached_skb = true;
+            server->attached_skb = true;
         }
         else
         {
@@ -696,6 +708,19 @@ void next_server_destroy( next_server_t * server )
     next_platform_mutex_destroy( &server->client_payload_mutex );
 
 #ifdef __linux__
+
+    if ( server->program != NULL )
+    {
+        if ( server->attached_native )
+        {
+            xdp_program__detach( server->program, server->interface_index, XDP_MODE_NATIVE, 0 );
+        }
+        if ( server->attached_skb )
+        {
+            xdp_program__detach( server->program, server->interface_index, XDP_MODE_SKB, 0 );
+        }
+        xdp_program__close( server->program );
+    }
 
     next_platform_mutex_destroy( &server->frame_mutex );
 
