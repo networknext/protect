@@ -455,7 +455,7 @@ next_server_t * next_server_create( void * context, const char * bind_address_st
 
         int num_queues = max_queues / 2;
 
-        next_intfo( "setting nic combined queues to %d", num_queues );
+        next_info( "setting nic combined queues to %d", num_queues );
 
         char command[2048];
         snprintf( command, sizeof(command), "ethtool -L %s combined %d", (const char*) &interface_name[0], num_queues );
@@ -501,7 +501,7 @@ next_server_t * next_server_create( void * context, const char * bind_address_st
         {
             printf( "\nerror: could not open server_xdp.tar.gz for writing" );
             next_server_destroy( server );
-            return false;
+            return NULL;
         }
 
         fwrite( next_server_xdp_tar_gz, sizeof(next_server_xdp_tar_gz), 1, file );
@@ -536,7 +536,7 @@ next_server_t * next_server_create( void * context, const char * bind_address_st
     {
         next_error( "could not load server_xdp program" );
         next_server_destroy( server );
-        return false;
+        return NULL;
     }
 
     next_info( "server_xdp loaded successfully" );
@@ -560,7 +560,7 @@ next_server_t * next_server_create( void * context, const char * bind_address_st
         {
             next_error( "failed to attach server_xdp program to interface" );
             next_server_destroy( server );
-            return false;
+            return NULL;
         }
     }
 
