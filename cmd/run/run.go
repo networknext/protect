@@ -97,8 +97,6 @@ func main() {
 		proton()
 	} else if command == "client-backend" {
 		client_backend()
-	} else if command == "server-xdp" {
-		server_xdp()
 	} else {
 		fmt.Printf("\nunknown command\n\n")
 	}
@@ -106,14 +104,6 @@ func main() {
 
 func help() {
 	fmt.Printf("\nsyntax:\n\n    run <action> [args]\n\n")
-}
-
-func server_xdp() {
-	if runtime.GOOS == "linux" {
-		bash("cd dist && sudo SERVER_XDP_PUBLIC_ADDRESS=45.250.253.243 ./server_xdp")
-	} else {
-		bash("cd dist && SERVER_XDP_PUBLIC_ADDRESS=45.250.253.243 ./server_xdp")
-	}
 }
 
 func client_backend() {

@@ -56,6 +56,31 @@ DONE
 
 TODO
 
+    OK. The trick is that you *must* have an XDP program loaded. It won't work without. It won't call the complete.
+
+    So I have to merge in the server XDP program in with the next_server.cpp, and load it when the server starts.
+
+    We need to have next_server_xdp.c as part of the SDK!
+
+    ----------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     Implement send with AF_XDP
 
     First, reserve n packets in the send queue. I believe we don't have to actually transmit all that we reserve.
