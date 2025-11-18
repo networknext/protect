@@ -1232,8 +1232,6 @@ void next_server_process_packets_end( struct next_server_t * server )
 
 #ifdef __linux__
 
-    // send queued packets
-
     // hack: see if we can send zero tx descriptors and get away with it (cancel)
     int num_packets = 0;
     uint64_t packet_address[NEXT_XDP_MAX_SEND_PACKETS];
@@ -1250,7 +1248,7 @@ void next_server_process_packets_end( struct next_server_t * server )
         packet_address[num_packets] = frame;
 
         struct xdp_desc * desc = xsk_ring_prod__tx_desc( &server->send_queue, server->send_index + i );
-        desc->addr = packet_address[i];
+        desc->addr = NULL; // packet_address[i];
         desc->len = 0; // packet_length[i];
 
         num_packets++;
