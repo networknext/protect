@@ -536,7 +536,7 @@ void next_server_destroy( next_server_t * server )
 
 #define INVALID_FRAME UINT64_MAX
 
-uint64_t next_server_alloc_send_packet( next_server_t * server )
+uint64_t next_server_alloc_frame( next_server_t * server )
 {
     next_platform_mutex_acquire( &server->frame_mutex );
     uint64_t frame = INVALID_FRAME;
