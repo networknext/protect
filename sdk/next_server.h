@@ -36,13 +36,15 @@ uint64_t next_server_id( struct next_server_t * server );
 
 // send packets (zero copy)
 
+void next_server_send_packets_begin( struct next_server_t * server );
+
 uint8_t * next_server_start_packet( struct next_server_t * server, int client_index, uint64_t * sequence );
 
 void next_server_finish_packet( struct next_server_t * server, uint8_t * packet_data, int packet_bytes );
 
 void next_server_abort_packet( struct next_server_t * server, uint8_t * packet_data );
 
-void next_server_send_packets( struct next_server_t * server );
+void next_server_send_packets_end( struct next_server_t * server );
 
 // receive packets (zero copy)
 
@@ -57,10 +59,10 @@ struct next_server_process_packets_t
     uint8_t * packet_data[NEXT_NUM_SERVER_FRAMES];
 };
 
-struct next_server_process_packets_t * next_server_process_packets_start( struct next_server_t * server );
+struct next_server_process_packets_t * next_server_process_packets_begin( struct next_server_t * server );
 
 void next_server_packet_processed( struct next_server_t * server, uint8_t * packet_data );
 
-void next_server_process_packets_finish( struct next_server_t * server );
+void next_server_process_packets_end( struct next_server_t * server );
 
 #endif // #ifndef NEXT_CLIENT_H

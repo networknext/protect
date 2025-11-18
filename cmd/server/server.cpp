@@ -38,21 +38,22 @@ int main()
     {
         next_server_receive_packets( server );
 
-        next_server_process_packets_t * packets = next_server_process_packets_start( server );
-        if ( packets )
+        next_server_process_packets_t * packets = next_server_process_packets_begin( server );
+
+        for ( int i = 0; i < packets->num_packets; i++ )
         {
-            for ( int i = 0; i < packets->num_packets; i++ )
-            {
-                // next_info( "server received packet %" PRId64 " from client %d (%d bytes)", packets->sequence[i], packets->client_index[i], packets->packet_bytes[i] );
-                next_server_packet_processed( server, packets->packet_data[i] );
-            }
-            next_server_process_packets_finish( server );
+            // next_info( "server received packet %" PRId64 " from client %d (%d bytes)", packets->sequence[i], packets->client_index[i], packets->packet_bytes[i] );
+            next_server_packet_processed( server, packets->packet_data[i] );
         }
+
+        next_server_process_packets_end( server );
 
         next_server_update( server );
 
         for ( int i = 0; i < NEXT_MAX_CLIENTS; i++ )
         {
+            next_server_send_packets_begin( server );
+
             if ( next_server_client_connected( server, i ) )
             {
                 uint64_t sequence;
@@ -66,7 +67,7 @@ int main()
             }
         }
 
-        next_server_send_packets( server );
+        next_server_send_packets_end( server );
 
         next_platform_sleep( 1.0 / 100.0 );       
     }
@@ -79,7 +80,6 @@ int main()
     {
         next_server_receive_packets( server );
         next_server_update( server );
-        next_server_send_packets( server );
         next_platform_sleep( 1.0 / 100.0 );
     }
 

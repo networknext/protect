@@ -99,6 +99,9 @@ struct next_server_t
     struct xsk_ring_prod fill_queue;
     struct xsk_socket * xsk;
 
+    bool sending_packets;
+    int send_index;
+
 #else // #ifdef __linux__
 
     next_platform_socket_t * socket;
@@ -835,12 +838,38 @@ void socket_update( struct socket_t * socket, int queue_id )
 
 #endif // #if 0
 
+void next_server_send_packets_begin( struct next_server_t * server )
+{
+    next_assert( server );
+
+#ifdef __linux__
+
+    next_assert( !server->sending_packets );            // IMPORTANT: You must call next_server_send_packets_end!
+
+    int result = xsk_ring_prod__reserve( &socket->send_queue, NEXT_XDP_MAX_SEND_PACKETS, &server->send_index );
+    if ( result == 0 ) 
+        return;
+
+    server->sending_packets = true;
+
+#else // #ifdef __linux__
+
+    // ...
+
+#endif // #ifdef __linux__
+}
+
 uint8_t * next_server_start_packet( struct next_server_t * server, int client_index, uint64_t * out_sequence )
 {
     next_assert( server );
     next_assert( client_index >= 0 );
     next_assert( client_index < NEXT_MAX_CLIENTS );
     next_assert( out_sequence );
+
+#ifdef __linux__
+    if ( !server->sending_packets )
+        return;
+#endif // #ifdef __linux__
 
     if ( !server->client_connected[client_index] )
         return NULL;
@@ -889,6 +918,9 @@ void next_server_finish_packet_internal( struct next_server_t * server, uint8_t 
     next_assert( server );
 
 #ifdef __linux__
+
+    if ( !server->sending_packets )
+        return;
 
     // todo: AF_XDP
 
@@ -950,6 +982,9 @@ void next_server_abort_packet( struct next_server_t * server, uint8_t * packet_d
 
 #ifdef __linux__
 
+    if ( !server->sending_packets )
+        return;
+
     // todo: AF_XDP
 
 #else // #ifdef __linux__
@@ -970,13 +1005,15 @@ void next_server_abort_packet( struct next_server_t * server, uint8_t * packet_d
 #endif // #ifdef __linux__
 }
 
-void next_server_send_packets( struct next_server_t * server )
+void next_server_send_packets_end( struct next_server_t * server )
 {
     next_assert( server );
 
 #ifdef __linux__
 
-    // todo: AF_XDP
+    // ...
+
+    server->sending_packets = false;
 
 #else // #ifdef __linux__
 
@@ -1131,7 +1168,7 @@ void next_server_receive_packets( next_server_t * server )
 #endif // #ifdef __linux__
 }
 
-struct next_server_process_packets_t * next_server_process_packets_start( struct next_server_t * server )
+struct next_server_process_packets_t * next_server_process_packets_begin( struct next_server_t * server )
 {
     next_assert( server );
 
@@ -1186,7 +1223,7 @@ void next_server_packet_processed( struct next_server_t * server, uint8_t * pack
 #endif // #ifdef __linux__
 }
 
-void next_server_process_packets_finish( struct next_server_t * server )
+void next_server_process_packets_end( struct next_server_t * server )
 {
     next_assert( server );
 

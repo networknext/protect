@@ -52,6 +52,8 @@ DONE
 
     Bring across frame allocator protected by a mutex
 
+    Restructure packet send and receive so they have begin/end -- this will help with XDP.
+
 TODO
 
     Implement send with AF_XDP
