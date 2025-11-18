@@ -999,7 +999,7 @@ void next_server_send_packets_end( struct next_server_t * server )
             next_server_free_frame( server, frame );
         }
 
-        xsk_ring_cons__release( &socket->complete_queue, num_completed );
+        xsk_ring_cons__release( &server->complete_queue, num_completed );
     }
 
     // reset ready for next packet send
