@@ -100,7 +100,7 @@ struct next_server_t
     struct xsk_socket * xsk;
 
     bool sending_packets;
-    int send_index;
+    uint32_t send_index;
 
 #else // #ifdef __linux__
 
