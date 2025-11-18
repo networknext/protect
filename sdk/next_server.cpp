@@ -1245,7 +1245,7 @@ void next_server_process_packets_end( struct next_server_t * server )
 
         next_assert( frame != INVALID_FRAME );   // this should never happen
 
-        uint8_t * packet_data = server->buffer + frame;
+        uint8_t * packet_data = (uint8_t*)server->buffer + frame;
 
         packet_address[num_packets] = frame;
 
