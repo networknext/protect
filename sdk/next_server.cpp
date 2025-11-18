@@ -479,6 +479,8 @@ next_server_t * next_server_create( void * context, const char * bind_address_st
 
     // be extra safe and let's make sure no xdp programs are running on this interface before we start
     {
+        next_info( "unloading all xdp programs on network interface" );
+
         char command[2048];
         snprintf( command, sizeof(command), "xdp-loader unload %s --all", interface_name );
         FILE * file = popen( command, "r" );
@@ -489,6 +491,8 @@ next_server_t * next_server_create( void * context, const char * bind_address_st
 
     // delete all bpf maps we use so stale data doesn't stick around
     {
+        next_info( "deleting previous bpf maps to avoid stale data" );
+
         {
             const char * command = "rm -f /sys/fs/bpf/server_xdp_config_map";
             FILE * file = popen( command, "r" );
@@ -508,6 +512,8 @@ next_server_t * next_server_create( void * context, const char * bind_address_st
 
     // write out source tar.gz for server_xdp_xdp.o
     {
+        next_info( "writing server_xdp.tar.gz" );
+
         FILE * file = fopen( "server_xdp.tar.gz", "wb" );
         if ( !file )
         {
@@ -523,6 +529,8 @@ next_server_t * next_server_create( void * context, const char * bind_address_st
 
     // unzip source and build server_xdp.o from source with make
     {
+        next_info( "building server_xdp.o" );
+
         const char * command = "rm -f Makefile && rm -f *.c && rm -f *.h && rm -f *.o && tar -zxf server_xdp.tar.gz && make server_xdp.o";
         FILE * file = popen( command, "r" );
         char buffer[1024];
@@ -541,7 +549,7 @@ next_server_t * next_server_create( void * context, const char * bind_address_st
 
     // load the server_xdp program and attach it to the network interface
 
-    next_info( "loading server_xdp..." );
+    next_info( "loading server_xdp.o" );
 
     server->program = xdp_program__open_file( "server_xdp.o", "server_xdp", NULL );
     if ( libxdp_get_error( server->program ) ) 
