@@ -729,9 +729,6 @@ void next_server_send_packets_begin( struct next_server_t * server )
 
 #ifdef __linux__
 
-    // todo
-    printf( "send packets begin\n" );
-
     next_assert( !server->sending_packets );     // IMPORTANT: You must call next_server_send_packets_end!
 
     int result = xsk_ring_prod__reserve( &server->send_queue, NEXT_XDP_MAX_SEND_PACKETS, &server->xdp_send_queue_index );
@@ -956,9 +953,6 @@ void next_server_send_packets_end( struct next_server_t * server )
 
     next_assert( server->sending_packets );
 
-    // todo
-    printf( "send packets end\n" );
-
     // setup descriptors for packets that were sent
 
     /*
@@ -982,6 +976,7 @@ void next_server_send_packets_end( struct next_server_t * server )
         if ( frame == INVALID_FRAME )
         {
             printf( "invalid frame\n" );
+            exit(0);
         }
 
         desc->addr = frame;
@@ -995,7 +990,12 @@ void next_server_send_packets_end( struct next_server_t * server )
     // actually send the packets
 
     if ( xsk_ring_prod__needs_wakeup( &server->send_queue ) )
+    {
+        // todo
+        printf( "*** WAKEUP ***\n" );
+
         sendto( xsk_socket__fd( server->xsk ), NULL, 0, MSG_DONTWAIT, NULL, 0 );
+    }
 
     // mark any sent packet frames as free to be reused
 
