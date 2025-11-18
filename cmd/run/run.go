@@ -120,9 +120,9 @@ func client() {
 
 func server() {
 	if runtime.GOOS == "linux" {
-		bash("sudo ./dist/server")
+		bash("cd dist && sudo ./server")
 	} else {
-		bash("./dist/server")
+		bash("cd dist && ./server")
 	}
 }
 
