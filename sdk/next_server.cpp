@@ -1005,7 +1005,7 @@ void next_server_send_packets_end( struct next_server_t * server )
     // reset ready for next packet send
 
     server->num_send_packets = 0;
-    server->xdp_send_queue_index  0;
+    server->xdp_send_queue_index = 0;
     server->sending_packets = false;
 
 #else // #ifdef __linux__
