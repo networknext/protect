@@ -971,7 +971,7 @@ void next_server_send_packets_end( struct next_server_t * server )
             exit(0);
         }
 
-        uint8_t * packet_data = (uint8_t*)server->buffer + frame * NEXT_SERVER_FRAME_SIZE;
+        uint8_t * packet_data = (uint8_t*)server->buffer + frame;
 
         uint32_t client_address_big_endian = 0;
         uint32_t client_port_big_endian = 0;
