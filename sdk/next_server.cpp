@@ -965,7 +965,7 @@ void next_server_send_packets_end( struct next_server_t * server )
 
     // setup descriptors for packets that were sent
 
-    for ( int i = 0; i < NEXT_XDP_MAX_SEND_PACKETS; i++ )
+    for ( int i = 0; i < NEXT_XDP_SEND_BATCH_SIZE; i++ )
     {
         struct xdp_desc * desc = xsk_ring_prod__tx_desc( &server->send_queue, server->xdp_send_queue_index + i );
 
