@@ -741,15 +741,12 @@ void next_server_send_packets_begin( struct next_server_t * server )
 
     next_assert( !server->sending_packets );     // IMPORTANT: You must call next_server_send_packets_end!
 
-    // todo
-    /*
     int result = xsk_ring_prod__reserve( &server->send_queue, NEXT_XDP_MAX_SEND_PACKETS, &server->xdp_send_queue_index );
     if ( result == 0 ) 
     {
         next_warn( "server send queue is full" );
         return;
     }
-    */
 
     server->sending_packets = true;
 
@@ -968,7 +965,6 @@ void next_server_send_packets_end( struct next_server_t * server )
 
     // setup descriptors for packets that were sent
 
-    /*
     for ( int i = 0; i < NEXT_XDP_MAX_SEND_PACKETS; i++ )
     {
         struct xdp_desc * desc = xsk_ring_prod__tx_desc( &server->send_queue, server->xdp_send_queue_index + i );
@@ -985,8 +981,8 @@ void next_server_send_packets_end( struct next_server_t * server )
         uint8_t * packet_data = (uint8_t*)server->buffer + frame * NEXT_SERVER_FRAME_SIZE;
 
         // todo: actually set these to something valid
-        uint32_t client_address_big_endian = 0;
-        uint32_t client_port_big_endian = 0;
+        uint32_t client_address_big_endian = 0x0301a8c0;                            // batman
+        uint32_t client_port_big_endian = next_platform_htons( 30000 );             // port is hard coded on the client for now...
 
         int payload_bytes = 100;
 
@@ -1021,15 +1017,11 @@ void next_server_send_packets_end( struct next_server_t * server )
         for ( int i = 0; i < num_completed; i++ )
         {
             uint64_t frame = *xsk_ring_cons__comp_addr( &server->complete_queue, complete_index++ );
-
-            printf( "frame %" PRId64 " completed\n", frame );
-
             next_server_free_frame( server, frame );
         }
 
         xsk_ring_cons__release( &server->complete_queue, num_completed );
     }
-    */
 
     // reset ready for next packet send
 
