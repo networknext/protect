@@ -74,7 +74,7 @@ int main()
 
         next_server_send_packets_end( server );
 
-        next_platform_sleep( 1.0 / 100.0 );       
+        next_platform_sleep( 1.0 ); // / 100.0 );       
     }
 
     next_info( "stopping" );

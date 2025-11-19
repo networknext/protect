@@ -375,98 +375,6 @@ next_server_t * next_server_create( void * context, const char * bind_address_st
         server->gateway_ethernet_address[0] 
     );
 
-    // are we in AWS?
-
-    bool running_in_aws = false;
-    {
-        next_info( "checking if we are running in aws..." );
-        char command_line[2048];
-        strncpy( command_line, "curl -s \"http://169.254.169.254/latest/meta-data\" --max-time 2 -s 2>/dev/null", sizeof(command_line) );
-        next_info( "command line: '%s'", command_line );
-        FILE * file = popen( command_line, "r" );
-        if ( file )
-        {
-            char buffer[1024];
-            while ( fgets( buffer, sizeof(buffer), file ) != NULL )
-            {
-                if ( strstr( buffer, "ami-id" ) != NULL )
-                {
-                    next_info( "we are running in aws" );
-                    running_in_aws = true;
-                    break;
-                }
-            }
-            pclose( file );
-        }
-        if ( !running_in_aws )
-        {
-            next_info( "we are not running in aws" );
-        }
-    }
-
-    // we need to set an MTU of 1500 in AWS, otherwise we can't attach the XDP program
-
-    if ( running_in_aws )
-    {
-        next_info( "setting mtu to 1500" );
-        char command[2048];
-        snprintf( command, sizeof(command), "ifconfig %s mtu 1500 up", (const char*) &interface_name[0] );
-        FILE * file = popen( command, "r" );
-        char buffer[1024];
-        while ( fgets( buffer, sizeof(buffer), file ) != NULL )
-        {
-            if ( strlen( buffer ) > 0 )
-            {
-                printf( "%s", buffer );
-            }
-        }
-        pclose( file );
-    }
-
-    // we need to only use half the network queues available on the NIC on AWS
-
-    if ( running_in_aws )
-    {
-        next_info( "aws workaround for nic queues" );
-
-        // first we need to find how many combined queues we have
-
-        int max_queues = 2;
-        {
-            char command[2048];
-            snprintf( command, sizeof(command), "ethtool -l %s | grep -m 1 Combined |  perl -ne '/Combined:\\s*(\\d+)/ and print \"$1\\n\";'", (const char*) &interface_name[0] );
-            FILE * file = popen( command, "r" );
-            char buffer[1024];
-            while ( fgets( buffer, sizeof(buffer), file ) != NULL )
-            {
-                if ( strlen( buffer ) > 0 )
-                {
-                    int result = atoi( buffer );
-                    if ( result > 0 )
-                    {
-                        max_queues = result;
-                        next_info( "maximum nic combined queues is %d", max_queues );
-                    }
-                    break;
-                }
-            }
-            pclose( file );
-        }
-
-        // now reduce to use only half max queues
-
-        int num_queues = max_queues / 2;
-
-        next_info( "setting nic combined queues to %d", num_queues );
-
-        char command[2048];
-        snprintf( command, sizeof(command), "ethtool -L %s combined %d", (const char*) &interface_name[0], num_queues );
-        FILE * file = popen( command, "r" );
-        char buffer[1024];
-        while ( fgets( buffer, sizeof(buffer), file ) != NULL ) {}
-        pclose( file );
-    }
-
     // allow unlimited locking of memory, so all memory needed for packet buffers can be locked
 
     struct rlimit rlim = { RLIM_INFINITY, RLIM_INFINITY };
@@ -503,7 +411,7 @@ next_server_t * next_server_create( void * context, const char * bind_address_st
 
     memset( &xsk_config, 0, sizeof(xsk_config) );
 
-    xsk_config.rx_size = 0;
+    xsk_config.rx_size = XSK_RING_PROD__DEFAULT_NUM_DESCS;
     xsk_config.tx_size = XSK_RING_PROD__DEFAULT_NUM_DESCS;
     xsk_config.xdp_flags = XDP_ZEROCOPY;     
     xsk_config.bind_flags = XDP_USE_NEED_WAKEUP;
@@ -827,12 +735,15 @@ void next_server_send_packets_begin( struct next_server_t * server )
 
     next_assert( !server->sending_packets );     // IMPORTANT: You must call next_server_send_packets_end!
 
+    // todo
+    /*
     int result = xsk_ring_prod__reserve( &server->send_queue, NEXT_XDP_MAX_SEND_PACKETS, &server->xdp_send_queue_index );
     if ( result == 0 ) 
     {
         next_warn( "server send queue is full" );
         return;
     }
+    */
 
     server->sending_packets = true;
 
@@ -1051,6 +962,7 @@ void next_server_send_packets_end( struct next_server_t * server )
 
     // setup descriptors for packets that were sent
 
+    /*
     for ( int i = 0; i < NEXT_XDP_MAX_SEND_PACKETS; i++ )
     {
         struct xdp_desc * desc = xsk_ring_prod__tx_desc( &server->send_queue, server->xdp_send_queue_index + i );
@@ -1111,6 +1023,7 @@ void next_server_send_packets_end( struct next_server_t * server )
 
         xsk_ring_cons__release( &server->complete_queue, num_completed );
     }
+    */
 
     // reset ready for next packet send
 
