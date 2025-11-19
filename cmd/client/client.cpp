@@ -48,7 +48,7 @@ int main()
 
 #if CLIENT_DIRECT
 
-    const char * connect = "127.0.0.1:40000";
+    const char * connect = "192.168.1.4:40000";       // hulk 10G
 
 #else // #if CLIENT_DIRECT
 
