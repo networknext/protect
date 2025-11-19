@@ -965,7 +965,7 @@ void next_server_send_packets_end( struct next_server_t * server )
 
     // setup descriptors for packets that were sent
 
-    for ( int i = 0; i < 10; i++ ) // NEXT_XDP_SEND_BATCH_SIZE; i++ )
+    for ( int i = 0; i < NEXT_XDP_SEND_BATCH_SIZE; i++ )
     {
         struct xdp_desc * desc = xsk_ring_prod__tx_desc( &server->send_queue, server->xdp_send_queue_index + i );
 
@@ -989,12 +989,12 @@ void next_server_send_packets_end( struct next_server_t * server )
         int packet_bytes = generate_packet_header( packet_data, server->server_ethernet_address, server->gateway_ethernet_address, server->server_address_big_endian, client_address_big_endian, server->server_port_big_endian, client_port_big_endian, payload_bytes );
 
         desc->addr = frame;
-        desc->len = packet_bytes;
+        desc->len = ( i < 10 ) ? packet_bytes : 0;
     }
 
     // submit send queue to driver
 
-    xsk_ring_prod__submit( &server->send_queue, 10 ); // NEXT_XDP_SEND_BATCH_SIZE );
+    xsk_ring_prod__submit( &server->send_queue, NEXT_XDP_SEND_BATCH_SIZE );
 
     // actually send the packets
 
