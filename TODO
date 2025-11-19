@@ -8,10 +8,13 @@ DONE
 
     I will setup my hulk linux machine and work in my lab instead.
 
-TODO
-
     Get hulk up and running so I can send packets with AF_XDP
 
+    Fixed the bug that was breaking the NIC. Bad offset values were crashing out the NIC.
+
+TODO
+
+    Now check if we can send a subset of the frames we reserved and not run out of send queue.
 
 
 
