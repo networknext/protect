@@ -12,9 +12,16 @@ DONE
 
     Fixed the bug that was breaking the NIC. Bad offset values were crashing out the NIC.
 
+    Now check if we can send a subset of the frames we reserved and not run out of send queue.
+
+    We cannot. At this point I think it's correct to accept that we must reserve and send the number of packets we say.
+
+    This means we need two interfaces, a regular, memcpy once interface for sending packets. Looks just like the non-XDP way.
+
+    And then we have this zero copy interface, where you specifically have to call out the number of packets to send and you *must* send that many packets. 
+
 TODO
 
-    Now check if we can send a subset of the frames we reserved and not run out of send queue.
 
 
 

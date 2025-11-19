@@ -360,7 +360,7 @@ next_server_t * next_server_create( void * context, const char * bind_address_st
     // look up the gateway ethernet address for the network interface
 
     // batman mac address on LAN
-    uint8_t batman_mac[] = { 0xe3, 0x3a, 0xd8, 0x7a, 0x81, 0xd0 };
+    uint8_t batman_mac[] = { 0xec, 0x3a, 0xd8, 0x7a, 0x81, 0xd0 };
     memcpy( server->gateway_ethernet_address, batman_mac, 6 );
 
     /*

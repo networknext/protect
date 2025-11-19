@@ -660,7 +660,7 @@ static void next_client_thread_function( void * data )
     {
         next_client_receive_packets( client );
 
-        next_platform_sleep( 0.001 );
+        next_platform_sleep( 0.001 );       // IMPORTANT: ~1ms resolution for pings
     }
 }
 
@@ -681,6 +681,9 @@ void next_client_receive_packets( next_client_t * client )
         int packet_bytes = next_platform_socket_receive_packet( client->socket, &from, packet_data, NEXT_MAX_PACKET_BYTES );
         if ( packet_bytes == 0 )
             break;
+
+        // todo
+        next_info( "client received %d byte packet", packet_bytes );
 
         double receive_time = next_platform_time();
 
