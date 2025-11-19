@@ -1005,12 +1005,15 @@ void next_server_send_packets_end( struct next_server_t * server )
 
     // mark any sent packet frames as free to be reused
 
-    uint32_t complete_index;
-
-    unsigned int num_completed = xsk_ring_cons__peek( &server->complete_queue, XSK_RING_CONS__DEFAULT_NUM_DESCS, &complete_index );
-
-    if ( num_completed > 0 ) 
+    while ( true )
     {
+        uint32_t complete_index;
+
+        unsigned int num_completed = xsk_ring_cons__peek( &server->complete_queue, XSK_RING_CONS__DEFAULT_NUM_DESCS, &complete_index );
+
+        if ( num_completed == 0 )
+            break;
+
         printf( "%d completed\n", num_completed );
         fflush( stdout );
 

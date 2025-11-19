@@ -13,9 +13,9 @@
 #define NEXT_SERVER_FRAME_SIZE                                       2048
 
 #define NEXT_NUM_SERVER_FRAMES                  ( 10 * NEXT_MAX_CLIENTS )
-#define NEXT_NUM_CLIENT_FRAMES                                   ( 1024 )
+#define NEXT_NUM_CLIENT_FRAMES                                       1024
 
-#define NEXT_XDP_SEND_BATCH_SIZE                                      256
+#define NEXT_XDP_SEND_BATCH_SIZE                                       10
 
 #define NEXT_DIRECT_TIMEOUT                                           5.0
 
