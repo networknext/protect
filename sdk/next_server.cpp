@@ -190,6 +190,8 @@ static bool get_gateway_mac_address( const char * interface_name, uint8_t * mac_
 
     if ( !gateway_ip_string )
     {
+        // todo
+        printf( "could not find gateway ip string" );
         return false;
     }
 
@@ -198,6 +200,8 @@ static bool get_gateway_mac_address( const char * interface_name, uint8_t * mac_
     next_address_t address;
     if ( !next_address_parse( &address, gateway_ip_string ) || address.type != NEXT_ADDRESS_IPV4 )
     {
+        // todo
+        printf( "gateway address is not valid" );
         return false;
     }
 
@@ -228,6 +232,8 @@ static bool get_gateway_mac_address( const char * interface_name, uint8_t * mac_
 
     if ( !found_mac_address )
     {
+        // todo
+        printf( "did not find mac address" );
         return false;
     }
 
