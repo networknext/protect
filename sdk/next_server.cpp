@@ -1318,9 +1318,22 @@ void next_server_receive_packets( next_server_t * server )
 
 #ifdef __linux__
 
-    // todo: need n receive buffers, not one
-    // server->receive_buffer.current_packet = 0;
+    for ( int queue = 0; queue < NUM_SERVER_XDP_SOCKETS; queue++ )
+    {
+        // double buffer the receive buffers via receive index
 
+        next_server_xdp_socket_t * socket = &server->socket[queue];
+
+        int current_index = socket->receive_index;
+
+        socket->receive_index = current_index ? 0 : 1;
+
+        // ...
+
+    }
+
+// todo: this moves to a thread per-socket
+#if 0
     for ( int queue = 0; queue < NUM_SERVER_XDP_SOCKETS; queue++ )
     {
         next_server_xdp_socket_t * socket = &server->socket[queue];
@@ -1364,6 +1377,7 @@ void next_server_receive_packets( next_server_t * server )
             xsk_ring_cons__release( &socket->receive_queue, num_packets );
         }
     }
+#endif // #if 0
 
 #else // #ifdef __linux__
 
