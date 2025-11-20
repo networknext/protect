@@ -6,7 +6,7 @@
     USAGE:
 
         make
-        sudo xdp-loader load eno1 server_xdp.o
+        sudo xdp-loader load eno1 server_xdp.o --pin-path /sys/fs/bpf/server_xdp
         sudo xdp-loader status
         sudo cat /sys/kernel/debug/tracing/trace_pipe
         sudo xdp-loader unload -a eno1

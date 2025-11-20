@@ -454,7 +454,7 @@ next_server_t * next_server_create( void * context, const char * bind_address_st
 
     // get file descriptors for maps so we can communicate with the server_xdp program running in kernel space
 
-    server->config_map_fd = bpf_obj_get( "/sys/fs/bpf/config_map" );
+    server->config_map_fd = bpf_obj_get( "/sys/fs/bpf/server_xdp/config_map" );
     if ( server->config_map_fd <= 0 )
     {
         next_error( "server could not get config map: %s\n\n", strerror(errno) );
@@ -462,7 +462,7 @@ next_server_t * next_server_create( void * context, const char * bind_address_st
         return NULL;
     }
 
-    server->socket_map_fd = bpf_obj_get( "/sys/fs/bpf/socket_map" );
+    server->socket_map_fd = bpf_obj_get( "/sys/fs/bpf/server_xdp/socket_map" );
     if ( server->socket_map_fd <= 0 )
     {
         next_error( "server could not get socket map: %s\n\n", strerror(errno) );
