@@ -366,7 +366,7 @@ SEC("server_xdp") int server_xdp_filter( struct xdp_md *ctx )
                 if ( (void*)udp + sizeof(struct udphdr) <= data_end )
                 {
                     int key = 0;
-                    struct server_xdp_config * config = (struct server_xdp_config*) bpf_map_lookup_elem( &config_map, &key );
+                    struct server_xdp_config * config = (struct server_xdp_config*) bpf_map_lookup_elem( &server_xdp_config_map, &key );
                     if ( config == NULL )
                     {
                         debug_printf( "config is null" );
@@ -609,7 +609,7 @@ SEC("server_xdp") int server_xdp_filter( struct xdp_md *ctx )
 
                         // __u32 queue_id = ctx->rx_queue_index; // Get the current queue ID
 
-                        bpf_redirect_map( &socket_map, queue_id, BPF_F_INGRESS);
+                        bpf_redirect_map( &server_xdp_socket_map, queue_id, BPF_F_INGRESS);
 
                         return XDP_REDIRECT;
                     }
