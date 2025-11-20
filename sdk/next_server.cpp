@@ -949,6 +949,8 @@ void next_server_send_packets( struct next_server_t * server )
 
         int batch_packets = ( num_packets_to_send < NEXT_XDP_SEND_BATCH_SIZE ) ? num_packets_to_send : NEXT_XDP_SEND_BATCH_SIZE;
 
+        const int original_batch_packets = batch_packets;
+
         uint64_t frames[NEXT_XDP_SEND_BATCH_SIZE];
         for ( int i = 0; i < batch_packets; i++ )
         {
@@ -980,7 +982,12 @@ void next_server_send_packets( struct next_server_t * server )
                 return;
             }
 
-            // todo: if we couldn't reserve all entries we need to free some frames here
+            // it's possible to reserve fewer entries in the send queue than we requested. when this happens we have to free some frames
+
+            for ( int j = batch_packets; j < original_batch_packets; j++ )
+            {
+                next_server_free_frame( server, frames[j] );
+            }
 
             // setup descriptors for packets to be sent
 
