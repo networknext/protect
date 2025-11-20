@@ -25,6 +25,7 @@
 #include <net/if.h>
 #include <linux/if_link.h>
 #include <linux/if_ether.h>
+#include <errno.h>
 
 #include "next_server_xdp.h"
 
