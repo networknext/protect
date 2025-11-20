@@ -130,7 +130,7 @@ struct {
     __type(value, __u32);
     __uint(max_entries, 64);
     __uint(pinning, LIBBPF_PIN_BY_NAME);
-} xsk_map SEC(".maps");
+} socket_map SEC(".maps");
 
 #define DEBUG 1
 
@@ -609,7 +609,7 @@ SEC("server_xdp") int server_xdp_filter( struct xdp_md *ctx )
 
                         // __u32 queue_id = ctx->rx_queue_index; // Get the current queue ID
 
-                        bpf_redirect_map( &xsk_map, queue_id, BPF_F_INGRESS);
+                        bpf_redirect_map( &socket_map, queue_id, BPF_F_INGRESS);
 
                         return XDP_REDIRECT;
                     }

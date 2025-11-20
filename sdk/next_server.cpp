@@ -98,6 +98,7 @@ struct next_server_t
     struct xsk_ring_prod fill_queue;
     struct xsk_socket * xsk;
 
+    int config_map_fd;
     int socket_map_fd;
 
 #else // #ifdef __linux__
@@ -453,7 +454,15 @@ next_server_t * next_server_create( void * context, const char * bind_address_st
 
     // get file descriptors for maps so we can communicate with the server_xdp program running in kernel space
 
-    server->socket_map_fd = bpf_obj_get( "xsk_map" );
+    server->config_map_fd = bpf_obj_get( "/sys/fs/bpf/config_map" );
+    if ( server->config_map_fd <= 0 )
+    {
+        next_error( "server could not get config map: %s\n\n", strerror(errno) );
+        next_server_destroy( server );
+        return NULL;
+    }
+
+    server->socket_map_fd = bpf_obj_get( "/sys/fs/bpf/socket_map" );
     if ( server->socket_map_fd <= 0 )
     {
         next_error( "server could not get socket map: %s\n\n", strerror(errno) );
