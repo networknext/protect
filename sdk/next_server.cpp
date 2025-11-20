@@ -1127,6 +1127,8 @@ void next_server_receive_packets( next_server_t * server )
 
 #ifdef __linux__
 
+    next_info( "receive packets?" );
+
     uint32_t receive_index;
     
     uint32_t num_packets = xsk_ring_cons__peek( &server->receive_queue, NEXT_XDP_RECV_QUEUE_SIZE, &receive_index );
