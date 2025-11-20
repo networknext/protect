@@ -1141,15 +1141,16 @@ void next_server_receive_packets( next_server_t * server )
 
             int packet_bytes = desc->len - ( sizeof(struct ethhdr) + sizeof(struct iphdr) + sizeof(struct udphdr) );
 
+            next_info( "received %d byte packet", packet_bytes );
+
             if ( packet_bytes > 18 )
             {
-                next_info( "received %d byte packet", packet_bytes );
                 const int index = server->receive_buffer.current_packet++;
                 server->receive_buffer.packet_data[index] = server->receive_buffer.data + index * NEXT_MAX_PACKET_BYTES;
                 server->receive_buffer.packet_bytes[index] = packet_bytes;
             }
 
-            // todo: do we really want to return packets to fill one at a time? probably not
+            // todo: batch prod__submit -> num_packets
             uint32_t fill_index;
             if ( xsk_ring_prod__reserve( &server->fill_queue, 1, &fill_index ) == 1 ) 
             {
