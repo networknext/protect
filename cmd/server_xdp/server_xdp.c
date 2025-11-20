@@ -603,9 +603,13 @@ SEC("server_xdp") int server_xdp_filter( struct xdp_md *ctx )
 
 #endif // #if ADVANCED_PACKET_FILTER
 
-                        int queue_id = 0;
+                        debug_printf( "redirecting to xdp socket for queue 0" );
 
-                        bpf_redirect_map( &server_xdp_socket_map, queue_id, 0 );
+                        __u32 queue_id = 0;
+
+                        // __u32 queue_id = ctx->rx_queue_index; // Get the current queue ID
+
+                        bpf_redirect_map( &server_xdp_socket_map, queue_id, BPF_F_INGRESS);
 
                         return XDP_REDIRECT;
                     }
