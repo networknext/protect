@@ -567,9 +567,9 @@ next_server_t * next_server_create( void * context, const char * bind_address_st
 
     // initialize server xdp sockets (one socket per-NIC queue)
 
-    for ( int i = 0; i < NUM_SERVER_XDP_SOCKETS; i++ )
+    for ( int queue = 0; queue < NUM_SERVER_XDP_SOCKETS; queue++ )
     {
-        next_server_xdp_socket_t * socket = &server->socket[i];
+        next_server_xdp_socket_t * socket = &server->socket[queue];
 
         // allocate umem
 
@@ -602,24 +602,22 @@ next_server_t * next_server_create( void * context, const char * bind_address_st
         xsk_config.bind_flags = XDP_USE_NEED_WAKEUP;
         xsk_config.libbpf_flags = XSK_LIBBPF_FLAGS__INHIBIT_PROG_LOAD;
 
-        int queue_id = 0;
-
-        result = xsk_socket__create( &socket->xsk, interface_name, queue_id, socket->umem, &socket->receive_queue, &socket->send_queue, &xsk_config );
+        result = xsk_socket__create( &socket->xsk, interface_name, queue, socket->umem, &socket->receive_queue, &socket->send_queue, &xsk_config );
         if ( result )
         {
-            next_error( "server could not create xsk socket" );
+            next_error( "server could not create xsk socket for queue %d", queue );
             next_server_destroy( server );
             return NULL;
         }
 
         // configure the xdp socket to receive packets from the xdp program
 
-        __u32 key = queue_id;
+        __u32 key = queue;
         __u32 value = xsk_socket__fd( socket->xsk );
 
-        if ( bpf_map_update_elem( socket->socket_map_fd, &key, &value, BPF_ANY ) < 0 ) 
+        if ( bpf_map_update_elem( server->socket_map_fd, &key, &value, BPF_ANY ) < 0 ) 
         {
-            next_error( "server failed to add xdp socket to map" );
+            next_error( "server failed to add xdp socket for queue %d to map", queue );
             next_server_destroy( server );
             return NULL;
         }
