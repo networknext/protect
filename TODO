@@ -63,8 +63,6 @@ DONE
 
         xdp-loader load eth0 my_prog.o --pin-path /sys/fs/bpf/my-prog
 
-    Without this, you can't just 
-
     Verify the client user space receives packets sent to it from AF_XDP
 
     What's the next step?
@@ -83,17 +81,13 @@ DONE
 
     Also, for a game server receiving packets (aside from dropped bad ones in XDP) is not a high bandwidth operation. Servers receive relatively little bandwidth vs. what they send.
 
+    Bring back the XDP program loaded by next_server.cpp
+
 TODO
 
     Copy from the XDP packets into the receive buffer. It's all on one thread so we don't need any locking for now.
 
-    Shortly, we should extend the code to look up the number of queues on the NIC, and create that number of threads for sending and receiving packets.
-
-    These threads should be greedy, in that they sleep until they have work to do.    
-
-    We should also consider bringing back the XDP program so it is loaded inside the next_server.cpp again
-
-
+    Extend to support reading from n background threads, querying the NIC to see how many queues exist.
 
 
 

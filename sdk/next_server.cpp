@@ -1269,6 +1269,8 @@ void next_server_receive_packets( next_server_t * server )
 
 #ifdef __linux__
 
+    server->receive_buffer.current_packet = 0;
+
     uint32_t receive_index;
     
     uint32_t num_packets = xsk_ring_cons__peek( &server->receive_queue, NEXT_XDP_RECV_QUEUE_SIZE, &receive_index );
@@ -1279,15 +1281,18 @@ void next_server_receive_packets( next_server_t * server )
         {
             const struct xdp_desc * desc = xsk_ring_cons__rx_desc( &server->receive_queue, receive_index + i );
 
-            uint8_t * packet_data = (uint8_t*) xsk_umem__get_data( server->umem, desc->addr );
+            uint8_t * packet_data = (uint8_t*)server->buffer + desc->addr;
 
             int packet_bytes = desc->len - ( sizeof(struct ethhdr) + sizeof(struct iphdr) + sizeof(struct udphdr) );
 
             next_info( "received %d byte packet", packet_bytes );
 
-            if ( packet_bytes > 18 )
+            if ( packet_bytes > 18 && server->receive_buffer.current_packet < NEXT_SERVER_MAX_RECEIVE_PACKETS )
             {
                 const int index = server->receive_buffer.current_packet++;
+
+                next_info( "packet index is %d", index );
+
                 server->receive_buffer.packet_data[index] = server->receive_buffer.data + index * NEXT_MAX_PACKET_BYTES;
                 server->receive_buffer.packet_bytes[index] = packet_bytes;
                 memcpy( server->receive_buffer.packet_data[index], packet_data, packet_bytes );
