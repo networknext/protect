@@ -437,9 +437,39 @@ next_server_t * next_server_create( void * context, const char * bind_address_st
         server->frames[j] = j * NEXT_XDP_FRAME_SIZE;
     }
 
-    // todo: allocate fill frames for receiving packets from network driver
-
     server->num_free_frames = NEXT_XDP_NUM_FRAMES;
+
+    // populate fill ring for packets to be received in
+    {
+        uint32_t index;
+        if ( xsk_ring_prod__reserve( &server->fill_queue, NEXT_XDP_FILL_QUEUE_SIZE, &index ) != NEXT_XDP_FILL_QUEUE_SIZE ) 
+        {
+            next_error( "server failed to populate fill queue" );
+            next_server_destroy( server );
+            return NULL;
+        }
+
+        uint64_t frames[NEXT_XDP_FILL_QUEUE_SIZE];
+        for ( int i = 0; i < NEXT_XDP_FILL_QUEUE_SIZE; i++ ) 
+        {
+            frames[i] = next_server_alloc_frame( server );
+            if ( frame == INVALID_FRAME )
+            {
+                next_error( "server could not allocate frame for fill queue" );
+                next_server_destroy( server );
+                return NULL;
+            }
+        }
+
+        for ( int i = 0; i < NEXT_XDP_FILL_QUEUE_SIZE; i++ ) 
+        {
+            uint64_t * frame = xsk_ring_prod__fill_desc( &server->fill_queue, index + i );
+            next_assert( frame );
+            *frame = frames[i];
+        }
+
+        xsk_ring_prod__submit( &server->fill_queue, NEXT_XDP_FILL_QUEUE_SIZE );
+    }
 
     // save the server public address and port in network order (big endian)
 
@@ -921,7 +951,7 @@ void next_server_send_packets( struct next_server_t * server )
         if ( num_packets_to_send == 0 )
             break;
 
-        const int batch_packets = ( num_packets_to_send < NEXT_XDP_SEND_BATCH_SIZE ) ? num_packets_to_send : NEXT_XDP_SEND_BATCH_SIZE;
+        int batch_packets = ( num_packets_to_send < NEXT_XDP_SEND_BATCH_SIZE ) ? num_packets_to_send : NEXT_XDP_SEND_BATCH_SIZE;
 
         uint64_t frames[NEXT_XDP_SEND_BATCH_SIZE];
         for ( int i = 0; i < batch_packets; i++ )
@@ -947,8 +977,8 @@ void next_server_send_packets( struct next_server_t * server )
             // reserve entries in the send queue. we *must* send all entries we reserve
 
             uint32_t send_queue_index;
-            int result = xsk_ring_prod__reserve( &server->send_queue, batch_packets, &send_queue_index );
-            if ( result == 0 ) 
+            batch_packets = xsk_ring_prod__reserve( &server->send_queue, batch_packets, &send_queue_index );
+            if ( batch_packets == 0 ) 
             {
                 next_warn( "server send queue is full" );
                 return;
