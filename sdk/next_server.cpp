@@ -345,7 +345,7 @@ next_server_t * next_server_create( void * context, const char * bind_address_st
                 if ( sa->sin_addr.s_addr == public_address_ipv4 )
                 {
                     strncpy( interface_name, iap->ifa_name, sizeof(interface_name) );
-                    printf( "found network interface: '%s'\n", interface_name );
+                    next_info( "server found network interface: %s", interface_name );
                     server->interface_index = if_nametoindex( iap->ifa_name );
                     if ( !server->interface_index ) 
                     {
@@ -491,7 +491,7 @@ next_server_t * next_server_create( void * context, const char * bind_address_st
     server->program = xdp_program__open_file( "server_xdp.o", "server_xdp", NULL );
     if ( libxdp_get_error( server->program ) ) 
     {
-        printf( "\nerror: could not load server_xdp program\n\n");
+        next_error( "could not load server_xdp program" );
         next_server_destroy( server );
         return NULL;
     }
@@ -578,7 +578,7 @@ next_server_t * next_server_create( void * context, const char * bind_address_st
     server->config_map_fd = bpf_obj_get( "/sys/fs/bpf/server_xdp_config_map" );
     if ( server->config_map_fd <= 0 )
     {
-        next_error( "server could not get config map: %s\n\n", strerror(errno) );
+        next_error( "server could not get config map: %s", strerror(errno) );
         next_server_destroy( server );
         return NULL;
     }
@@ -586,7 +586,7 @@ next_server_t * next_server_create( void * context, const char * bind_address_st
     server->state_map_fd = bpf_obj_get( "/sys/fs/bpf/server_xdp_state_map" );
     if ( server->state_map_fd <= 0 )
     {
-        next_error( "server could not get state map: %s\n\n", strerror(errno) );
+        next_error( "server could not get state map: %s", strerror(errno) );
         next_server_destroy( server );
         return NULL;
     }
@@ -594,7 +594,7 @@ next_server_t * next_server_create( void * context, const char * bind_address_st
     server->socket_map_fd = bpf_obj_get( "/sys/fs/bpf/server_xdp_socket_map" );
     if ( server->socket_map_fd <= 0 )
     {
-        next_error( "server could not get socket map: %s\n\n", strerror(errno) );
+        next_error( "server could not get socket map: %s", strerror(errno) );
         next_server_destroy( server );
         return NULL;
     }
@@ -1087,9 +1087,6 @@ void next_server_send_packets( struct next_server_t * server )
         if ( num_completed == 0 )
             break;
 
-        printf( "%d completed\n", num_completed );
-        fflush( stdout );
-
         for ( int i = 0; i < num_completed; i++ )
         {
             uint64_t frame = *xsk_ring_cons__comp_addr( &server->complete_queue, complete_index++ );
@@ -1196,9 +1193,6 @@ void next_server_send_packets( struct next_server_t * server )
             // submit send queue to driver
 
             xsk_ring_prod__submit( &server->send_queue, batch_packets );
-
-            // todo
-            printf( "sent batch of %d packets\n", batch_packets );
         }
 
         num_packets_to_send -= batch_packets;
@@ -1290,9 +1284,6 @@ void next_server_receive_packets( next_server_t * server )
             if ( packet_bytes > 18 && server->receive_buffer.current_packet < NEXT_SERVER_MAX_RECEIVE_PACKETS )
             {
                 const int index = server->receive_buffer.current_packet++;
-
-                next_info( "packet index is %d", index );
-
                 server->receive_buffer.packet_data[index] = server->receive_buffer.data + index * NEXT_MAX_PACKET_BYTES;
                 server->receive_buffer.packet_bytes[index] = packet_bytes;
                 memcpy( server->receive_buffer.packet_data[index], packet_data, packet_bytes );
