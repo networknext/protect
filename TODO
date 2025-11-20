@@ -77,13 +77,21 @@ DONE
 
     Decision. Get everything working with one queue up to packet processing via the userspace application.
 
-    Next, 
+    Bring back the receive buffer in AF_XDP mode on linux. We're going to copy from the ring buffers to our own receive buffer.
+
+    The reason is that the receive buffers and fill buffers in XDP are shorter than we need for storing packets between frames, so we can't reasonably rely on them to buffer everything.
+
+    Also, for a game server receiving packets (aside from dropped bad ones in XDP) is not a high bandwidth operation. Servers receive relatively little bandwidth vs. what they send.
 
 TODO
 
+    Copy from the XDP packets into the receive buffer. It's all on one thread so we don't need any locking for now.
 
+    Shortly, we should extend the code to look up the number of queues on the NIC, and create that number of threads for sending and receiving packets.
 
+    These threads should be greedy, in that they sleep until they have work to do.    
 
+    We should also consider bringing back the XDP program so it is loaded inside the next_server.cpp again
 
 
 
