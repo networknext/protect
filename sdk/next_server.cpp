@@ -1457,6 +1457,12 @@ struct next_server_process_packets_t * next_server_process_packets_begin( struct
 {
     next_assert( server );
 
+#ifdef __linux__
+
+    // todo: AF_XDP
+
+#else // #ifdef __linux__
+
     next_assert( !server->receive_buffer.processing_packets );          // IMPORTANT: You must always call next_server_process_packets_finish
 
     const int num_packets = server->receive_buffer.current_packet;
@@ -1476,6 +1482,8 @@ struct next_server_process_packets_t * next_server_process_packets_begin( struct
 
     server->receive_buffer.processing_packets = true;
 
+#endif // #ifdef __linux__
+
     return &server->process_packets;
 }
 
@@ -1494,6 +1502,16 @@ void next_server_process_packets_end( struct next_server_t * server )
 {
     next_assert( server );
     next_assert( server->receive_buffer.processing_packets );
+
+#ifdef __linux__
+
+    // todo: AF_XDP
+
+#else // #ifdef __linux__
+
     server->receive_buffer.processing_packets = false;
+
+#endif // #ifdef __linux__
+
     server->process_packets.num_packets = 0;
 }
