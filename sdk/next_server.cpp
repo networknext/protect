@@ -238,6 +238,31 @@ static bool get_gateway_mac_address( const char * interface_name, uint8_t * mac_
     return true;
 }
 
+#define INVALID_FRAME UINT64_MAX
+
+uint64_t next_server_alloc_frame( next_server_t * server )
+{
+    next_platform_mutex_acquire( &server->frame_mutex );
+    uint64_t frame = INVALID_FRAME;
+    if ( server->num_free_frames > 0 )
+    {
+        server->num_free_frames--;
+        frame = server->frames[server->num_free_frames];
+        server->frames[server->num_free_frames] = INVALID_FRAME;
+    }
+    next_platform_mutex_release( &server->frame_mutex );
+    return frame;
+}
+
+void next_server_free_frame( next_server_t * server, uint64_t frame )
+{
+    next_platform_mutex_acquire( &server->frame_mutex );
+    next_assert( server->num_free_frames < NEXT_XDP_NUM_FRAMES );
+    server->frames[server->num_free_frames] = frame;
+    server->num_free_frames++;
+    next_platform_mutex_release( &server->frame_mutex );
+}
+
 #endif // #ifdef __linux__
 
 next_server_t * next_server_create( void * context, const char * bind_address_string, const char * public_address_string )
@@ -570,35 +595,6 @@ void next_server_destroy( next_server_t * server )
 
     next_clear_and_free( server->context, server, sizeof(next_server_t) );
 }
-
-#ifdef __linux__
-
-#define INVALID_FRAME UINT64_MAX
-
-uint64_t next_server_alloc_frame( next_server_t * server )
-{
-    next_platform_mutex_acquire( &server->frame_mutex );
-    uint64_t frame = INVALID_FRAME;
-    if ( server->num_free_frames > 0 )
-    {
-        server->num_free_frames--;
-        frame = server->frames[server->num_free_frames];
-        server->frames[server->num_free_frames] = INVALID_FRAME;
-    }
-    next_platform_mutex_release( &server->frame_mutex );
-    return frame;
-}
-
-void next_server_free_frame( next_server_t * server, uint64_t frame )
-{
-    next_platform_mutex_acquire( &server->frame_mutex );
-    next_assert( server->num_free_frames < NEXT_XDP_NUM_FRAMES );
-    server->frames[server->num_free_frames] = frame;
-    server->num_free_frames++;
-    next_platform_mutex_release( &server->frame_mutex );
-}
-
-#endif // #ifdef __linux__
 
 void next_server_client_timed_out( next_server_t * server, int client_index )
 {
