@@ -501,9 +501,10 @@ next_server_t * next_server_create( void * context, const char * bind_address_st
     // populate fill ring for packets to be received in
     {
         uint32_t index;
-        if ( xsk_ring_prod__reserve( &server->fill_queue, NEXT_XDP_FILL_QUEUE_SIZE, &index ) != NEXT_XDP_FILL_QUEUE_SIZE ) 
+        int result = xsk_ring_prod__reserve( &server->fill_queue, NEXT_XDP_FILL_QUEUE_SIZE, &index );
+        if ( result != NEXT_XDP_FILL_QUEUE_SIZE )
         {
-            next_error( "server failed to populate fill queue" );
+            next_error( "server failed to populate fill queue: %d", result );
             next_server_destroy( server );
             return NULL;
         }
