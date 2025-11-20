@@ -513,7 +513,7 @@ next_server_t * next_server_create( void * context, const char * bind_address_st
 
         for ( int i = 0; i < NEXT_XDP_FILL_QUEUE_SIZE; i++ ) 
         {
-            uint64_t * frame = xsk_ring_prod__fill_addr( &server->fill_queue, index + i );
+            uint64_t * frame = (uint64_t*) xsk_ring_prod__fill_addr( &server->fill_queue, index + i );
             next_assert( frame );
             *frame = frames[i];
         }
@@ -1129,7 +1129,7 @@ void next_server_receive_packets( next_server_t * server )
         {
             const struct xdp_desc * desc = xsk_ring_cons__rx_desc( &server->receive_queue, receive_index + i );
 
-            uint8_t * packet_data = (uint8_t*) xsk_umem__get_data( server->umem_buffer, desc->addr );
+            uint8_t * packet_data = (uint8_t*) xsk_umem__get_data( server->umem, desc->addr );
 
             next_info( "received %d byte packet", desc->len );
 
