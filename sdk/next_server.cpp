@@ -942,7 +942,7 @@ void next_server_send_packets( struct next_server_t * server )
 
                 const int payload_bytes = server->send_buffer.packet_bytes[index];
 
-                memcpy( packet_data + sizeof(struct ethhdr) + sizeof(struct iphdr) + sizeof(struct udphdr), server->send_buffer.data + index * NEXT_SERVER_FRAME_SIZE, payload_bytes );
+                memcpy( packet_data + sizeof(struct ethhdr) + sizeof(struct iphdr) + sizeof(struct udphdr), server->send_buffer.data + index * NEXT_XDP_FRAME_SIZE, payload_bytes );
 
                 // todo: get these from the client arrays according to client_index or whatever
                 uint32_t client_address_big_endian = 0x0301a8c0;                            // batman IP on 10G LAN
