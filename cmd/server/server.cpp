@@ -36,10 +36,10 @@ int main()
 
     while ( !quit )
     {
-        // todo
-        /*
         next_server_receive_packets( server );
 
+        // todo
+        /*
         next_server_process_packets_t * packets = next_server_process_packets_begin( server );
 
         for ( int i = 0; i < packets->num_packets; i++ )
