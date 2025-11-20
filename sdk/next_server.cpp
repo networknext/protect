@@ -1145,7 +1145,7 @@ void next_server_receive_packets( next_server_t * server )
             {
                 next_info( "received %d byte packet", packet_bytes );
                 const int index = server->receive_buffer.current_packet++;
-                server->receive_buffer.packet_data[index] = server->receive_buffer.data + index * NEXT_MAX_PACKET_SIZE;
+                server->receive_buffer.packet_data[index] = server->receive_buffer.data + index * NEXT_MAX_PACKET_BYTES;
                 server->receive_buffer.packet_bytes[index] = packet_bytes;
             }
 
