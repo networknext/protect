@@ -36,7 +36,11 @@ DONE
 
     Now hook up AF_XDP to send the packets in batches in next_server_send_packets (send as much as it can... warn if it can't send all...
 
+    Cleaned up the server packet buffer sizes a lot, and increased the size for 
+
 TODO
+
+    The next stepy 
 
     -------------
 

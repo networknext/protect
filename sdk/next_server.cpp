@@ -873,6 +873,29 @@ void next_server_send_packets( struct next_server_t * server )
 
 #ifdef __linux__
 
+    // mark any sent packet frames as free to be reused
+
+    while ( true )
+    {
+        uint32_t complete_index;
+
+        unsigned int num_completed = xsk_ring_cons__peek( &server->complete_queue, XSK_RING_CONS__DEFAULT_NUM_DESCS, &complete_index );
+
+        if ( num_completed == 0 )
+            break;
+
+        printf( "%d completed\n", num_completed );
+        fflush( stdout );
+
+        for ( int i = 0; i < num_completed; i++ )
+        {
+            uint64_t frame = *xsk_ring_cons__comp_addr( &server->complete_queue, complete_index++ );
+            next_server_free_frame( server, frame );
+        }
+
+        xsk_ring_cons__release( &server->complete_queue, num_completed );
+    }
+
     // count how many valid packets we have to send in the send buffer (non-zero size)
 
     int num_packets_to_send = 0;
@@ -913,6 +936,10 @@ void next_server_send_packets( struct next_server_t * server )
                 for ( int j = 0; j < i; j++ )
                 {
                     next_server_free_frame( server, frames[j] );
+                }
+                if ( xsk_ring_prod__needs_wakeup( &server->send_queue ) )
+                {
+                    sendto( xsk_socket__fd( server->xsk ), NULL, 0, MSG_DONTWAIT, NULL, 0 );
                 }
                 return;
             }
@@ -958,38 +985,18 @@ void next_server_send_packets( struct next_server_t * server )
 
             xsk_ring_prod__submit( &server->send_queue, batch_packets );
 
-            // actually send the packets
-
-            if ( xsk_ring_prod__needs_wakeup( &server->send_queue ) )
-            {
-                sendto( xsk_socket__fd( server->xsk ), NULL, 0, MSG_DONTWAIT, NULL, 0 );
-            }
-
             // todo
             printf( "sent batch of %d packets\n", batch_packets );
-
-            // mark any sent packet frames as free to be reused
-
-            uint32_t complete_index;
-
-            unsigned int num_completed = xsk_ring_cons__peek( &server->complete_queue, XSK_RING_CONS__DEFAULT_NUM_DESCS, &complete_index );
-
-            if ( num_completed > 0 )
-            {
-                printf( "%d completed\n", num_completed );
-                fflush( stdout );
-
-                for ( int i = 0; i < num_completed; i++ )
-                {
-                    uint64_t frame = *xsk_ring_cons__comp_addr( &server->complete_queue, complete_index++ );
-                    next_server_free_frame( server, frame );
-                }
-
-                xsk_ring_cons__release( &server->complete_queue, num_completed );
-            }
         }
 
         num_packets_to_send -= batch_packets;
+    }
+
+    // actually send the packets
+
+    if ( xsk_ring_prod__needs_wakeup( &server->send_queue ) )
+    {
+        sendto( xsk_socket__fd( server->xsk ), NULL, 0, MSG_DONTWAIT, NULL, 0 );
     }
 
     // all packets have been sent
