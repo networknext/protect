@@ -1127,16 +1127,12 @@ void next_server_receive_packets( next_server_t * server )
 
 #ifdef __linux__
 
-    next_info( "receive packets?" );
-
     uint32_t receive_index;
     
     uint32_t num_packets = xsk_ring_cons__peek( &server->receive_queue, NEXT_XDP_RECV_QUEUE_SIZE, &receive_index );
 
-    if ( num_packets > 0) 
+    if ( num_packets > 0 )
     {
-        next_info( "received %d packets", num_packets );
-
         for ( uint32_t i = 0; i < num_packets; i++ ) 
         {
             const struct xdp_desc * desc = xsk_ring_cons__rx_desc( &server->receive_queue, receive_index + i );
@@ -1147,12 +1143,14 @@ void next_server_receive_packets( next_server_t * server )
 
             next_info( "received %d byte packet", packet_bytes );
 
+            /*
             if ( packet_bytes > 18 )
             {
                 const int index = server->receive_buffer.current_packet++;
                 server->receive_buffer.packet_data[index] = server->receive_buffer.data + index * NEXT_MAX_PACKET_BYTES;
                 server->receive_buffer.packet_bytes[index] = packet_bytes;
             }
+            */
 
             // todo: batch prod__submit -> num_packets
             uint32_t fill_index;
