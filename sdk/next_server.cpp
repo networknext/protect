@@ -37,21 +37,21 @@ struct next_server_send_buffer_t
 {
     next_platform_mutex_t mutex;
     size_t current_frame;
-    next_address_t to[NEXT_NUM_SERVER_FRAMES];
-    size_t packet_bytes[NEXT_NUM_SERVER_FRAMES];
-    uint8_t packet_type[NEXT_NUM_SERVER_FRAMES];
-    uint8_t data[NEXT_MAX_PACKET_BYTES*NEXT_NUM_SERVER_FRAMES];
+    next_address_t to[NEXT_SERVER_MAX_SEND_PACKETS];
+    size_t packet_bytes[NEXT_SERVER_MAX_SEND_PACKETS];
+    uint8_t packet_type[NEXT_SERVER_MAX_SEND_PACKETS];
+    uint8_t data[NEXT_MAX_PACKET_BYTES*NEXT_SERVER_MAX_SEND_PACKETS];
 };
 
 struct next_server_receive_buffer_t
 {
     int current_frame;
     bool processing_packets;
-    int client_index[NEXT_NUM_SERVER_FRAMES];
-    uint64_t sequence[NEXT_NUM_SERVER_FRAMES];
-    uint8_t * packet_data[NEXT_NUM_SERVER_FRAMES];
-    size_t packet_bytes[NEXT_NUM_SERVER_FRAMES];
-    uint8_t data[NEXT_MAX_PACKET_BYTES*NEXT_NUM_SERVER_FRAMES];
+    int client_index[NEXT_SERVER_MAX_RECEIVE_PACKETS];
+    uint64_t sequence[NEXT_SERVER_MAX_RECEIVE_PACKETS];
+    uint8_t * packet_data[NEXT_SERVER_MAX_RECEIVE_PACKETS];
+    size_t packet_bytes[NEXT_SERVER_MAX_RECEIVE_PACKETS];
+    uint8_t data[NEXT_MAX_PACKET_BYTES*NEXT_SERVER_MAX_RECEIVE_PACKETS];
 };
 
 struct next_server_t
@@ -382,7 +382,7 @@ next_server_t * next_server_create( void * context, const char * bind_address_st
         return NULL;
     }
 
-    const int buffer_size = NEXT_NUM_SERVER_FRAMES * NEXT_SERVER_FRAME_SIZE;
+    const int buffer_size = NEXT_XDP_NUM_FRAMES * NEXT_XDP_FRAME_SIZE;
 
     if ( posix_memalign( &server->buffer, getpagesize(), buffer_size ) ) 
     {
@@ -407,8 +407,8 @@ next_server_t * next_server_create( void * context, const char * bind_address_st
 
     memset( &xsk_config, 0, sizeof(xsk_config) );
 
-    xsk_config.rx_size = XSK_RING_PROD__DEFAULT_NUM_DESCS;
-    xsk_config.tx_size = XSK_RING_PROD__DEFAULT_NUM_DESCS;
+    xsk_config.rx_size = NEXT_XDP_RECV_QUEUE_SIZE;
+    xsk_config.tx_size = NEXT_XDP_SEND_QUEUE_SIZE;
     xsk_config.xdp_flags = XDP_ZEROCOPY;     
     xsk_config.bind_flags = XDP_USE_NEED_WAKEUP;
     xsk_config.libbpf_flags = XSK_LIBBPF_FLAGS__INHIBIT_PROG_LOAD;
@@ -432,12 +432,14 @@ next_server_t * next_server_create( void * context, const char * bind_address_st
         return NULL;
     }
 
-    for ( int j = 0; j < NEXT_NUM_SERVER_FRAMES; j++ )
+    for ( int j = 0; j < NEXT_XDP_NUM_FRAMES; j++ )
     {
-        server->frames[j] = j * NEXT_SERVER_FRAME_SIZE;
+        server->frames[j] = j * NEXT_XDP_FRAME_SIZE;
     }
 
-    server->num_free_frames = NEXT_NUM_SERVER_FRAMES;
+    // todo: allocate fill frames for receiving packets from driver
+
+    server->num_free_frames = NEXT_XDP_SERVER_FRAMES;
 
     // save the server public address and port in network order (big endian)
 
@@ -740,7 +742,7 @@ uint8_t * next_server_start_packet_internal( struct next_server_t * server, next
 
     uint8_t * packet_data = NULL;
     int frame = server->send_buffer.current_frame ;
-    if ( server->send_buffer.current_frame < NEXT_NUM_SERVER_FRAMES )
+    if ( server->send_buffer.current_frame < NEXT_SERVER_MAX_SEND_PACKETS )
     {
         packet_data = server->send_buffer.data + frame * NEXT_MAX_PACKET_BYTES;
         server->send_buffer.current_frame++;
@@ -1056,7 +1058,7 @@ void next_server_receive_packets( next_server_t * server )
 
     while ( 1 )
     {
-        if ( server->receive_buffer.current_frame >= NEXT_NUM_SERVER_FRAMES )
+        if ( server->receive_buffer.current_frame >= NEXT_SERVER_MAX_RECEIVE_PACKETS )
             break;
 
         uint8_t * packet_data = server->receive_buffer.data + NEXT_MAX_PACKET_BYTES * server->receive_buffer.current_frame;

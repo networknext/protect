@@ -51,10 +51,10 @@ void next_server_receive_packets( struct next_server_t * server );
 struct next_server_process_packets_t
 {
     int num_packets;
-    uint64_t sequence[NEXT_NUM_SERVER_FRAMES];
-    int client_index[NEXT_NUM_SERVER_FRAMES];
-    int packet_bytes[NEXT_NUM_SERVER_FRAMES];
-    uint8_t * packet_data[NEXT_NUM_SERVER_FRAMES];
+    uint64_t sequence[NEXT_SERVER_MAX_RECEIVE_PACKETS];
+    int client_index[NEXT_SERVER_MAX_RECEIVE_PACKETS];
+    int packet_bytes[NEXT_SERVER_MAX_RECEIVE_PACKETS];
+    uint8_t * packet_data[NEXT_SERVER_MAX_RECEIVE_PACKETS];
 };
 
 struct next_server_process_packets_t * next_server_process_packets_begin( struct next_server_t * server );

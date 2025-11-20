@@ -10,13 +10,23 @@
 
 #include "next.h"
 
-#define NEXT_SERVER_FRAME_SIZE                                       2048
+#define NEXT_SEND_PACKETS_PER_CLIENT                                   64
 
-#define NEXT_NUM_SERVER_FRAMES                  ( 10 * NEXT_MAX_CLIENTS )
+#define NEXT_RECEIVE_PACKETS_PER_CLIENT                                16
 
+#define NEXT_SERVER_MAX_SEND_PACKETS              ( NEXT_SEND_PACKETS_PER_CLIENT * NEXT_MAX_CLIENTS )
+
+#define NEXT_SERVER_MAX_RECEIVE_PACKETS        ( NEXT_RECEIVE_PACKETS_PER_CLIENT * NEXT_MAX_CLIENTS )
+
+// todo: rename
 #define NEXT_NUM_CLIENT_FRAMES                                       1024
 
-#define NEXT_XDP_SEND_BATCH_SIZE                                      256
+#define NEXT_XDP_FRAME_SIZE                                      ( 2 * 1024 )
+#define NEXT_XDP_SEND_QUEUE_SIZE                                 ( 8 * 1024 )
+#define NEXT_XDP_FILL_QUEUE_SIZE                                 ( 8 * 1024 )
+#define NEXT_XDP_RECV_QUEUE_SIZE                                 ( 8 * 1024 )
+#define NEXT_XDP_NUM_FRAMES                                     ( 32 * 1024 )
+#define NEXT_XDP_SEND_BATCH_SIZE                                     1024
 
 #define NEXT_DIRECT_TIMEOUT                                           5.0
 

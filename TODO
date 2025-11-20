@@ -34,9 +34,9 @@ DONE
 
     OK. Recovered the simple send packet setup for the server, 
 
-TODO
-
     Now hook up AF_XDP to send the packets in batches in next_server_send_packets (send as much as it can... warn if it can't send all...
+
+TODO
 
     -------------
 
