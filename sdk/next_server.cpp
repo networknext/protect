@@ -488,7 +488,7 @@ next_server_t * next_server_create( void * context, const char * bind_address_st
 
         for ( int i = 0; i < NEXT_XDP_FILL_QUEUE_SIZE; i++ ) 
         {
-            uint64_t * frame = xsk_ring_prod__fill_desc( &server->fill_queue, index + i );
+            uint64_t * frame = xsk_ring_prod__fill_addr( &server->fill_queue, index + i );
             next_assert( frame );
             *frame = frames[i];
         }
