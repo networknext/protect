@@ -52,11 +52,9 @@ DONE
 
     Change the send sequence number to atomic increment
 
-TODO
-
     Extract the from address and port from the iphdr and udphdr structs
 
-    ----------
+TODO
 
     Create a separate frame allocator for receive packets vs. send packets, this way they can be on different threads.
 
