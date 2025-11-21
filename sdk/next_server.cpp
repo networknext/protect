@@ -1466,15 +1466,18 @@ static void xdp_receive_thread_function( void * data )
                     receive_buffer->packet_bytes[index] = packet_bytes;
                     memcpy( receive_buffer->packet_data + index * NEXT_MAX_PACKET_BYTES, packet_data, packet_bytes );
                 }
-
-                // todo: batch prod__submit -> num_packets
-                uint32_t fill_index;
-                if ( xsk_ring_prod__reserve( &socket->fill_queue, 1, &fill_index ) == 1 ) 
-                {
-                    *xsk_ring_prod__fill_addr( &socket->fill_queue, fill_index ) = desc->addr;
-                    xsk_ring_prod__submit( &socket->fill_queue, 1 );
-                }
             }
+
+            // todo: we can't really handle any error in reserving fill queue below can we?
+            uint32_t fill_index;
+            int num_reserved = xsk_ring_prod__reserve( &socket->fill_queue, num_packets, &fill_index );
+            next_assert( num_reserved == num_packets );
+            for ( int i = 0; i < num_reserved; i++ )
+            {
+                *xsk_ring_prod__fill_addr( &socket->fill_queue, fill_index + i ) = desc->addr;
+            }
+
+            xsk_ring_prod__submit( &socket->fill_queue, num_reserved );
 
             xsk_ring_cons__release( &socket->receive_queue, num_packets );
         }
