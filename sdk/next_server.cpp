@@ -1438,7 +1438,7 @@ void next_server_receive_packets( next_server_t * server )
 
         next_platform_mutex_acquire( &socket->receive_mutex );
 
-        next_server_xdp_receive_buffer_t * receive_buffer = socket->receive_buffer[socket->current_index];
+        next_server_xdp_receive_buffer_t * receive_buffer = socket->receive_buffer[socket->receive_buffer_index];
 
         uint32_t receive_index;
         
