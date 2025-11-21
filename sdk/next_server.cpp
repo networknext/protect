@@ -1430,8 +1430,8 @@ void next_server_receive_packets( next_server_t * server )
         }
     }
 
-// todo: this moves to a thread per-socket
-#if 0
+    // todo: move this to a thread per-socket
+
     for ( int queue = 0; queue < NUM_SERVER_XDP_SOCKETS; queue++ )
     {
         next_server_xdp_socket_t * socket = &server->socket[queue];
@@ -1452,16 +1452,13 @@ void next_server_receive_packets( next_server_t * server )
 
                 next_info( "received %d byte packet on queue %d", packet_bytes, queue );
 
-                // todo: disable for the moment. we need n receive buffers, one per-socket queue for this to work
-                /*
-                if ( packet_bytes > 18 && socket->receive_buffer.current_packet < NEXT_SERVER_MAX_RECEIVE_PACKETS )
+                if ( packet_bytes > 18 && socket->receive_buffer.current_packet < NEXT_XDP_RECV_QUEUE_SIZE )
                 {
                     const int index = socket->receive_buffer.current_packet++;
                     socket->receive_buffer.packet_data[index] = socket->receive_buffer.data + index * NEXT_MAX_PACKET_BYTES;
                     socket->receive_buffer.packet_bytes[index] = packet_bytes;
                     memcpy( socket->receive_buffer.packet_data[index], packet_data, packet_bytes );
                 }
-                */
 
                 // todo: batch prod__submit -> num_packets
                 uint32_t fill_index;
@@ -1475,7 +1472,6 @@ void next_server_receive_packets( next_server_t * server )
             xsk_ring_cons__release( &socket->receive_queue, num_packets );
         }
     }
-#endif // #if 0
 
 #else // #ifdef __linux__
 
