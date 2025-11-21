@@ -1463,9 +1463,8 @@ void next_server_receive_packets( next_server_t * server )
                     // todo: extract from address from ip and udp headers
                     next_address_parse( &receive_buffer->from[index], "192.168.1.3:30000" );
                     
-                    receive_buffer->packet_data[index] = receive_buffer->packet_data + index * NEXT_MAX_PACKET_BYTES;
                     receive_buffer->packet_bytes[index] = packet_bytes;
-                    memcpy( receive_buffer->packet_data[index], packet_data, packet_bytes );
+                    memcpy( receive_buffer->packet_data + index * NEXT_MAX_PACKET_BYTES, packet_data, packet_bytes );
                 }
 
                 // todo: batch prod__submit -> num_packets
