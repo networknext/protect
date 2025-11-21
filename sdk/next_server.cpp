@@ -52,6 +52,7 @@ struct next_server_xdp_receive_buffer_t
 struct next_server_xdp_socket_t
 {
     int queue;
+    int event_fd;
     std::atomic<bool> quit;
 
     uint32_t num_free_frames;
