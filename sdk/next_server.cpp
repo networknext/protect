@@ -1410,8 +1410,31 @@ static void xdp_receive_thread_function( void * data )
 {
     next_server_xdp_socket_t * socket = (next_server_xdp_socket_t*) data;
 
+    struct pollfd fds[1];
+    fds[0].fd = xsk_socket__fd( socket-> xsk );
+    fds[0].events = POLLIN;
+
     while ( !socket->quit )
     {
+        if ( xsk_ring_prod__needs_wakeup( &server->fill_queue ) ) 
+        {
+            sendto( xsk_socket__fd( socket->xsk ), NULL, 0, MSG_DONTWAIT, NULL, 0 );
+        }
+
+        int poll_result = poll( fds, 1, -1 );
+        if ( poll_result < 0 ) 
+        {
+            next_error( "poll error on socket queue %d (%d)", socket->queue, poll_result );
+            break;
+        }
+
+        if ( ( fds[0].revents & POLLIN ) == 0 ) 
+        {
+            continue;
+        }
+
+        // pump to receive all packets
+
         next_platform_mutex_acquire( &socket->receive_mutex );
 
         next_server_xdp_receive_buffer_t * receive_buffer = &socket->receive_buffer[socket->receive_buffer_index];
