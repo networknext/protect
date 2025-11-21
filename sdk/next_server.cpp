@@ -217,7 +217,7 @@ static bool get_gateway_mac_address( const char * interface_name, uint8_t * mac_
     {
         return false;
     }
-7
+
     // parse the address and make sure it's a valid ipv4
 
     next_address_t address;
