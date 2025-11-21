@@ -1395,16 +1395,16 @@ void next_server_receive_packets( next_server_t * server )
 
     for ( int queue = 0; queue < NUM_SERVER_XDP_SOCKETS; queue++ )
     {
-        // double buffer via receive buffer index
+        // double buffer socket receive buffer ...
 
         next_server_xdp_socket_t * socket = &server->socket[queue];
 
         next_platform_mutex_acquire( &socket->receive_mutex );
-        int current_index = socket->receive_buffer_index;
-        socket->receive_index = current_index ? 0 : 1;
+        const int current_index = socket->receive_buffer_index;
+        socket->receive_buffer_index = current_index ? 0 : 1;
         next_platform_mutex_release( &socket->receive_mutex );
 
-        // now we can access the off receive buffer without contention...
+        // ... now we can access the off receive buffer without contention
 
         next_server_xdp_receive_buffer_t * receive_buffer = socket->receive_buffer[current_index];
 
