@@ -1492,8 +1492,8 @@ static void xdp_receive_thread_function( void * data )
                     struct udphdr * udp = (udphdr*) ( (uint8_t*)ip + sizeof( struct iphdr ) );
 
                     uint32_t source_ipv4 = (uint32_t) ip->daddr;
-
-                    next_address_load_ipv4( &receive_buffer->from[index], &source_ipv4 );
+    
+                    next_address_load_ipv4( &receive_buffer->from[index], source_ipv4 );
                     receive->buffer->from[index].port = udp->dest;
                     
                     receive_buffer->packet_bytes[index] = packet_bytes;
