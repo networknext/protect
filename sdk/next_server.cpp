@@ -1479,7 +1479,7 @@ static void xdp_receive_thread_function( void * data )
                 next_assert( num_reserved == num_packets );
                 for ( int i = 0; i < num_reserved; i++ )
                 {
-                    *xsk_ring_prod__fill_addr( &socket->fill_queue, fill_index + i ) = desc->addr;
+                    *xsk_ring_prod__fill_addr( &socket->fill_queue, fill_index + i ) = frame[i];
                 }
 
                 xsk_ring_prod__submit( &socket->fill_queue, num_reserved );
