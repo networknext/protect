@@ -1417,7 +1417,7 @@ static void xdp_receive_thread_function( void * data )
 
     while ( !socket->quit )
     {
-        if ( xsk_ring_prod__needs_wakeup( &server->fill_queue ) ) 
+        if ( xsk_ring_prod__needs_wakeup( &socket->fill_queue ) ) 
         {
             sendto( xsk_socket__fd( socket->xsk ), NULL, 0, MSG_DONTWAIT, NULL, 0 );
         }
