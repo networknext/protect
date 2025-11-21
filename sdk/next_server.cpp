@@ -25,6 +25,7 @@
 #include <net/if.h>
 #include <linux/if_link.h>
 #include <linux/if_ether.h>
+#include <sys/eventfd.h>
 #include <errno.h>
 #include <poll.h>
 #include <atomic>
@@ -810,6 +811,8 @@ void next_server_destroy( next_server_t * server )
 
         next_platform_thread_join( socket->receive_thread );
         next_platform_thread_destroy( socket->receive_thread );
+
+        close( socket->event_fd );
 
         next_platform_mutex_destroy( &socket->receive_mutex );
 
