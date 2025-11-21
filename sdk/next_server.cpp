@@ -28,7 +28,6 @@
 #include <sys/eventfd.h>
 #include <errno.h>
 #include <poll.h>
-#include <atomic>
 
 #include "next_server_xdp.h"
 
@@ -36,6 +35,7 @@
 
 #include <memory.h>
 #include <stdio.h>
+#include <atomic>
 
 #ifdef __linux__
 
@@ -77,6 +77,7 @@ struct next_server_xdp_socket_t
 struct next_server_send_buffer_t
 {
     next_platform_mutex_t mutex;
+    std::atomic<uint64_t> sequence;
     size_t current_packet;
     next_address_t to[NEXT_SERVER_MAX_SEND_PACKETS];
     size_t packet_bytes[NEXT_SERVER_MAX_SEND_PACKETS];
@@ -1057,10 +1058,7 @@ uint8_t * next_server_start_packet( struct next_server_t * server, int client_in
 
 #else // #ifdef __linux__
 
-    // todo: this can actually be atomic increment
-    next_platform_mutex_acquire( &server->client_payload_mutex );
-    uint64_t sequence = ++server->client_payload_sequence[client_index];
-    next_platform_mutex_release( &server->client_payload_mutex );
+    uint64_t sequence = server->send_buffer.sequence.fetch_add(1);
 
     if ( server->client_direct[client_index] )
     {

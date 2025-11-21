@@ -50,6 +50,8 @@ DONE
 
     Add an event fd so we can wakeup the receive thread when it needs to be shut down.
 
+    Change the send sequence number to atomic increment
+
 TODO
 
     Extract the from address and port from the iphdr and udphdr structs
@@ -67,10 +69,6 @@ TODO
     Make these send buffers double buffered like receive.
 
     This way we can distribute packets sent across multiple thread send queues without mutexes per-packet send
-
-    ----------
-
-    Also change the send sequence number to atomic increment
 
     ----------
 
