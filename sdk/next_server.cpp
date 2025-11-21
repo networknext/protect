@@ -1436,6 +1436,10 @@ void next_server_receive_packets( next_server_t * server )
     {
         next_server_xdp_socket_t * socket = &server->socket[queue];
 
+        next_platform_mutex_acquire( &socket->receive_mutex );
+
+        next_server_xdp_receive_buffer_t * receive_buffer = socket->receive_buffer[socket->current_index];
+
         uint32_t receive_index;
         
         uint32_t num_packets = xsk_ring_cons__peek( &socket->receive_queue, NEXT_XDP_RECV_QUEUE_SIZE, &receive_index );
@@ -1475,6 +1479,8 @@ void next_server_receive_packets( next_server_t * server )
 
             xsk_ring_cons__release( &socket->receive_queue, num_packets );
         }
+
+        next_platform_mutex_release( &socket->receive_mutex );
     }
 
 #else // #ifdef __linux__
