@@ -49,6 +49,9 @@ struct next_server_xdp_receive_buffer_t
 
 struct next_server_xdp_socket_t
 {
+    int queue;
+    atomic<bool> quit;
+
     uint32_t num_free_frames;
     uint64_t frames[NEXT_XDP_NUM_FRAMES];
 
@@ -214,7 +217,7 @@ static bool get_gateway_mac_address( const char * interface_name, uint8_t * mac_
     {
         return false;
     }
-
+7
     // parse the address and make sure it's a valid ipv4
 
     next_address_t address;
@@ -414,7 +417,7 @@ next_server_t * next_server_create( void * context, const char * bind_address_st
     uint8_t batman_mac[] = { 0xd0, 0x81, 0x7a, 0xd8, 0x3a, 0xec };
     memcpy( server->gateway_ethernet_address, batman_mac, 6 );
 
-    /*
+     /*
     if ( !get_gateway_mac_address( interface_name, server->gateway_ethernet_address ) )
     {
         next_error( "server could not get gateway mac address" );
@@ -682,6 +685,18 @@ next_server_t * next_server_create( void * context, const char * bind_address_st
 
             xsk_ring_prod__submit( &socket->fill_queue, NEXT_XDP_FILL_QUEUE_SIZE );
         }
+
+        // start receive thread for queue
+
+        socket->queue = queue;
+
+        socket->receive_thread = next_platform_thread_create( NULL, xdp_receive_thread_function, socket );
+        if ( !socket->thread )
+        {
+            next_error( "server could not create receive thread" );
+            next_server_destroy( server );
+            return NULL;
+        }
     }
 
     // save the server public address and port in network order (big endian)
@@ -772,7 +787,11 @@ void next_server_destroy( next_server_t * server )
     {
         next_server_xdp_socket_t * socket = &server->socket[i];
 
-        // todo: delete receive thread
+        socket->quit = true;
+
+        next_platform_thread_join( socket->receive_thread );
+
+        next_platform_thread_destroy( socket->receive_thread );
 
         next_platform_mutex_destroy( &socket->receive_mutex );
 
@@ -1383,6 +1402,65 @@ void next_server_process_direct_packet( next_server_t * server, next_address_t *
     server->process_packets.packet_bytes[index] = packet_bytes;
 }
 
+#ifdef __linux__
+
+static void xdp_receive_thread_function( void * data )
+{
+    next_server_xdp_socket_t * socket = (next_server_xdp_socket_t*) data;
+
+    next_info( "started receive thread for socket queue %d", socket->queue );
+
+    while ( !socket->quit )
+    {
+        next_platform_mutex_acquire( &socket->receive_mutex );
+
+        next_server_xdp_receive_buffer_t * receive_buffer = &socket->receive_buffer[socket->receive_buffer_index];
+
+        uint32_t receive_index;
+        
+        uint32_t num_packets = xsk_ring_cons__peek( &socket->receive_queue, NEXT_XDP_RECV_QUEUE_SIZE, &receive_index );
+
+        if ( num_packets > 0 )
+        {
+            for ( uint32_t i = 0; i < num_packets; i++ ) 
+            {
+                const struct xdp_desc * desc = xsk_ring_cons__rx_desc( &socket->receive_queue, receive_index + i );
+
+                uint8_t * packet_data = (uint8_t*)socket->buffer + desc->addr;
+
+                int packet_bytes = desc->len - ( sizeof(struct ethhdr) + sizeof(struct iphdr) + sizeof(struct udphdr) );
+
+                next_info( "received %d byte packet on queue %d", packet_bytes, socket->queue );
+
+                if ( packet_bytes > 18 && receive_buffer->num_packets < NEXT_XDP_RECV_QUEUE_SIZE )
+                {
+                    const int index = receive_buffer->num_packets++;
+
+                    // todo: extract from address from ip and udp headers
+                    next_address_parse( &receive_buffer->from[index], "192.168.1.3:30000" );
+                    
+                    receive_buffer->packet_bytes[index] = packet_bytes;
+                    memcpy( receive_buffer->packet_data + index * NEXT_MAX_PACKET_BYTES, packet_data, packet_bytes );
+                }
+
+                // todo: batch prod__submit -> num_packets
+                uint32_t fill_index;
+                if ( xsk_ring_prod__reserve( &socket->fill_queue, 1, &fill_index ) == 1 ) 
+                {
+                    *xsk_ring_prod__fill_addr( &socket->fill_queue, fill_index ) = desc->addr;
+                    xsk_ring_prod__submit( &socket->fill_queue, 1 );
+                }
+            }
+
+            xsk_ring_cons__release( &socket->receive_queue, num_packets );
+        }
+
+        next_platform_mutex_release( &socket->receive_mutex );
+    }
+}
+
+#endif // #ifdef __linux__
+
 void next_server_receive_packets( next_server_t * server )
 {
     next_assert( server );
@@ -1428,58 +1506,6 @@ void next_server_receive_packets( next_server_t * server )
                 next_server_process_packet_internal( server, &from, packet_data, packet_bytes );            
             }
         }
-    }
-
-    // todo: move this to a thread per-socket
-
-    for ( int queue = 0; queue < NUM_SERVER_XDP_SOCKETS; queue++ )
-    {
-        next_server_xdp_socket_t * socket = &server->socket[queue];
-
-        next_platform_mutex_acquire( &socket->receive_mutex );
-
-        next_server_xdp_receive_buffer_t * receive_buffer = &socket->receive_buffer[socket->receive_buffer_index];
-
-        uint32_t receive_index;
-        
-        uint32_t num_packets = xsk_ring_cons__peek( &socket->receive_queue, NEXT_XDP_RECV_QUEUE_SIZE, &receive_index );
-
-        if ( num_packets > 0 )
-        {
-            for ( uint32_t i = 0; i < num_packets; i++ ) 
-            {
-                const struct xdp_desc * desc = xsk_ring_cons__rx_desc( &socket->receive_queue, receive_index + i );
-
-                uint8_t * packet_data = (uint8_t*)socket->buffer + desc->addr;
-
-                int packet_bytes = desc->len - ( sizeof(struct ethhdr) + sizeof(struct iphdr) + sizeof(struct udphdr) );
-
-                next_info( "received %d byte packet on queue %d", packet_bytes, queue );
-
-                if ( packet_bytes > 18 && receive_buffer->num_packets < NEXT_XDP_RECV_QUEUE_SIZE )
-                {
-                    const int index = receive_buffer->num_packets++;
-
-                    // todo: extract from address from ip and udp headers
-                    next_address_parse( &receive_buffer->from[index], "192.168.1.3:30000" );
-                    
-                    receive_buffer->packet_bytes[index] = packet_bytes;
-                    memcpy( receive_buffer->packet_data + index * NEXT_MAX_PACKET_BYTES, packet_data, packet_bytes );
-                }
-
-                // todo: batch prod__submit -> num_packets
-                uint32_t fill_index;
-                if ( xsk_ring_prod__reserve( &socket->fill_queue, 1, &fill_index ) == 1 ) 
-                {
-                    *xsk_ring_prod__fill_addr( &socket->fill_queue, fill_index ) = desc->addr;
-                    xsk_ring_prod__submit( &socket->fill_queue, 1 );
-                }
-            }
-
-            xsk_ring_cons__release( &socket->receive_queue, num_packets );
-        }
-
-        next_platform_mutex_release( &socket->receive_mutex );
     }
 
 #else // #ifdef __linux__
