@@ -63,6 +63,7 @@ struct next_server_xdp_socket_t
     struct xsk_ring_prod fill_queue;
     struct xsk_socket * xsk;
 
+    next_platform_thread_t * receive_thread;
     next_platform_mutex_t receive_mutex;
     int receive_buffer_index;
     struct next_server_xdp_receive_buffer_t receive_buffer[2];
