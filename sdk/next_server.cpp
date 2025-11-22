@@ -1391,12 +1391,9 @@ void next_server_send_packets( struct next_server_t * server )
         next_platform_mutex_acquire( &socket->send_mutex );
         const int current_index = socket->send_buffer_index;
         socket->send_buffer_index = current_index ? 0 : 1;
+        socket->send_buffer[0].num_packets = 0;
+        socket->send_buffer[1].num_packets = 0;
         next_platform_mutex_release( &socket->send_mutex );
-    }
-
-    for ( int queue = 0; queue < NUM_SERVER_XDP_SOCKETS; queue++ )
-    {
-        next_server_xdp_socket_t * socket = &server->socket[queue];
 
         // trigger the send queue to wake up and send the packets in the off send buffer
 
