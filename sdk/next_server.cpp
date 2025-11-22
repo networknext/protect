@@ -1558,11 +1558,7 @@ static void xdp_send_thread_function( void * data )
                 send_buffer->num_packets = NEXT_XDP_SEND_QUEUE_SIZE;
             }
 
-            next_info( "send thread %d waking up to do work", socket->queue );
-
             // mark any sent packet frames as free to be reused
-
-            next_info( "mark completed send packet frames for reuse" );
 
             uint32_t complete_index;
 
@@ -1581,8 +1577,6 @@ static void xdp_send_thread_function( void * data )
 
             // count how many packets we have to send in the send buffer
 
-            next_info( "how many packets do we have to send in the send buffer?" );
-
             int num_packets_to_send = 0;
 
             const int num_packets = (int) send_buffer->num_packets;
@@ -1597,17 +1591,15 @@ static void xdp_send_thread_function( void * data )
                 }
             }
 
-            next_info( "we have %d packets to send", num_packets_to_send );
-
             if ( num_packets_to_send == 0 )
             {
-                next_info( "go back to poll" );
                 next_platform_mutex_release( &socket->send_mutex );            
                 break;
             }
 
+            next_info( "send thread %d waking up to do work. send %d packets", socket->queue, num_packets_to_send );
+
             // todo: mock sending the packets
-            next_info( "mock send packets" );
             for ( int i = 0; i < num_packets; i++ )
             {
                 send_buffer->packet_bytes[i] = 0;
