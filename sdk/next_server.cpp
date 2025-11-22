@@ -1411,6 +1411,7 @@ static void xdp_send_thread_function( void * data )
         // todo
         next_info( "send thread %d waking up to do work", socket->queue );
 
+#if 0
         while ( true )
         {
             next_platform_mutex_acquire( &socket->send_mutex );
@@ -1549,6 +1550,7 @@ static void xdp_send_thread_function( void * data )
 
             next_platform_mutex_release( &socket->send_mutex );
         }
+#endif // #if 0
     }
 }
 
