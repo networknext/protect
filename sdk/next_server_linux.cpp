@@ -1204,7 +1204,7 @@ void next_server_process_direct_packet( next_server_t * server, next_address_t *
     if ( packet_bytes < NEXT_HEADER_BYTES + 8 )
         return;
 
-    if ( server->process_packets.num_packets == NEXT_SERVER_MAX_RECEIVE_PACKETS )
+    if ( server->process_packets.num_packets >= NEXT_XDP_RECV_QUEUE_SIZE )
         return;
 
     int client_index = -1;
