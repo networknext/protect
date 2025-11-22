@@ -1016,7 +1016,7 @@ uint8_t * next_server_start_packet_internal( struct next_server_t * server, int 
     const int index = socket->send_buffer_off_index;
 
     // todo
-    next_info( "start packet %" PRId64 " [%d]", sequence, index );
+    next_info( "start packet [%d]", index );
 
     next_server_xdp_send_buffer_t * send_buffer = &socket->send_buffer[index];
 
