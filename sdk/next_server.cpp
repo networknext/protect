@@ -1265,16 +1265,16 @@ void next_server_finish_packet( struct next_server_t * server, uint64_t sequence
     next_assert( packet_bytes > 0 );
     next_assert( packet_bytes <= NEXT_MTU );
 
-    server->send_buffer.packet_bytes[packet_index] = packet_bytes + NEXT_HEADER_BYTES + 8;
+    send_buffer->packet_bytes[packet_index] = packet_bytes + NEXT_HEADER_BYTES + 8;
 
     // write the packet header
 
     packet_data -= NEXT_HEADER_BYTES + 8;
 
-    packet_data[0] = server->send_buffer.packet_type[packet];
+    packet_data[0] = send_buffer->packet_type[packet];
 
     uint8_t to_address_data[32];
-    next_address_data( &server->send_buffer.to[packet], to_address_data );
+    next_address_data( &send_buffer->to[packet], to_address_data );
 
     uint8_t from_address_data[32];
     next_address_data( &server->public_address, from_address_data );
@@ -1356,7 +1356,7 @@ void next_server_abort_packet( struct next_server_t * server, uint64_t sequence,
     next_assert( packet_index >= 0 );  
     next_assert( packet_index < NEXT_SERVER_MAX_SEND_PACKETS );  
 
-    server->send_buffer.packet_bytes[packet_index] = 0;
+    send_buffer->packet_bytes[packet_index] = 0;
 
 #else // #ifdef __linux__
 
