@@ -1346,7 +1346,7 @@ static void xdp_send_thread_function( void * data )
                 send_buffer->packet_bytes[i] = 0;
             }
 
-            send_buffer->packet_start_index = send_packet_index[num_packets]
+            send_buffer->packet_start_index = send_packet_index[num_packets];
 
             bool stop = send_buffer->packet_start_index >= send_buffer->num_packets;
 
