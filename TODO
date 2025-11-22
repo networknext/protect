@@ -1,90 +1,24 @@
 DONE
 
-    Sketch out design for one socket and umem per-NIC queue
-
-    And then setup with two NIC queues.
-
-    Manually poll them once per-frame (for now...)
-
-    What's the next step?
-
-    Some options:
-
-        1. Implement packet sending across multiple queues (scatter...)
-
-        2. Copy packets from the receive queue into the receive buffer (seems wrong approach though...)
-
-        3. Move packet receives to multiple threads, and separate out the management of frames for fill/receive vs. send/complete so there is not contention
-
-        4. Move packet sends to multiple threads (but then the question is how to wake up the send packet threads to do work?)
-
-    I think that implementing receive packets across multiple threads, and working out what core to pin those threads to is an important step. 
-
-    What needs to be done to implement receive packets across multiple threads?
-
-    First I think we need a receive buffer per-socket, double buffered with a pointer to the current receive buffer.
-
-    The sync point happens with main thread (receive packets) and the main thread flips that atomic ptr to the other one, and then does the regular receive on the main.
-
-    Start here, it's complex enough to be interesting. It still requires copying (not zero copy), but it's only one copy and receive is not a hot path really.
-
-    Setup the double buffer receive buffer per-socket thing, and then start doing the atomic ptr swap.
-
-    Modify how process packet is done with XDP so the process packets is just ptrs to packets in various socket receive buffers.
-
-    Clean up and start testing the client and server on localhost.
-
-    Debug why the server is sending packet type 0 when it should be sending NEXT_PACKET_DIRECT (6)
-
-    This is causing the client to timeout.
-
-    Was just off by 8 bytes because I forgot to subtract it for the sequence.
-
-    Run the server XDP receive packets on separate threads.
-
-    Next? Run with poll so the receive threads don't take 100% CPU.
-
-    Batch the return received descriptors to fill queue.
-
-    Spin until we return all received frames to the fill queue, otherwise we break (have no choice).
-
-    Add an event fd so we can wakeup the receive thread when it needs to be shut down.
-
-    Change the send sequence number to atomic increment
-
-    Extract the from address and port from the iphdr and udphdr structs
-
-    Create send thread per-xdp socket
-
-    Setup an event_fd so the send threads know to wake up when they have finished work
-
-    Create separate send buffers per-socket
-
-    Make these send buffers double buffered like receive.
-
-    Verify that send threads wake up to do work.
-
-    Needed to read 8 bytes on the event_fd so it keeps working, otherwise one of the threads doesn't wake up.
-
-    Extend so we send multiple packets per-frame.
-
-    Modulo number of queues and distribute packets across different send queues.
-
-    Implement the send buffer queue up for server start packet XDP
-
     Swap out send_mutex for atomic increment
 
     Verify that the send threads wake up and want to send 50 packets each (100 sent total)
 
+    Make sure we clamp num_packets for XDP, since it will be using atomic increment, it can increment past the max packets sent
+
 TODO
 
-    Make sure we clamp num_packets for XDP, since it will be using atomic increment, it can increment past the max packets sent
+    OK we do have a major problem, which is that we don't have an easy way to get back from packet_data to the send queue
+
+    We need the sequence # passed back in to finish packet / abort packet
 
     ----------
 
+    Implement finish packet XDP
+
     Implement abort packet XDP
 
-    Implement finish packet XDP
+    We should now see each thread wanting to send 50 packets again
 
     ----------
 

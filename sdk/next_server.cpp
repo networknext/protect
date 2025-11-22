@@ -1234,7 +1234,7 @@ uint8_t * next_server_start_packet( struct next_server_t * server, int client_in
 #endif // #ifdef __linux__
 }
 
-void next_server_finish_packet( struct next_server_t * server, uint8_t * packet_data, int packet_bytes )
+void next_server_finish_packet( struct next_server_t * server, uint64_t sequence, uint8_t * packet_data, int packet_bytes )
 {
     next_assert( server );
     next_assert( packet_bytes >= 0 );
@@ -1242,7 +1242,51 @@ void next_server_finish_packet( struct next_server_t * server, uint8_t * packet_
 
 #ifdef __linux__
 
-    // todo: AF_XDP
+    int queue = sequence % NUM_SERVER_XDP_SOCKETS;
+
+    next_server_xdp_socket_t * socket = &server->socket[queue];
+
+    const int index = socket->send_buffer_index ? 0 : 1;            // IMPORTANT: get the off buffer that is not currently being sent by the send thread
+
+    next_server_xdp_send_buffer_t * send_buffer = &socket->send_buffer[index];
+
+    size_t offset = ( packet_data - send_buffer->packet_data );
+
+    offset -= offset % NEXT_MAX_PACKET_BYTES;
+
+    next_assert( offset < NEXT_MAX_PACKET_BYTES*NEXT_SERVER_MAX_SEND_PACKETS );
+
+    const int packet_index = (int) ( offset / NEXT_MAX_PACKET_BYTES );
+
+    next_assert( packet_index >= 0 );  
+    next_assert( packet_index < NEXT_SERVER_MAX_SEND_PACKETS );  
+
+    next_assert( packet_data );
+    next_assert( packet_bytes > 0 );
+    next_assert( packet_bytes <= NEXT_MTU );
+
+    server->send_buffer.packet_bytes[packet_index] = packet_bytes + NEXT_HEADER_BYTES + 8;
+
+    // write the packet header
+
+    packet_data -= NEXT_HEADER_BYTES + 8;
+
+    packet_data[0] = server->send_buffer.packet_type[packet];
+
+    uint8_t to_address_data[32];
+    next_address_data( &server->send_buffer.to[packet], to_address_data );
+
+    uint8_t from_address_data[32];
+    next_address_data( &server->public_address, from_address_data );
+
+    uint8_t * a = packet_data + 1;
+    uint8_t * b = packet_data + 3;
+
+    uint8_t magic[8];
+    memset( magic, 0, sizeof(magic) );
+
+    next_generate_pittle( a, from_address_data, to_address_data, packet_bytes );
+    next_generate_chonkle( b, magic, from_address_data, to_address_data, packet_bytes );
 
 #else // #ifdef __linux__
 
@@ -1287,13 +1331,32 @@ void next_server_finish_packet( struct next_server_t * server, uint8_t * packet_
 #endif // #ifdef __linux__
 }
 
-void next_server_abort_packet( struct next_server_t * server, uint8_t * packet_data )
+void next_server_abort_packet( struct next_server_t * server, uint64_t sequence, uint8_t * packet_data )
 {
     next_assert( server );
 
 #ifdef __linux__
 
-    // todo: AF_XDP
+    int queue = sequence % NUM_SERVER_XDP_SOCKETS;
+
+    next_server_xdp_socket_t * socket = &server->socket[queue];
+
+    const int index = socket->send_buffer_index ? 0 : 1;            // IMPORTANT: get the off buffer that is not currently being sent by the send thread
+
+    next_server_xdp_send_buffer_t * send_buffer = &socket->send_buffer[index];
+
+    size_t offset = ( packet_data - send_buffer->packet_data );
+
+    offset -= offset % NEXT_MAX_PACKET_BYTES;
+
+    next_assert( offset < NEXT_MAX_PACKET_BYTES*NEXT_SERVER_MAX_SEND_PACKETS );
+
+    const int packet_index = (int) ( offset / NEXT_MAX_PACKET_BYTES );
+
+    next_assert( packet_index >= 0 );  
+    next_assert( packet_index < NEXT_SERVER_MAX_SEND_PACKETS );  
+
+    server->send_buffer.packet_bytes[packet_index] = 0;
 
 #else // #ifdef __linux__
 
