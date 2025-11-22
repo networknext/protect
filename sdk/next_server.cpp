@@ -887,7 +887,7 @@ void next_server_destroy( next_server_t * server )
 
         // stop receive thread
 
-        int result = write( socket->receive_event_fd, &value, sizeof(uint64_t) );
+        result = write( socket->receive_event_fd, &value, sizeof(uint64_t) );
         (void) result;
 
         next_platform_thread_join( socket->receive_thread );
