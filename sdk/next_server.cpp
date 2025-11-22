@@ -1119,9 +1119,9 @@ uint8_t * next_server_start_packet_internal( struct next_server_t * server, int 
 
     packet_data += NEXT_HEADER_BYTES;
 
-    send_buffer->to[packet] = *to;
-    send_buffer->packet_type[packet] = packet_type;
-    send_buffer->packet_bytes[packet] = 0;
+    send_buffer->to[index] = *to;
+    send_buffer->packet_type[index] = packet_type;
+    send_buffer->packet_bytes[index] = 0;
 
     return packet_data;
 }
