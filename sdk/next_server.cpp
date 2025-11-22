@@ -1174,7 +1174,11 @@ uint8_t * next_server_start_packet( struct next_server_t * server, int client_in
 
 #ifdef __linux__
 
-    uint64_t sequence = server->send_buffer.sequence.fetch_add(1);
+    const int index = socket->send_buffer_index ? 0 : 1;            // IMPORTANT: get the off buffer that is not currently being sent by the send thread
+
+    next_server_xdp_send_buffer_t * send_buffer = &socket->send_buffer[index];
+
+    uint64_t sequence = send_buffer->sequence.fetch_add(1);
 
     int queue = sequence % NUM_SERVER_XDP_SOCKETS;
 
