@@ -1499,6 +1499,8 @@ static void xdp_send_thread_function( void * data )
 
             // mark any sent packet frames as free to be reused
 
+            next_info( "mark completed send packet frames for reuse" );
+
             uint32_t complete_index;
 
             unsigned int num_completed = xsk_ring_cons__peek( &socket->complete_queue, XSK_RING_CONS__DEFAULT_NUM_DESCS, &complete_index );
@@ -1516,6 +1518,8 @@ static void xdp_send_thread_function( void * data )
 
             // count how many packets we have to send in the send buffer
 
+            next_info( "how many packets do we have to send in the send buffer?" );
+
             int num_packets_to_send = 0;
 
             const int num_packets = (int) send_buffer->num_packets;
@@ -1530,10 +1534,16 @@ static void xdp_send_thread_function( void * data )
                 }
             }
 
+            next_info( "we have %d packets to send", num_packets_to_send );
+
             if ( num_packets_to_send == 0 )
-                break;                                   // no more work to do. go back to poll...
+            {
+                next_info( "go back to poll" );
+                break;
+            }
 
             // todo: mock sending the packets
+            next_info( "mock send packets" );
             for ( int i = 0; i < num_packets; i++ )
             {
                 send_buffer->packet_bytes[i] = 0;
