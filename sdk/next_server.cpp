@@ -1539,6 +1539,7 @@ static void xdp_send_thread_function( void * data )
             if ( num_packets_to_send == 0 )
             {
                 next_info( "go back to poll" );
+                next_platform_mutex_release( &socket->send_mutex );            
                 break;
             }
 
