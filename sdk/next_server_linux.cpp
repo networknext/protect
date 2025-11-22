@@ -1322,10 +1322,9 @@ static void xdp_send_thread_function( void * data )
 
             for ( int i = start_index; i < num_packets; i++ )
             {
-                if ( num_packets_to_send >= NEXT_XDP_BATCH_SIZE )
+                if ( num_packets_to_send >= NEXT_XDP_SEND_BATCH_SIZE )
                     break;
-                const int packet_bytes = (int) send_buffer->packet_bytes[i];
-                if ( packet_bytes > 0 )
+                if ( send_buffer->packet_bytes[i] > 0 )
                 {
                     send_packet_index[num_packets_to_send] = i;
                     num_packets_to_send++;
