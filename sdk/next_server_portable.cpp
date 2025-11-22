@@ -18,8 +18,7 @@
 
 struct next_server_send_buffer_t
 {
-    next_platform_mutex_t mutex;
-    size_t current_packet;
+    std::atomic<int> num_packets;
     next_address_t to[NEXT_SERVER_MAX_SEND_PACKETS];
     size_t packet_bytes[NEXT_SERVER_MAX_SEND_PACKETS];
     uint8_t packet_type[NEXT_SERVER_MAX_SEND_PACKETS];
@@ -50,11 +49,7 @@ struct next_server_t
     bool client_direct[NEXT_MAX_CLIENTS];
     next_address_t client_address[NEXT_MAX_CLIENTS];
     double client_last_packet_receive_time[NEXT_MAX_CLIENTS];
-
-    next_platform_mutex_t client_payload_mutex;
-    uint64_t client_payload_sequence[NEXT_MAX_CLIENTS];
-
-    std::atomic<uint64_t> send_sequence;
+    std::atomic<uint64_t> client_send_sequence[NEXT_MAX_CLIENTS];
 
     next_platform_socket_t * socket;
     next_server_send_buffer_t send_buffer;
@@ -119,19 +114,10 @@ next_server_t * next_server_create( void * context, const char * bind_address_st
     next_info( "server id is %016" PRIx64, server->server_id );
     next_info( "match id is %016" PRIx64, server->match_id );
 
-    if ( !next_platform_mutex_create( &server->client_payload_mutex ) )
-    {
-        next_error( "server failed to create client payload mutex" );
-        next_server_destroy( server );
-        return NULL;
-    }
-
-    if ( !next_platform_mutex_create( &server->send_buffer.mutex ) )
-    {
-        next_error( "server failed to create send buffer mutex" );
-        next_server_destroy( server );
-        return NULL;
-    }
+    // todo: mock a client connected in slot 0
+    server->client_connected[0] = true;
+    server->client_direct[0] = true;
+    next_address_parse( &server->client_address[0], "192.168.1.3:30000" );
 
     return server;    
 }
@@ -141,14 +127,10 @@ void next_server_destroy( next_server_t * server )
     next_assert( server );
     next_assert( server->state == NEXT_SERVER_STOPPED );        // IMPORTANT: Please stop the server and wait until state is NEXT_SERVER_STOPPED before destroying it
 
-    next_platform_mutex_destroy( &server->client_payload_mutex );
-
     if ( server->socket )
     {
         next_platform_socket_destroy( server->socket );
     }
-
-    next_platform_mutex_destroy( &server->send_buffer.mutex );
 
     next_clear_and_free( server->context, server, sizeof(next_server_t) );
 }
@@ -160,6 +142,7 @@ void next_server_client_timed_out( next_server_t * server, int client_index )
     char buffer[NEXT_MAX_ADDRESS_STRING_LENGTH];
     next_info( "client %s timed out from slot %d", next_address_to_string( &server->client_address[client_index], buffer ), client_index );
     server->client_connected[client_index] = 0;
+    server->client_send_sequence[client_index] = 0;
     memset( &server->client_address[client_index], 0, sizeof(next_address_t) );
 }
 
@@ -170,6 +153,7 @@ void next_server_client_disconnected( next_server_t * server, int client_index )
     char buffer[NEXT_MAX_ADDRESS_STRING_LENGTH];
     next_info( "client %s disconnected from slot %d", next_address_to_string( &server->client_address[client_index], buffer ), client_index );
     server->client_connected[client_index] = 0;
+    server->client_send_sequence[client_index] = 0;
     memset( &server->client_address[client_index], 0, sizeof(next_address_t) );
 }
 
@@ -252,26 +236,18 @@ uint8_t * next_server_start_packet_internal( struct next_server_t * server, next
     next_assert( server );
     next_assert( to );
 
-    next_platform_mutex_acquire( &server->send_buffer.mutex );
+    const int packet_index = server->send_buffer.num_packets.fetch_add( 1 );
 
-    uint8_t * packet_data = NULL;
-    int packet = server->send_buffer.current_packet;
-    if ( server->send_buffer.current_packet < NEXT_SERVER_MAX_SEND_PACKETS )
-    {
-        packet_data = server->send_buffer.data + packet * NEXT_MAX_PACKET_BYTES;
-        server->send_buffer.current_packet++;
-    }
-
-    next_platform_mutex_release( &server->send_buffer.mutex );
-
-    if ( !packet_data )
+    if ( packet_index >= NEXT_SERVER_MAX_SEND_PACKETS )
         return NULL;
+
+    uint8_t * packet_data = server->send_buffer.data + packet_index * NEXT_MAX_PACKET_BYTES;
 
     packet_data += NEXT_HEADER_BYTES;
 
-    server->send_buffer.to[packet] = *to;
-    server->send_buffer.packet_type[packet] = packet_type;
-    server->send_buffer.packet_bytes[packet] = 0;
+    server->send_buffer.to[packet_index] = *to;
+    server->send_buffer.packet_type[packet_index] = packet_type;
+    server->send_buffer.packet_bytes[packet_index] = 0;
 
     return packet_data;
 }
@@ -286,7 +262,7 @@ uint8_t * next_server_start_packet( struct next_server_t * server, int client_in
     if ( !server->client_connected[client_index] )
         return NULL;
 
-    uint64_t sequence = server->send_sequence.fetch_add(1);
+    uint64_t sequence = server->client_send_sequence[client_index].fetch_add(1);
 
     if ( server->client_direct[client_index] )
     {
@@ -337,6 +313,9 @@ void next_server_finish_packet( struct next_server_t * server, uint64_t sequence
 
     server->send_buffer.packet_bytes[packet] = packet_bytes + NEXT_HEADER_BYTES + 8;
 
+    // todo
+    next_info( "send packet %" PRId64 " (%d bytes)", sequence, server->send_buffer.packet_bytes[packet] );
+
     // write the packet header
 
     packet_data -= NEXT_HEADER_BYTES + 8;
@@ -381,7 +360,11 @@ void next_server_send_packets( struct next_server_t * server )
 {
     next_assert( server );
 
-    const int num_packets = (int) server->send_buffer.current_packet;
+    int num_packets = server->send_buffer.num_packets;
+    if ( num_packets > NEXT_SERVER_MAX_SEND_PACKETS )
+    {
+        num_packets = NEXT_SERVER_MAX_SEND_PACKETS;
+    }
 
     for ( int i = 0; i < num_packets; i++ )
     {
@@ -397,7 +380,7 @@ void next_server_send_packets( struct next_server_t * server )
         }
     }
 
-    server->send_buffer.current_packet = 0;
+    server->send_buffer.num_packets = 0;
 }
 
 void next_server_process_packet_internal( next_server_t * server, next_address_t * from, uint8_t * packet_data, int packet_bytes )

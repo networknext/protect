@@ -1115,6 +1115,9 @@ void next_server_finish_packet( struct next_server_t * server, uint64_t sequence
 
     send_buffer->packet_bytes[packet_index] = packet_bytes + NEXT_HEADER_BYTES + 8;
 
+    // todo
+    next_info( "finish packet %" PRId64 " (%d bytes)", sequence, server->send_buffer.packet_bytes[packet] );
+
     // write the packet header
 
     packet_data -= NEXT_HEADER_BYTES + 8;
