@@ -56,6 +56,12 @@ DONE
 
 TODO
 
+    Create send thread per-xdp socket
+
+    Setup an event_fd so the send threads know to wake up when they have finished work
+
+    ----------
+
     Create a separate frame allocator for receive packets vs. send packets, this way they can be on different threads.
 
     The first half of the umem will have frames for packet sends, the second half will be frames for packet receives.

@@ -41,6 +41,14 @@
 
 #define NUM_SERVER_XDP_SOCKETS 2
 
+struct next_server_xdp_send_buffer_t
+{
+    int num_packets;
+    next_address_t from[NEXT_XDP_SEND_QUEUE_SIZE];
+    size_t packet_bytes[NEXT_XDP_SEND_QUEUE_SIZE];
+    uint8_t packet_data[NEXT_MAX_PACKET_BYTES*NEXT_XDP_SEND_QUEUE_SIZE];
+};
+
 struct next_server_xdp_receive_buffer_t
 {
     int num_packets;
@@ -71,7 +79,11 @@ struct next_server_xdp_socket_t
     int receive_buffer_index;
     struct next_server_xdp_receive_buffer_t receive_buffer[2];
 
-    // todo: send buffer
+    int send_event_fd;
+    next_platform_thread_t * send_thread;
+    next_platform_mutex_t send_mutex;
+    int send_buffer_index;
+    struct next_server_xdp_send_buffer_t send_buffer[2];
 };
 
 #else // #ifdef __linux__
@@ -589,6 +601,18 @@ next_server_t * next_server_create( void * context, const char * bind_address_st
         return NULL;
     }
 
+    // save the server public address and port in network order (big endian)
+
+    server->server_address_big_endian = public_address_ipv4;
+    server->server_port_big_endian = next_platform_htons( public_address.port );
+
+    // todo: mock a client connected in slot 0
+    server->client_connected[0] = true;
+    server->client_direct[0] = true;
+    next_address_parse( &server->client_address[0], "192.168.1.3:30000" );
+    server->client_address_big_endian[0] = next_address_ipv4( &server->client_address[0] );
+    server->client_port_big_endian[0] = next_platform_htons( 30000 );
+
     // initialize server xdp sockets (one socket per-NIC queue)
 
     for ( int queue = 0; queue < NUM_SERVER_XDP_SOCKETS; queue++ )
@@ -645,6 +669,53 @@ next_server_t * next_server_create( void * context, const char * bind_address_st
             next_server_destroy( server );
             return NULL;
         }
+    }
+
+    // setup send threads
+
+    for ( int queue = 0; queue < NUM_SERVER_XDP_SOCKETS; queue++ )
+    {
+        next_server_xdp_socket_t * socket = &server->socket[queue];
+
+        // create event fd to wake up poll in the send thread on quit
+        
+        socket->send_event_fd = eventfd( 0, 0 );
+        if ( socket->send_event_fd == -1 )
+        {
+            next_error( "server failed to create send event fd %d", queue );
+            next_server_destroy( server );
+            return NULL;
+        }
+
+        // create send thread mutex for double buffering
+
+        if ( !next_platform_mutex_create( &socket->send_mutex ) )
+        {
+            next_error( "server failed to create send mutex %d", queue );
+            next_server_destroy( server );
+            return NULL;
+        }
+
+        // start send thread for queue
+
+        next_info( "starting send thread for socket queue %d", socket->queue );
+
+        socket->send_thread = next_platform_thread_create( NULL, xdp_send_thread_function, socket );
+        if ( !socket->send_thread )
+        {
+            next_error( "server could not create send thread %d", queue );
+            next_server_destroy( server );
+            return NULL;
+        }
+    }
+
+    // setup receive threads
+
+    for ( int queue = 0; queue < NUM_SERVER_XDP_SOCKETS; queue++ )
+    {
+        next_server_xdp_socket_t * socket = &server->socket[queue];
+
+        // todo: separate send and receive frame allocators
 
         // initialize frame allocator
 
@@ -685,13 +756,6 @@ next_server_t * next_server_create( void * context, const char * bind_address_st
                 *frame = frames[i];
             }
 
-            if ( !next_platform_mutex_create( &socket->receive_mutex ) )
-            {
-                next_error( "server failed to create receive mutex" );
-                next_server_destroy( server );
-                return NULL;
-            }
-
             xsk_ring_prod__submit( &socket->fill_queue, NEXT_XDP_FILL_QUEUE_SIZE );
         }
 
@@ -701,6 +765,15 @@ next_server_t * next_server_create( void * context, const char * bind_address_st
         if ( socket->receive_event_fd == -1 )
         {
             next_error( "server failed to create receive event fd" );
+            next_server_destroy( server );
+            return NULL;
+        }
+
+        // create receive thread mutex for double buffering
+
+        if ( !next_platform_mutex_create( &socket->receive_mutex ) )
+        {
+            next_error( "server failed to create receive mutex" );
             next_server_destroy( server );
             return NULL;
         }
@@ -719,18 +792,6 @@ next_server_t * next_server_create( void * context, const char * bind_address_st
             return NULL;
         }
     }
-
-    // save the server public address and port in network order (big endian)
-
-    server->server_address_big_endian = public_address_ipv4;
-    server->server_port_big_endian = next_platform_htons( public_address.port );
-
-    // todo: mock a client connected in slot 0
-    server->client_connected[0] = true;
-    server->client_direct[0] = true;
-    next_address_parse( &server->client_address[0], "192.168.1.3:30000" );
-    server->client_address_big_endian[0] = next_address_ipv4( &server->client_address[0] );
-    server->client_port_big_endian[0] = next_platform_htons( 30000 );
 
     // the server has started successfully
 
@@ -810,7 +871,21 @@ void next_server_destroy( next_server_t * server )
 
         socket->quit = true;
 
+        // stop send thread
+
         uint64_t value = 1;
+        int result = write( socket->send_event_fd, &value, sizeof(uint64_t) );
+        (void) result;
+
+        next_platform_thread_join( socket->send_thread );
+        next_platform_thread_destroy( socket->send_thread );
+
+        close( socket->send_event_fd );
+
+        next_platform_mutex_destroy( &socket->send_mutex );
+
+        // stop receive thread
+
         int result = write( socket->receive_event_fd, &value, sizeof(uint64_t) );
         (void) result;
 
@@ -820,6 +895,8 @@ void next_server_destroy( next_server_t * server )
         close( socket->receive_event_fd );
 
         next_platform_mutex_destroy( &socket->receive_mutex );
+
+        // destroy xdp socket
 
         if ( socket->xsk )
         {
@@ -1434,18 +1511,16 @@ static void xdp_receive_thread_function( void * data )
 {
     next_server_xdp_socket_t * socket = (next_server_xdp_socket_t*) data;
 
-    struct pollfd fds[2];
-    fds[0].fd = xsk_socket__fd( socket->xsk );
+    struct pollfd fds[1];
+    fds[0].fd = socket->receive_event_fd;
     fds[0].events = POLLIN;
-    fds[1].fd = socket->receive_event_fd;
-    fds[1].events = POLLIN;
 
     while ( true )
     {
-        int poll_result = poll( fds, 2, -1 );
+        int poll_result = poll( fds, 1, -1 );
         if ( poll_result < 0 ) 
         {
-            next_error( "poll error on socket queue %d (%d)", socket->queue, poll_result );
+            next_error( "poll error on socket send queue %d (%d)", socket->queue, poll_result );
             break;
         }
 
@@ -1457,7 +1532,42 @@ static void xdp_receive_thread_function( void * data )
             continue;
         }
 
-        // pump to receive all packets
+        next_platform_mutex_acquire( &socket->send_mutex );
+
+        // todo: send packets
+
+        next_platform_mutex_acquire( &socket->send_mutex );
+    }
+}
+
+static void xdp_receive_thread_function( void * data )
+{
+    next_server_xdp_socket_t * socket = (next_server_xdp_socket_t*) data;
+
+    struct pollfd fds[2];
+    fds[0].fd = xsk_socket__fd( socket->xsk );
+    fds[0].events = POLLIN;
+    fds[1].fd = socket->receive_event_fd;
+    fds[1].events = POLLIN;
+
+    while ( true )
+    {
+        int poll_result = poll( fds, 2, -1 );
+        if ( poll_result < 0 ) 
+        {
+            next_error( "poll error on socket receive queue %d (%d)", socket->queue, poll_result );
+            break;
+        }
+
+        if ( socket->quit )
+            break;
+
+        if ( ( fds[0].revents & POLLIN ) == 0 ) 
+        {
+            continue;
+        }
+
+        // receive packets
 
         next_platform_mutex_acquire( &socket->receive_mutex );
 
