@@ -1278,11 +1278,6 @@ static void xdp_send_thread_function( void * data )
             break;
         }
 
-        if ( ( fds[0].revents & POLLIN ) == 0 ) 
-        {
-            continue;
-        }
-
         uint64_t value;
         ssize_t bytes_read = read( socket->send_event_fd, &value, sizeof(uint64_t) );
         (void) bytes_read;
