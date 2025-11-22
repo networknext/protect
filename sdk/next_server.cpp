@@ -44,7 +44,7 @@
 struct next_server_xdp_send_buffer_t
 {
     std::atomic<int> num_packets;
-    next_address_t from[NEXT_XDP_SEND_QUEUE_SIZE];
+    next_address_t to[NEXT_XDP_SEND_QUEUE_SIZE];
     size_t packet_bytes[NEXT_XDP_SEND_QUEUE_SIZE];
     uint8_t packet_data[NEXT_MAX_PACKET_BYTES*NEXT_XDP_SEND_QUEUE_SIZE];
 };
