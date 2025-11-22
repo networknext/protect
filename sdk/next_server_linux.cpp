@@ -118,12 +118,9 @@ struct next_server_t
     next_address_t client_address[NEXT_MAX_CLIENTS];
     double client_last_packet_receive_time[NEXT_MAX_CLIENTS];
 
-    next_platform_mutex_t client_payload_mutex;
-    uint64_t client_payload_sequence[NEXT_MAX_CLIENTS];
+    std::atomic<uint64_t> client_send_sequence[NEXT_MAX_CLIENTS];
 
-    std::atomic<uint64_t> send_sequence;
-
-#   uint8_t server_ethernet_address[ETH_ALEN];
+    uint8_t server_ethernet_address[ETH_ALEN];
     uint8_t gateway_ethernet_address[ETH_ALEN];
 
     uint32_t server_address_big_endian;
@@ -787,13 +784,6 @@ next_server_t * next_server_create( void * context, const char * bind_address_st
     next_info( "server id is %016" PRIx64, server->server_id );
     next_info( "match id is %016" PRIx64, server->match_id );
 
-    if ( !next_platform_mutex_create( &server->client_payload_mutex ) )
-    {
-        next_error( "server failed to create client payload mutex" );
-        next_server_destroy( server );
-        return NULL;
-    }
-
     return server;    
 }
 
@@ -801,8 +791,6 @@ void next_server_destroy( next_server_t * server )
 {
     next_assert( server );
     next_assert( server->state == NEXT_SERVER_STOPPED );        // IMPORTANT: Please stop the server and wait until state is NEXT_SERVER_STOPPED before destroying it
-
-    next_platform_mutex_destroy( &server->client_payload_mutex );
 
     if ( server->program != NULL )
     {
@@ -1054,7 +1042,7 @@ uint8_t * next_server_start_packet( struct next_server_t * server, int client_in
     if ( !server->client_connected[client_index] )
         return NULL;
 
-    uint64_t sequence = server->send_sequence.fetch_add(1);
+    uint64_t sequence = server->client_send_sequence[client_index].fetch_add(1);
 
     int queue = sequence % NUM_SERVER_XDP_SOCKETS;
 

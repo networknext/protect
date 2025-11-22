@@ -16,12 +16,7 @@ DONE
 
     We should now see each thread wanting to send 50 packets again
 
-
-TODO
-
     Instead, they now each want to send 49 packets. Off by one somewhere?
-
-    ----------
 
     It's getting complex enough that I think we should have different server implementations
 
@@ -29,6 +24,18 @@ TODO
         next_server_linux.cpp
 
     If the portable server is limited to direct only, it's not going to have too much duplication with the linux server.
+
+    Pass over the portable server and make it lock free with atomics.    
+
+    Pass over the linux server and fix send sequence to be atomic.
+
+TODO
+
+    Debug why we are seeing 49 packets to send, instead of 50.
+
+    What's happening is that some packets come through with a packet_bytes of zero in the send thread.
+
+    But I don't understand how this can happen, unless something is wrong with the double buffer?
 
     ----------
 
@@ -38,15 +45,11 @@ TODO
 
     ----------
 
-    Bring across as much code as possible to prep-packets and frames for sending, but don't actually send
-
-    ----------
-
     Each socket needs to know the ethernet addresses, and the server ipv4 and port big endian.
 
     ----------
 
-    Actually implement the packet send
+    Actually hook up the AF_XDP send code
 
     ----------
 
@@ -54,13 +57,15 @@ TODO
 
     ----------
 
-    Verify that packets are sent across both send threads.
+    Server AF_XDP is basically working at this point!
 
     ----------
 
-    Server AF_XDP is basically working at this point!
+    It's technically possible to avoid the copy by using the umem and allocating frames double buffered in the umem, instead of copying across.
 
+    I should probably do this, especially on send because it does need to be as fast as possible.
 
+    ----------
 
 
 
