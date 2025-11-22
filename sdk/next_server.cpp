@@ -43,19 +43,27 @@
 
 struct next_server_xdp_send_buffer_t
 {
+    uint8_t padding_0[1024];
+
     std::atomic<int> num_packets;
     next_address_t to[NEXT_XDP_SEND_QUEUE_SIZE];
     uint8_t packet_type[NEXT_XDP_SEND_QUEUE_SIZE];
     size_t packet_bytes[NEXT_XDP_SEND_QUEUE_SIZE];
     uint8_t packet_data[NEXT_MAX_PACKET_BYTES*NEXT_XDP_SEND_QUEUE_SIZE];
+
+    uint8_t padding_1[1024];
 };
 
 struct next_server_xdp_receive_buffer_t
 {
+    uint8_t padding_0[1024];
+
     int num_packets;
     next_address_t from[NEXT_XDP_RECV_QUEUE_SIZE];
     size_t packet_bytes[NEXT_XDP_RECV_QUEUE_SIZE];
     uint8_t packet_data[NEXT_MAX_PACKET_BYTES*NEXT_XDP_RECV_QUEUE_SIZE];
+
+    uint8_t padding_1[1024];
 };
 
 struct next_server_xdp_socket_t
@@ -1530,17 +1538,17 @@ static void xdp_send_thread_function( void * data )
             break;
         }
 
+        if ( ( fds[0].revents & POLLIN ) == 0 ) 
+        {
+            continue;
+        }
+
         uint64_t value;
         ssize_t bytes_read = read( socket->send_event_fd, &value, sizeof(uint64_t) );
         (void) bytes_read;
 
         if ( socket->quit )
             break;
-
-        if ( ( fds[0].revents & POLLIN ) == 0 ) 
-        {
-            continue;
-        }
 
         while ( true )
         {
