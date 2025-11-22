@@ -97,7 +97,8 @@ struct next_server_xdp_socket_t
     int send_event_fd;
     next_platform_thread_t * send_thread;
     next_platform_mutex_t send_mutex;
-    int send_buffer_index;
+    int send_buffer_on_index;
+    int send_buffer_off_index;
     struct next_server_xdp_send_buffer_t send_buffer[2];
 
     uint8_t padding_5[1024];
@@ -1012,7 +1013,7 @@ uint8_t * next_server_start_packet_internal( struct next_server_t * server, int 
 {
     next_server_xdp_socket_t * socket = &server->socket[queue];
 
-    const int index = socket->send_buffer_index ? 0 : 1;            // IMPORTANT: get the off buffer that is not currently being sent by the send thread
+    const int index = socket->send_buffer_off_index;
 
     next_server_xdp_send_buffer_t * send_buffer = &socket->send_buffer[index];
 
@@ -1082,7 +1083,7 @@ void next_server_finish_packet( struct next_server_t * server, uint64_t sequence
 
     next_server_xdp_socket_t * socket = &server->socket[queue];
 
-    const int index = socket->send_buffer_index ? 0 : 1;            // IMPORTANT: get the off buffer that is not currently being sent by the send thread
+    const int index = socket->send_buffer_off_index;
 
     next_server_xdp_send_buffer_t * send_buffer = &socket->send_buffer[index];
 
@@ -1133,7 +1134,7 @@ void next_server_abort_packet( struct next_server_t * server, uint64_t sequence,
 
     next_server_xdp_socket_t * socket = &server->socket[queue];
 
-    const int index = socket->send_buffer_index ? 0 : 1;            // IMPORTANT: get the off buffer that is not currently being sent by the send thread
+    const int index = socket->send_buffer_off_index;
 
     next_server_xdp_send_buffer_t * send_buffer = &socket->send_buffer[index];
 
@@ -1162,8 +1163,8 @@ void next_server_send_packets( struct next_server_t * server )
         // double buffer the send buffer
 
         next_platform_mutex_acquire( &socket->send_mutex );
-        const int current_index = socket->send_buffer_index;
-        socket->send_buffer_index = current_index ? 0 : 1;
+        socket->send_buffer_off_index = socket->send_buffer_off_index ? 0 : 1;
+        socket->send_buffer_on_index = socket->send_buffer_off_index ? 0 : 1;
         next_platform_mutex_release( &socket->send_mutex );
 
         // trigger the send queue to wake up and send the packets in the off send buffer
@@ -1292,7 +1293,7 @@ static void xdp_send_thread_function( void * data )
         {
             next_platform_mutex_acquire( &socket->send_mutex );
 
-            next_server_xdp_send_buffer_t * send_buffer = &socket->send_buffer[socket->send_buffer_index];
+            next_server_xdp_send_buffer_t * send_buffer = &socket->send_buffer[socket->send_buffer_on_index];
 
             // IMPORTANT: We have to do this because with atomic increment on num_packets
             // it's possible that across multiple threads we incr it past the max value
