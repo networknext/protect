@@ -1104,7 +1104,7 @@ int generate_packet_header( void * data, uint8_t * server_ethernet_address, uint
 
 uint8_t * next_server_start_packet_internal( struct next_server_t * server, int queue, next_address_t * to, uint8_t packet_type )
 {
-    next_server_xdp_socket_t * socket = server->socket[queue];
+    next_server_xdp_socket_t * socket = &server->socket[queue];
 
     const int index = socket->send_buffer_index ? 0 : 1;            // IMPORTANT: get the off buffer that is not currently being sent by the send thread
 
