@@ -1313,7 +1313,7 @@ static void xdp_send_thread_function( void * data )
 
             // count how many packets we have to send in the send buffer
 
-            const int start_index = receive_buffer->packet_start_index;
+            const int start_index = send_buffer->packet_start_index;
 
             const int num_packets = (int) send_buffer->num_packets;
 
@@ -1347,9 +1347,9 @@ static void xdp_send_thread_function( void * data )
                 send_buffer->packet_bytes[i] = 0;
             }
 
-            receive_buffer->packet_start_index = send_packet_index[num_packets]
+            send_buffer->packet_start_index = send_packet_index[num_packets]
 
-            bool stop = receive_buffer->packet_start_index >= receive_buffer->num_packets;
+            bool stop = send_buffer->packet_start_index >= send_buffer->num_packets;
 
             next_platform_mutex_release( &socket->send_mutex );
 
