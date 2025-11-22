@@ -1020,6 +1020,9 @@ uint8_t * next_server_start_packet_internal( struct next_server_t * server, int 
     if ( packet_index >= NEXT_XDP_SEND_QUEUE_SIZE )
         return NULL;
 
+    // todo
+    next_info( "start packet %d", packet_index );
+
     uint8_t * packet_data = send_buffer->packet_data + packet_index * NEXT_MAX_PACKET_BYTES;
 
     packet_data += NEXT_HEADER_BYTES;
@@ -1097,6 +1100,9 @@ void next_server_finish_packet( struct next_server_t * server, uint64_t sequence
     next_assert( packet_data );
     next_assert( packet_bytes > 0 );
     next_assert( packet_bytes <= NEXT_MTU );
+
+    // todo
+    next_info( "finish packet %d", packet_index );
 
     send_buffer->packet_bytes[packet_index] = packet_bytes + NEXT_HEADER_BYTES + 8;
 
