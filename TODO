@@ -66,11 +66,29 @@ DONE
 
     Needed to read 8 bytes on the event_fd so it keeps working, otherwise one of the threads doesn't wake up.
 
-TODO
-
-    Implement the send buffer queue up for server start packet, finish packet abort packet etc.
+    Extend so we send multiple packets per-frame.
 
     Modulo number of queues and distribute packets across different send queues.
+
+    Implement the send buffer queue up for server start packet XDP
+
+TODO
+
+    Swap out send_mutex for atomic increment
+
+    Make sure we clamp num_packets for XDP, since it will be using atomic increment, it can increment past the max packets sent
+
+    ----------
+
+    Verify that packets
+
+    ----------
+
+    Implement abort packet XDP
+
+    Implement finish packet XDP
+
+    Verify that the send threads wake up and want to send n packets
 
     ----------
 
@@ -95,8 +113,6 @@ TODO
     Verify the client receives packets from the server.
 
     ----------
-
-    Extend so we need multiple packets per-frame.
 
     Verify that packets are sent across both send threads.
 

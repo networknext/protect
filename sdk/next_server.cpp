@@ -43,7 +43,7 @@
 
 struct next_server_xdp_send_buffer_t
 {
-    int num_packets;
+    std::atomic<int> num_packets;
     next_address_t from[NEXT_XDP_SEND_QUEUE_SIZE];
     size_t packet_bytes[NEXT_XDP_SEND_QUEUE_SIZE];
     uint8_t packet_data[NEXT_MAX_PACKET_BYTES*NEXT_XDP_SEND_QUEUE_SIZE];
@@ -59,11 +59,17 @@ struct next_server_xdp_receive_buffer_t
 
 struct next_server_xdp_socket_t
 {
+    uint8_t padding_0[1024];
+
     int queue;
     std::atomic<bool> quit;
 
+    uint8_t padding_1[1024];
+
     uint32_t num_free_frames;
     uint64_t frames[NEXT_XDP_NUM_FRAMES];
+
+    uint8_t padding_2[1024];
 
     void * buffer;
     struct xsk_umem * umem;
@@ -73,17 +79,23 @@ struct next_server_xdp_socket_t
     struct xsk_ring_prod fill_queue;
     struct xsk_socket * xsk;
 
+    uint8_t padding_3[1024];
+
     int receive_event_fd;
     next_platform_thread_t * receive_thread;
     next_platform_mutex_t receive_mutex;
     int receive_buffer_index;
     struct next_server_xdp_receive_buffer_t receive_buffer[2];
 
+    uint8_t padding_4[1024];
+
     int send_event_fd;
     next_platform_thread_t * send_thread;
     next_platform_mutex_t send_mutex;
     int send_buffer_index;
     struct next_server_xdp_send_buffer_t send_buffer[2];
+
+    uint8_t padding_5[1024];
 };
 
 #else // #ifdef __linux__
@@ -1088,17 +1100,45 @@ int generate_packet_header( void * data, uint8_t * server_ethernet_address, uint
 
 #endif // #ifdef __linux__
 
-#ifndef __linux__
+#ifdef __linux__
+
+uint8_t * next_server_start_packet_internal( struct next_server_t * server, int queue, next_address_t * to, uint8_t packet_type )
+{
+    next_server_xdp_socket_t * socket = server->socket[queue];
+
+    const int index = socket->send_buffer_index ? 0 : 1;            // IMPORTANT: get the off buffer that is not currently being sent by the send thread
+
+    next_server_xdp_send_buffer_t * send_buffer = &socket->send_buffer[index];
+
+    int packet_index = server->send_buffer.num_packets.fetch_add(1);
+
+    if ( packet_index >= NEXT_SERVER_MAX_SEND_PACKETS )
+        return NULL;
+
+    uint8_t * packet_data = server->send_buffer.packet_data + packet_index * NEXT_MAX_PACKET_BYTES;
+
+    packet_data += NEXT_HEADER_BYTES;
+
+    server->send_buffer.to[packet] = *to;
+    server->send_buffer.packet_type[packet] = packet_type;
+    server->send_buffer.packet_bytes[packet] = 0;
+
+    return packet_data;
+}
+
+#else // #ifdef __linux__
 
 uint8_t * next_server_start_packet_internal( struct next_server_t * server, next_address_t * to, uint8_t packet_type )
 {
     next_assert( server );
     next_assert( to );
 
+    // todo: we can probably use atomic send buffer index to avoid this mutex lock
+
     next_platform_mutex_acquire( &server->send_buffer.mutex );
 
     uint8_t * packet_data = NULL;
-    int packet = server->send_buffer.current_packet ;
+    int packet = server->send_buffer.current_packet;
     if ( server->send_buffer.current_packet < NEXT_SERVER_MAX_SEND_PACKETS )
     {
         packet_data = server->send_buffer.data + packet * NEXT_MAX_PACKET_BYTES;
@@ -1119,7 +1159,7 @@ uint8_t * next_server_start_packet_internal( struct next_server_t * server, next
     return packet_data;
 }
 
-#endif // #ifndef __linux__
+#endif // #ifdef __linux__
 
 uint8_t * next_server_start_packet( struct next_server_t * server, int client_index, uint64_t * out_sequence )
 {
@@ -1133,8 +1173,34 @@ uint8_t * next_server_start_packet( struct next_server_t * server, int client_in
 
 #ifdef __linux__
 
-    // todo: AF_XDP
-    return NULL;
+    uint64_t sequence = server->send_buffer.sequence.fetch_add(1);
+
+    int queue = sequence % NUM_SERVER_XDP_SOCKETS;
+
+    if ( server->client_direct[client_index] )
+    {
+        // direct packet
+
+        uint8_t * packet_data = next_server_start_packet_internal( server, queue, &server->client_address[client_index], NEXT_PACKET_DIRECT );
+        if ( !packet_data )
+            return NULL;
+
+        uint64_t endian_sequence = sequence;
+        next_endian_fix( &endian_sequence );
+        memcpy( packet_data, (char*)&endian_sequence, 8 );
+
+        packet_data += 8;
+
+        *out_sequence = sequence;
+
+        return packet_data;
+    }
+    else
+    {
+        // todo: next packet
+
+        return NULL;
+    }
 
 #else // #ifdef __linux__
 

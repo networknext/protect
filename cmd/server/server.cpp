@@ -52,13 +52,16 @@ int main()
         {
             if ( next_server_client_connected( server, i ) )
             {
-                uint64_t sequence;
-                uint8_t * packet_data = next_server_start_packet( server, i, &sequence );
-                if ( packet_data )
+                for ( int j = 0; j < 100; j++ )
                 {
-                    memset( packet_data, 0, 100 );
-                    next_server_finish_packet( server, packet_data, 100 );
-                    // next_info( "server sent packet %" PRId64 " to client %d", sequence, i );
+                    uint64_t sequence;
+                    uint8_t * packet_data = next_server_start_packet( server, i, &sequence );
+                    if ( packet_data )
+                    {
+                        memset( packet_data, 0, 100 );
+                        next_server_finish_packet( server, packet_data, 100 );
+                        // next_info( "server sent packet %" PRId64 " to client %d", sequence, i );
+                    }
                 }
             }
         }

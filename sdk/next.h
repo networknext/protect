@@ -38,7 +38,7 @@
 
 #endif // !NEXT_DEVELOPMENT
 
-#define NEXT_MAX_CLIENTS                                       1024
+#define NEXT_MAX_CLIENTS                                       2048
 
 #define NEXT_MTU                                               1200
 
