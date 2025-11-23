@@ -667,8 +667,8 @@ next_server_t * next_server_create( void * context, const char * bind_address_st
             return NULL;
         }
 
-        int optval = 1; // Enable busy polling
-        if ( setsockopt( xsk_socket__fd( socket->xsk ), SOL_XDP, XDP_OPTIONS_BUSY_POLL, &optval, sizeof(optval) ) < 0) 
+        int optval = 64;
+        if ( setsockopt( xsk_socket__fd( socket->xsk ), SOL_XDP, SO_PREFER_BUSY_POLL, &optval, sizeof(optval) ) < 0) 
         {
             next_error( "server could not enable busy polling for queue %d", queue );
             next_server_destroy( server );
