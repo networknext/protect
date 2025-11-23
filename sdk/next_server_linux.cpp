@@ -1408,9 +1408,7 @@ static void xdp_send_thread_function( void * data )
             int batch_packets = xsk_ring_prod__reserve( &socket->send_queue, num_packets_to_send, &send_queue_index );
 
             // it's possible to reserve fewer entries in the send queue than requested. when this happens wind back the packet start index for sending packets
-            next_assert( batch_packets == num_packets_to_send );
 
-            /*
             if ( batch_packets < num_packets_to_send )
             {
                 send_buffer->packet_start_index = send_packet_index[batch_packets];
@@ -1420,7 +1418,6 @@ static void xdp_send_thread_function( void * data )
                     break;
                 }
             }
-            */
 
             // setup descriptors for packets in batch to be sent
 
