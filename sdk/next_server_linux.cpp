@@ -740,12 +740,12 @@ next_server_t * next_server_create( void * context, const char * bind_address_st
 
         // initialize receive frame allocator
 
-        for ( int j = 0; j < NEXT_XDP_NUM_FRAMES / 2; j++ )
+        for ( int j = 0; j < NEXT_XDP_RECV_QUEUE_SIZE; j++ )
         {
             socket->receive_frames[j] = ( NEXT_XDP_NUM_FRAMES / 2 + j ) * NEXT_XDP_FRAME_SIZE;
         }
 
-        socket->num_free_receive_frames = NEXT_XDP_NUM_FRAMES / 2;
+        socket->num_free_receive_frames = NEXT_XDP_RECV_QUEUE_SIZE;
 
         // populate fill ring for packets to be received in
         {
