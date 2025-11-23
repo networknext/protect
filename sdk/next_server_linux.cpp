@@ -1614,6 +1614,8 @@ void next_server_receive_packets( next_server_t * server )
                 next_server_process_packet_internal( server, &from, packet_data, packet_bytes );            
             }
         }
+
+        receive_buffer->num_packets = 0;
     }
 }
 
