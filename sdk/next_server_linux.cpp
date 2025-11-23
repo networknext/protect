@@ -1210,8 +1210,14 @@ void next_server_process_packet_internal( next_server_t * server, next_address_t
 {
     const uint8_t packet_type = packet_data[0];
 
+    // todo
+    next_info( "process packet internal: packet type = %d", packet_type );
+
     if ( packet_type == NEXT_PACKET_DISCONNECT && packet_bytes == sizeof(next_disconnect_packet_t) )
     {
+        // todo
+        next_info( "process disconnect packet" );
+
         int client_index = -1;
         for ( int i = 0; i < NEXT_MAX_CLIENTS; i++ )
         {
@@ -1517,7 +1523,9 @@ static void xdp_receive_thread_function( void * data )
 
                 uint8_t * packet_data = (uint8_t*)socket->buffer + desc->addr;
 
-                int packet_bytes = desc->len - ( sizeof(struct ethhdr) + sizeof(struct iphdr) + sizeof(struct udphdr) );
+                const int header_bytes = sizeof(ethhdr) + sizeof(iphdr) + sizeof(udphdr);
+
+                int packet_bytes = desc->len - header_bytes;
 
                 // next_info( "received %d byte packet on queue %d", packet_bytes, socket->queue );
 
@@ -1535,7 +1543,7 @@ static void xdp_receive_thread_function( void * data )
                     
                     receive_buffer->packet_bytes[index] = packet_bytes;
 
-                    memcpy( receive_buffer->packet_data + index * NEXT_MAX_PACKET_BYTES, packet_data + sizeof(ethhdr) + sizeof(iphdr) + sizeof(udphdr), packet_bytes );
+                    memcpy( receive_buffer->packet_data + index * NEXT_MAX_PACKET_BYTES, packet_data + header_bytes, packet_bytes );
                 }
             }
 
@@ -1606,7 +1614,7 @@ void next_server_receive_packets( next_server_t * server )
             }
             else
             {
-                next_server_process_packet_internal( server, &from, packet_data, packet_bytes );            
+                next_server_process_packet_internal( server, &from, packet_data, packet_bytes );
             }
         }
 
