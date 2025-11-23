@@ -53,9 +53,13 @@ DONE
 
     Go back to 8 NIC queues.
 
+    Try pinning the send and receive threads to the CPU.
+
 TODO
 
-    Try pinning the send and receive threads to the CPU.
+    Searching keeps telling me I need to set SO_PREFER_BUSY_POLL on the socket, but I can't find any definition of this SO in the headers?
+
+    Some info here: https://docs.kernel.org/networking/napi.html
 
     -------------
 
