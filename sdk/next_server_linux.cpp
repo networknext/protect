@@ -1542,7 +1542,7 @@ static void xdp_receive_thread_function( void * data )
                     
                     receive_buffer->packet_bytes[index] = packet_bytes;
 
-                    memcpy( receive_buffer->packet_data + index * NEXT_MAX_PACKET_BYTES, packet_data, packet_bytes );
+                    memcpy( receive_buffer->packet_data + index * NEXT_MAX_PACKET_BYTES, packet_data + sizeof(ethhdr) + sizeof(iphdr) + sizeof(udphdr), packet_bytes );
                 }
             }
 
