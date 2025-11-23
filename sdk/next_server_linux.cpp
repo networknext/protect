@@ -71,11 +71,6 @@ struct next_server_xdp_socket_t
 
     uint8_t padding_1[1024];
 
-    uint32_t num_free_frames;
-    uint64_t frames[NEXT_XDP_NUM_FRAMES];
-
-    uint8_t padding_2[1024];
-
     void * buffer;
     struct xsk_umem * umem;
     struct xsk_ring_cons receive_queue;
@@ -84,18 +79,22 @@ struct next_server_xdp_socket_t
     struct xsk_ring_prod fill_queue;
     struct xsk_socket * xsk;
 
-    uint8_t padding_3[1024];
+    uint8_t padding_2[1024];
 
     std::atomic<bool> receive_quit;
+    uint32_t num_free_receive_frames;
+    uint64_t receive_frames[NEXT_XDP_NUM_FRAMES/2];
     int receive_event_fd;
     next_platform_thread_t * receive_thread;
     next_platform_mutex_t receive_mutex;
     int receive_buffer_index;
     struct next_server_xdp_receive_buffer_t receive_buffer[2];
 
-    uint8_t padding_4[1024];
+    uint8_t padding_3[1024];
 
     std::atomic<bool> send_quit;
+    uint32_t num_free_send_frames;
+    uint64_t send_frames[NEXT_XDP_NUM_FRAMES/2];
     uint8_t server_ethernet_address[ETH_ALEN];
     uint8_t gateway_ethernet_address[ETH_ALEN];
     uint32_t server_address_big_endian;
@@ -107,7 +106,7 @@ struct next_server_xdp_socket_t
     int send_buffer_off_index;
     struct next_server_xdp_send_buffer_t send_buffer[2];
 
-    uint8_t padding_5[1024];
+    uint8_t padding_4[1024];
 };
 
 struct next_server_t
@@ -280,23 +279,42 @@ static bool get_gateway_mac_address( const char * interface_name, uint8_t * mac_
 
 #define INVALID_FRAME UINT64_MAX
 
-uint64_t next_server_xdp_socket_alloc_frame( next_server_xdp_socket_t * socket )
+static uint64_t alloc_send_frame( next_server_xdp_socket_t * socket )
 {
     uint64_t frame = INVALID_FRAME;
-    if ( socket->num_free_frames > 0 )
+    if ( socket->num_free_send_frames > 0 )
     {
-        socket->num_free_frames--;
-        frame = socket->frames[socket->num_free_frames];
-        socket->frames[socket->num_free_frames] = INVALID_FRAME;
+        socket->num_free_send_frames--;
+        frame = socket->send_frames[socket->num_free_send_frames];
+        socket->send_frames[socket->num_free_send_frames] = INVALID_FRAME;
     }
     return frame;
 }
 
-void next_server_xdp_socket_free_frame( next_server_xdp_socket_t * socket, uint64_t frame )
+static void free_send_frame( next_server_xdp_socket_t * socket, uint64_t frame )
 {
-    next_assert( socket->num_free_frames < NEXT_XDP_NUM_FRAMES );
-    socket->frames[socket->num_free_frames] = frame;
-    socket->num_free_frames++;
+    next_assert( socket->num_free_send_frames < NEXT_XDP_NUM_FRAMES );
+    socket->send_frames[socket->num_free_send_frames] = frame;
+    socket->num_free_send_frames++;
+}
+
+static uint64_t alloc_receive_frame( next_server_xdp_socket_t * socket )
+{
+    uint64_t frame = INVALID_FRAME;
+    if ( socket->num_free_receive_frames > 0 )
+    {
+        socket->num_free_receive_frames--;
+        frame = socket->receive_frames[socket->num_free_receive_frames];
+        socket->receive_frames[socket->num_free_receive_frames] = INVALID_FRAME;
+    }
+    return frame;
+}
+
+static void free_receive_frame( next_server_xdp_socket_t * socket, uint64_t frame )
+{
+    next_assert( socket->num_free_receive_frames < NEXT_XDP_NUM_FRAMES );
+    socket->receive_frames[socket->num_free_receive_frames] = frame;
+    socket->num_free_receive_frames++;
 }
 
 static void xdp_send_thread_function( void * data );
@@ -670,6 +688,18 @@ next_server_t * next_server_create( void * context, const char * bind_address_st
     {
         next_server_xdp_socket_t * socket = &server->socket[queue];
 
+        // initialize send frame allocator
+
+        next_assert( NEXT_XDP_SEND_QUEUE_SIZE <= NEXT_XDP_NUM_FRAMES / 2 );
+        next_assert( NEXT_XDP_RECV_QUEUE_SIZE <= NEXT_XDP_NUM_FRAMES / 2 );
+
+        for ( int j = 0; j < NEXT_XDP_SEND_QUEUE_SIZE; j++ )
+        {
+            socket->send_frames[j] = j * NEXT_XDP_FRAME_SIZE;
+        }
+
+        socket->num_free_send_frames = NEXT_XDP_SEND_QUEUE_SIZE;
+
         // create event fd to wake up poll in the send thread on quit
         
         socket->send_event_fd = eventfd( 0, 0 );
@@ -708,48 +738,46 @@ next_server_t * next_server_create( void * context, const char * bind_address_st
     {
         next_server_xdp_socket_t * socket = &server->socket[queue];
 
-        // todo: separate send and receive frame allocators
+        // initialize receive frame allocator
 
-        // initialize frame allocator
-
-        for ( int j = 0; j < NEXT_XDP_NUM_FRAMES; j++ )
+        for ( int j = 0; j < NEXT_XDP_NUM_FRAMES / 2; j++ )
         {
-            socket->frames[j] = j * NEXT_XDP_FRAME_SIZE;
+            socket->receive_frames[j] = ( NEXT_XDP_NUM_FRAMES / 2 + j ) * NEXT_XDP_FRAME_SIZE;
         }
 
-        socket->num_free_frames = NEXT_XDP_NUM_FRAMES;
+        socket->num_free_receive_frames = NEXT_XDP_NUM_FRAMES / 2;
 
         // populate fill ring for packets to be received in
         {
             uint32_t index;
-            int result = xsk_ring_prod__reserve( &socket->fill_queue, NEXT_XDP_FILL_QUEUE_SIZE, &index );
-            if ( result != NEXT_XDP_FILL_QUEUE_SIZE )
+            int result = xsk_ring_prod__reserve( &socket->fill_queue, NEXT_XDP_RECV_QUEUE_SIZE, &index );
+            if ( result != NEXT_XDP_RECV_QUEUE_SIZE )
             {
                 next_error( "server failed to populate fill queue: %d", result );
                 next_server_destroy( server );
                 return NULL;
             }
 
-            uint64_t frames[NEXT_XDP_FILL_QUEUE_SIZE];
-            for ( int i = 0; i < NEXT_XDP_FILL_QUEUE_SIZE; i++ ) 
+            uint64_t frames[NEXT_XDP_RECV_QUEUE_SIZE];
+            for ( int i = 0; i < NEXT_XDP_RECV_QUEUE_SIZE; i++ ) 
             {
-                frames[i] = next_server_xdp_socket_alloc_frame( socket );
+                frames[i] = alloc_receive_frame( socket );
                 if ( frames[i] == INVALID_FRAME )
                 {
-                    next_error( "server could not allocate frame for fill queue" );
+                    next_error( "server could not allocate receive frame for fill queue" );
                     next_server_destroy( server );
                     return NULL;
                 }
             }
 
-            for ( int i = 0; i < NEXT_XDP_FILL_QUEUE_SIZE; i++ ) 
+            for ( int i = 0; i < NEXT_XDP_RECV_QUEUE_SIZE; i++ ) 
             {
                 uint64_t * frame = (uint64_t*) xsk_ring_prod__fill_addr( &socket->fill_queue, index + i );
                 next_assert( frame );
                 *frame = frames[i];
             }
 
-            xsk_ring_prod__submit( &socket->fill_queue, NEXT_XDP_FILL_QUEUE_SIZE );
+            xsk_ring_prod__submit( &socket->fill_queue, NEXT_XDP_RECV_QUEUE_SIZE );
         }
 
         // create event fd to wake up poll in the receive thread on quit
@@ -1310,7 +1338,7 @@ static void xdp_send_thread_function( void * data )
                 send_buffer->num_packets = NEXT_XDP_SEND_QUEUE_SIZE;
             }
 
-            // mark any sent packet frames as free to be reused
+            // mark any completed send packet frames as free to be reused
 
             uint32_t complete_index;
 
@@ -1321,7 +1349,7 @@ static void xdp_send_thread_function( void * data )
                 for ( int i = 0; i < num_completed; i++ )
                 {
                     uint64_t frame = *xsk_ring_cons__comp_addr( &socket->complete_queue, complete_index++ );
-                    next_server_xdp_socket_free_frame( socket, frame );
+                    free_send_frame( socket, frame );
                 }
 
                 xsk_ring_cons__release( &socket->complete_queue, num_completed );
@@ -1387,7 +1415,7 @@ static void xdp_send_thread_function( void * data )
 
                 struct xdp_desc * desc = xsk_ring_prod__tx_desc( &socket->send_queue, send_queue_index + i );
 
-                int frame = next_server_xdp_socket_alloc_frame( socket );
+                int frame = alloc_send_frame( socket );
                 next_assert( frame != INVALID_FRAME );
                 if ( frame == INVALID_FRAME )
                 {

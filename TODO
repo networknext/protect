@@ -1,55 +1,18 @@
 DONE
 
-    Swap out send_mutex for atomic increment
-
-    Verify that the send threads wake up and want to send 50 packets each (100 sent total)
-
-    Make sure we clamp num_packets for XDP, since it will be using atomic increment, it can increment past the max packets sent
-
-    OK we do have a major problem, which is that we don't have an easy way to get back from packet_data to the send queue
-
-    We need the sequence # passed back in to finish packet / abort packet
-
-    Implement finish packet XDP
-
-    Implement abort packet XDP
-
-    We should now see each thread wanting to send 50 packets again
-
-    Instead, they now each want to send 49 packets. Off by one somewhere?
-
-    It's getting complex enough that I think we should have different server implementations
-
-        next_server_portable.cpp
-        next_server_linux.cpp
-
-    If the portable server is limited to direct only, it's not going to have too much duplication with the linux server.
-
-    Pass over the portable server and make it lock free with atomics.    
-
-    Pass over the linux server and fix send sequence to be atomic.
-
-    Debug why we are seeing 49 packets to send, instead of 50.
-
-    What's happening is that some packets come through with a packet_bytes of zero in the send thread.
-
-    But I don't understand how this can happen, unless something is wrong with the double buffer?
-
-    Each socket needs to know the ethernet addresses, and the server ipv4 and port big endian.
-
-    Actually hook up the AF_XDP send code
-
-    The effort to allocate frames before the reserve is bad, because the reserve is just going to give us what we get, and if we suddenly can't reserve enough frames to send, then we would have to close frames we've already reserved, and then even go back to the send queue, and pull our start_index back further... which is a huge PITA
-
-    I think the correct approach is to reserve to send up front, and then drive everything else from the reserved # as in how many frames to allocate, and if a frame fails to allocate, then that's a fatal error chummo.
-
-    Verify the client receives packets from the server.
-
-TODO
-
     Create a separate frame allocator for receive packets vs. send packets.
 
     The first half of the umem will have frames for packet sends, the second half will be frames for packet receives.
+
+    It seems that the send and receive queue sizes both overlap, as well as send/complete
+
+    So the reality is that we really only need 8k frames, if it is 4k per-queue.
+
+    Updated and added asserts which check that actually both send and receive queue sizes must be num frames / 2.
+
+TODO
+
+    Verify the new frame allocators compile and work
 
     ----------
 
