@@ -35,17 +35,7 @@ DONE
 
     But I don't understand how this can happen, unless something is wrong with the double buffer?
 
-TODO
-
     Each socket needs to know the ethernet addresses, and the server ipv4 and port big endian.
-
-    ----------
-
-    Create a separate frame allocator for receive packets vs. send packets.
-
-    The first half of the umem will have frames for packet sends, the second half will be frames for packet receives.
-
-    ----------
 
     Actually hook up the AF_XDP send code
 
@@ -53,23 +43,29 @@ TODO
 
     I think the correct approach is to reserve to send up front, and then drive everything else from the reserved # as in how many frames to allocate, and if a frame fails to allocate, then that's a fatal error chummo.
 
-    ----------
-
     Verify the client receives packets from the server.
+
+TODO
+
+    Create a separate frame allocator for receive packets vs. send packets.
+
+    The first half of the umem will have frames for packet sends, the second half will be frames for packet receives.
 
     ----------
 
     Server AF_XDP is basically working at this point!
 
-    ----------
+    Increase the num clients to 1000 and mock 1000 clients with incrementing port numbers to see how many packets we can send before it blows up
 
-    It's technically possible to avoid the copy by using the umem and allocating frames double buffered in the umem, instead of copying across.
-
-    I should probably do this, especially on send because it does need to be as fast as possible.
+    The different port numbers should scale RSS on the receive side
 
     ----------
 
+    Now we need to start profiling. I need some way to have a test XDP receiver (linux) which will count how many packets are received per-second and display them
 
+    It needs to be linux and xdp because we'll need to fake many connected clients (1000) and send many packets
+
+    ----------
 
 
 
