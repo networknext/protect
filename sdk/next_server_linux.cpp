@@ -667,6 +667,17 @@ next_server_t * next_server_create( void * context, const char * bind_address_st
             return NULL;
         }
 
+        // enable busy polling on the socket
+
+        #define SO_PREFER_BUSY_POLL 69
+        int option_value = 1;
+        if ( setsockopt(sockfd, SOL_XDP, SO_PREFER_BUSY_POLL, &option_value, sizeof(option_value) ) < 0 ) 
+        {
+            next_error( "server failed to set busy poll socket option for queue %d", queue );
+            next_server_destroy( server );
+            return NULL;
+        }
+
         // configure the xdp socket to receive packets from the xdp program
 
         __u32 key = queue;
