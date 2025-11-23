@@ -1314,7 +1314,7 @@ void next_server_process_direct_packet( next_server_t * server, next_address_t *
 static void pin_thread_to_cpu( int cpu ) 
 {
     int num_cpus = sysconf( _SC_NPROCESSORS_ONLN );
-    next_assert( cpu < 0 );
+    next_assert( cpu >= 0 );
     next_assert( cpu < num_cpus );
 
     cpu_set_t cpuset;
