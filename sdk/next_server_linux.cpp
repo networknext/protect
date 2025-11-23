@@ -1394,9 +1394,9 @@ static void xdp_send_thread_function( void * data )
 
                 uint8_t * packet_data = (uint8_t*)socket->buffer + frame;
 
-                const int payload_bytes = send_buffer->packet_bytes[index];
+                const int payload_bytes = send_buffer->packet_bytes[packet_index];
 
-                memcpy( packet_data + sizeof(struct ethhdr) + sizeof(struct iphdr) + sizeof(struct udphdr), send_buffer->packet_data + packet_index * NEXT_XDP_FRAME_SIZE, payload_bytes );
+                memcpy( packet_data + sizeof(struct ethhdr) + sizeof(struct iphdr) + sizeof(struct udphdr), send_buffer->packet_data + packet_index * NEXT_MAX_PACKET_BYTES, payload_bytes );
 
                 // todo: get these from the client arrays according to client_index or whatever
                 uint32_t client_address_big_endian = 0x0301a8c0;                            // batman IP on 10G LAN
