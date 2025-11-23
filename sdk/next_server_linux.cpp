@@ -753,17 +753,19 @@ next_server_t * next_server_create( void * context, const char * bind_address_st
 
         // populate fill ring for packets to be received in
         {
+            next_assert( NEXT_XDP_FILL_QUEUE_SIZE <= NEXT_XDP_RECV_QUEUE_SIZE );
+
             uint32_t index;
-            int result = xsk_ring_prod__reserve( &socket->fill_queue, NEXT_XDP_RECV_QUEUE_SIZE, &index );
-            if ( result != NEXT_XDP_RECV_QUEUE_SIZE )
+            int result = xsk_ring_prod__reserve( &socket->fill_queue, NEXT_XDP_FILL_QUEUE_SIZE, &index );
+            if ( result != NEXT_XDP_FILL_QUEUE_SIZE )
             {
                 next_error( "server failed to populate fill queue: %d", result );
                 next_server_destroy( server );
                 return NULL;
             }
 
-            uint64_t frames[NEXT_XDP_RECV_QUEUE_SIZE];
-            for ( int i = 0; i < NEXT_XDP_RECV_QUEUE_SIZE; i++ ) 
+            uint64_t frames[NEXT_XDP_FILL_QUEUE_SIZE];
+            for ( int i = 0; i < NEXT_XDP_FILL_QUEUE_SIZE; i++ ) 
             {
                 frames[i] = alloc_receive_frame( socket );
                 if ( frames[i] == INVALID_FRAME )
@@ -774,14 +776,14 @@ next_server_t * next_server_create( void * context, const char * bind_address_st
                 }
             }
 
-            for ( int i = 0; i < NEXT_XDP_RECV_QUEUE_SIZE; i++ ) 
+            for ( int i = 0; i < NEXT_XDP_FILL_QUEUE_SIZE; i++ ) 
             {
                 uint64_t * frame = (uint64_t*) xsk_ring_prod__fill_addr( &socket->fill_queue, index + i );
                 next_assert( frame );
                 *frame = frames[i];
             }
 
-            xsk_ring_prod__submit( &socket->fill_queue, NEXT_XDP_RECV_QUEUE_SIZE );
+            xsk_ring_prod__submit( &socket->fill_queue, NEXT_XDP_FILL_QUEUE_SIZE );
         }
 
         // create event fd to wake up poll in the receive thread on quit
