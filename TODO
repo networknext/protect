@@ -34,9 +34,20 @@ DONE
 
     We're definitely hitting a bottleneck, likely, it's the fastest a single CPU can queue up packets.
 
+    Increased send queue size and I'm definitely getting more packets through
+
+    1.21gigabyte per-second
+
+    It's 9.68 gigabits per-second.
+
+    That's pretty much working.
+
 TODO
 
-    Try doing 10 threads packet writing in server.cpp
+    The next thing to try is to enable busy polling on the sender.
+
+        echo 0 > /sys/class/net/enp8s0f0/napi_defer_hard_irqs
+        echo 0 > /sys/class/net/<interface_name>/gro_flush_timeout
 
     ----------
 
@@ -83,3 +94,8 @@ TODO
     Double this route and implement multipath
 
     -------------
+
+
+
+echo 0 > /sys/class/net/enp8s0f0/napi_defer_hard_irqs
+echo 0 > /sys/class/net/<interface_name>/gro_flush_timeout
