@@ -46,8 +46,8 @@ TODO
 
     The next thing to try is to enable busy polling on the sender.
 
-        echo 0 > /sys/class/net/enp8s0f0/napi_defer_hard_irqs
-        echo 0 > /sys/class/net/<interface_name>/gro_flush_timeout
+        sudo bash -c "echo 0 > /sys/class/net/enp8s0f0/napi_defer_hard_irqs"
+        sudo bash -c "echo 0 > /sys/class/net/enp8s0f0/gro_flush_timeout"
 
     ----------
 
@@ -97,5 +97,3 @@ TODO
 
 
 
-echo 0 > /sys/class/net/enp8s0f0/napi_defer_hard_irqs
-echo 0 > /sys/class/net/<interface_name>/gro_flush_timeout

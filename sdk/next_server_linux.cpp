@@ -666,6 +666,16 @@ next_server_t * next_server_create( void * context, const char * bind_address_st
             return NULL;
         }
 
+        // setup busy polling on the xdp socket
+
+        int batch_size = 64;
+        if ( setsockopt( xsk_socket__fd(socket->xsk), SOL_XDP, XDP_BUSY_POLL_BATCH_SIZE, &batch_size, sizeof(batch_size) ) < 0 ) 
+        {
+            next_error( "server could not set busypoll budget socket option for queue %d", queue );
+            next_server_destroy( server );
+            return NULL;
+        }
+
         // configure the xdp socket to receive packets from the xdp program
 
         __u32 key = queue;
