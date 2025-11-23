@@ -52,15 +52,18 @@ int main()
         {
             if ( next_server_client_connected( server, i ) )
             {
-                for ( int j = 0; j < 2; j++ )
+                for ( int j = 0; j < 10; j++ )
                 {
                     uint64_t sequence;
                     uint8_t * packet_data = next_server_start_packet( server, i, &sequence );
                     if ( packet_data )
                     {
-                        memset( packet_data, 0, 100 );
-                        next_server_finish_packet( server, sequence, packet_data, 100 );
-                        // next_info( "server sent packet %" PRId64 " to client %d", sequence, i );
+                        memset( packet_data, 0, NEXT_MTU );
+                        next_server_finish_packet( server, sequence, packet_data, NEXT_MTU );
+                    }
+                    else
+                    {
+                        next_warn( "null packet" );
                     }
                 }
             }

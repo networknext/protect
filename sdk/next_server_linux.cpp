@@ -35,7 +35,7 @@
 #include <stdio.h>
 #include <atomic>
 
-#define NUM_SERVER_XDP_SOCKETS 1 // 2
+#define NUM_SERVER_XDP_SOCKETS 8
 
 struct next_server_xdp_send_buffer_t
 {
@@ -83,7 +83,7 @@ struct next_server_xdp_socket_t
 
     std::atomic<bool> receive_quit;
     uint32_t num_free_receive_frames;
-    uint64_t receive_frames[NEXT_XDP_NUM_FRAMES/2];
+    uint64_t receive_frames[NEXT_XDP_RECV_QUEUE_SIZE];
     int receive_event_fd;
     next_platform_thread_t * receive_thread;
     next_platform_mutex_t receive_mutex;
@@ -94,7 +94,7 @@ struct next_server_xdp_socket_t
 
     std::atomic<bool> send_quit;
     uint32_t num_free_send_frames;
-    uint64_t send_frames[NEXT_XDP_NUM_FRAMES/2];
+    uint64_t send_frames[NEXT_XDP_SEND_QUEUE_SIZE];
     uint8_t server_ethernet_address[ETH_ALEN];
     uint8_t gateway_ethernet_address[ETH_ALEN];
     uint32_t server_address_big_endian;
