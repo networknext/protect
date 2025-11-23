@@ -1527,9 +1527,7 @@ static void xdp_receive_thread_function( void * data )
 
                 int packet_bytes = desc->len - header_bytes;
 
-                // next_info( "received %d byte packet on queue %d", packet_bytes, socket->queue );
-
-                if ( packet_bytes > 18 && receive_buffer->num_packets < NEXT_XDP_RECV_QUEUE_SIZE )
+                if ( packet_bytes >= 18 && receive_buffer->num_packets < NEXT_XDP_RECV_QUEUE_SIZE )
                 {
                     const int index = receive_buffer->num_packets++;
 
