@@ -36,7 +36,7 @@
 #include <stdio.h>
 #include <atomic>
 
-#define NUM_SERVER_XDP_SOCKETS 8
+#define NUM_SERVER_XDP_SOCKETS 16
 
 struct next_server_xdp_send_buffer_t
 {
@@ -663,14 +663,6 @@ next_server_t * next_server_create( void * context, const char * bind_address_st
         if ( result )
         {
             next_error( "server could not create xsk socket for queue %d", queue );
-            next_server_destroy( server );
-            return NULL;
-        }
-
-        int optval = 1;
-        if ( setsockopt( xsk_socket__fd( socket->xsk ), SOL_XDP, SO_PREFER_BUSY_POLL, &optval, sizeof(optval) ) < 0) 
-        {
-            next_error( "server could not enable busy polling for queue %d", queue );
             next_server_destroy( server );
             return NULL;
         }
