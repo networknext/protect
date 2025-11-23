@@ -16,11 +16,23 @@ DONE
 
     Increase to 8 NIC queues and see that NEXT_MTU (max packet bytes) can be sent for one client.
 
-TODO
-
     Mock 1000 clients with incrementing port numbers to see how many packets we can send before it blows up
 
     The different port numbers should scale RSS on the receive side
+
+    Stats on my mac (with 10G NIC) says that we are sending around 700 megabytes per-second, or 5.6 gigabits per-second.
+
+    Now go to the sending side, and calculate if this is what we are actually sending, or if we are dropping some packets somewhere, or not able to send them fast enough
+
+    Packets received per-second are around 570k packets per-second.
+
+    Calculating this... it's close enough to be correct.
+
+    Try increasing sent packets per-client.
+
+
+TODO
+
 
     ----------
 
