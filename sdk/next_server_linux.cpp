@@ -876,7 +876,7 @@ void next_server_destroy( next_server_t * server )
 
         if ( socket->receive_thread )
         {
-            result = write( socket->receive_event_fd, &value, sizeof(uint64_t) );
+            int result = write( socket->receive_event_fd, &value, sizeof(uint64_t) );
             (void) result;
             next_platform_thread_join( socket->receive_thread );
             next_platform_thread_destroy( socket->receive_thread );
