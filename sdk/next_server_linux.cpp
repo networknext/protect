@@ -608,12 +608,16 @@ next_server_t * next_server_create( void * context, const char * bind_address_st
     server->server_address_big_endian = public_address_ipv4;
     server->server_port_big_endian = next_platform_htons( public_address.port );
 
-    // todo: mock a client connected in slot 0
-    server->client_connected[0] = true;
-    server->client_direct[0] = true;
-    next_address_parse( &server->client_address[0], "192.168.1.3:30000" );
-    server->client_address_big_endian[0] = next_address_ipv4( &server->client_address[0] );
-    server->client_port_big_endian[0] = next_platform_htons( 30000 );
+    // todo: mock 1000 connected clients
+    for ( int i = 0; i < 1000; i++ )
+    {
+        server->client_connected[i] = true;
+        server->client_direct[i] = true;
+        next_address_parse( &server->client_address[i], "192.168.1.3" );
+        server->client_address[i] = 30000 + i;
+        server->client_address_big_endian[i] = next_address_ipv4( &server->client_address[i] );
+        server->client_port_big_endian[i] = next_platform_htons( server->client_address[i] );
+    }
 
     // initialize server xdp sockets (one socket per-NIC queue)
 

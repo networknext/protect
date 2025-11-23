@@ -10,15 +10,15 @@ DONE
 
     Updated and added asserts which check that actually both send and receive queue sizes must be num frames / 2.
 
-TODO
-
     Verify the new frame allocators compile and work
 
-    ----------
+    Had to double the frame allocators, since you can have worst case n in fill queue, and n in complete queue, so you actually need n*2 for receive, and same for send.
 
-    Server AF_XDP is basically working at this point!
+    Increase to 8 NIC queues and see that NEXT_MTU (max packet bytes) can be sent for one client.
 
-    Increase the num clients to 1000 and mock 1000 clients with incrementing port numbers to see how many packets we can send before it blows up
+TODO
+
+    Mock 1000 clients with incrementing port numbers to see how many packets we can send before it blows up
 
     The different port numbers should scale RSS on the receive side
 
