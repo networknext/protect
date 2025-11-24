@@ -619,9 +619,6 @@ void next_client_disconnect( next_client_t * client )
 
         for ( int i = 0; i < 10; i++ )
         {
-            // todo
-            next_info( "client sent disconnect packet" );
-
             next_direct_packet_t packet;
             packet.type = NEXT_PACKET_DISCONNECT;
             next_client_send_packet_internal( client, &client->direct_address, (uint8_t*) &packet, NEXT_HEADER_BYTES );
