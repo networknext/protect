@@ -57,6 +57,7 @@ struct next_server_xdp_receive_buffer_t
     uint8_t padding_0[1024];
 
     int num_packets;
+    uint8_t eth[NEXT_XDP_RECV_QUEUE_SIZE][ETH_ALEN];
     next_address_t from[NEXT_XDP_RECV_QUEUE_SIZE];
     size_t packet_bytes[NEXT_XDP_RECV_QUEUE_SIZE];
     uint8_t packet_data[NEXT_MAX_PACKET_BYTES*NEXT_XDP_RECV_QUEUE_SIZE];
@@ -125,6 +126,7 @@ struct next_server_t
     bool client_direct[NEXT_MAX_CLIENTS];
     next_address_t client_address[NEXT_MAX_CLIENTS];
     double client_last_packet_receive_time[NEXT_MAX_CLIENTS];
+    uint8_t client_eth[MAX_CLIENTS][ETH_ALEN];
 
     std::atomic<uint64_t> client_send_sequence[NEXT_MAX_CLIENTS];
 
@@ -1532,12 +1534,9 @@ static void xdp_receive_thread_function( void * data )
                     struct iphdr  * ip  = (iphdr*) ( (uint8_t*)packet_data + sizeof( struct ethhdr ) );
                     struct udphdr * udp = (udphdr*) ( (uint8_t*)ip + sizeof( struct iphdr ) );
 
-                    uint32_t source_ipv4 = (uint32_t) ip->saddr;
-    
-                    next_address_load_ipv4( &receive_buffer->from[index], source_ipv4, udp->dest );
-                    
+                    next_address_load_ipv4( &receive_buffer->from[index], (uint32_t) ip->saddr, udp->source );
                     receive_buffer->packet_bytes[index] = packet_bytes;
-
+                    memcpy( receive_buffer->eth[index], eth->h_source, ETH_ALEN );
                     memcpy( receive_buffer->packet_data + index * NEXT_MAX_PACKET_BYTES, packet_data + header_bytes, packet_bytes );
                 }
             }
