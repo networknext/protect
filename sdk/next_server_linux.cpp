@@ -126,7 +126,7 @@ struct next_server_t
     bool client_direct[NEXT_MAX_CLIENTS];
     next_address_t client_address[NEXT_MAX_CLIENTS];
     double client_last_packet_receive_time[NEXT_MAX_CLIENTS];
-    uint8_t client_eth[MAX_CLIENTS][ETH_ALEN];
+    uint8_t client_eth[NEXT_MAX_CLIENTS][ETH_ALEN];
 
     std::atomic<uint64_t> client_send_sequence[NEXT_MAX_CLIENTS];
 
