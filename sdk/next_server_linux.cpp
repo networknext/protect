@@ -1437,7 +1437,7 @@ static void xdp_send_thread_function( void * data )
 
                 // todo
                 char buffer[1024];
-                next_info( "send %d byte packet to %s", payload_bytes, next_address_to_string( &send_buffer->to[packet_index] ) );
+                next_info( "send %d byte packet to %s", payload_bytes, next_address_to_string( &send_buffer->to[packet_index], buffer ) );
 
                 int packet_bytes = generate_packet_header( packet_data, socket->server_ethernet_address, socket->gateway_ethernet_address, socket->server_address_big_endian, to_address_big_endian, socket->server_port_big_endian, to_port_big_endian, payload_bytes );
 
