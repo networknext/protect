@@ -1207,7 +1207,7 @@ void next_server_send_packets( struct next_server_t * server )
     }
 }
 
-void next_server_process_packet_internal( next_server_t * server, next_address_t * from, uint8_t * packet_data, int packet_bytes )
+void next_server_process_packet_internal( next_server_t * server, uint8_t * eth, next_address_t * from, uint8_t * packet_data, int packet_bytes )
 {
     const uint8_t packet_type = packet_data[0];
 
@@ -1230,7 +1230,7 @@ void next_server_process_packet_internal( next_server_t * server, next_address_t
     }
 }
 
-void next_server_process_direct_packet( next_server_t * server, next_address_t * from, uint8_t * packet_data, int packet_bytes )
+void next_server_process_direct_packet( next_server_t * server, uint8_t * eth, next_address_t * from, uint8_t * packet_data, int packet_bytes )
 {   
     if ( packet_bytes < NEXT_HEADER_BYTES + 8 )
         return;
@@ -1265,6 +1265,7 @@ void next_server_process_direct_packet( next_server_t * server, next_address_t *
             server->client_address[client_index] = *from;
             server->client_address_big_endian[client_index] = next_address_ipv4( from );
             server->client_port_big_endian[client_index] = next_platform_htons( from->port );
+            memcpy( server->client_eth[client_index], eth, ETH_ALEN );
         }
         else
         {
@@ -1593,6 +1594,7 @@ void next_server_receive_packets( next_server_t * server )
 
         for ( int i = 0; i < receive_buffer->num_packets; i++ )
         {
+            uint8_t * eth = receive_buffer->eth[i];
             next_address_t from = receive_buffer->from[i];
             uint8_t * packet_data = receive_buffer->packet_data + i * NEXT_MAX_PACKET_BYTES;
             const int packet_bytes = receive_buffer->packet_bytes[i];
@@ -1604,11 +1606,11 @@ void next_server_receive_packets( next_server_t * server )
 
             if ( packet_type == NEXT_PACKET_DIRECT )
             { 
-                next_server_process_direct_packet( server, &from, packet_data, packet_bytes );
+                next_server_process_direct_packet( server, eth, &from, packet_data, packet_bytes );
             }
             else
             {
-                next_server_process_packet_internal( server, &from, packet_data, packet_bytes );
+                next_server_process_packet_internal( server, eth, &from, packet_data, packet_bytes );
             }
         }
 

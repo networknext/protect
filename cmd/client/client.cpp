@@ -116,7 +116,7 @@ int main()
             }
         }
 
-        next_platform_sleep( 1.0 ); // / 100.0 );        
+        next_platform_sleep( 1.0 / 100.0 );
     }
 
     next_info( "disconnecting" );
