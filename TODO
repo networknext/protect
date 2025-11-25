@@ -14,8 +14,3 @@ DONE
 
 TODO
 
-    Client should be receiving packets sent from the server
-
-    Without this the client is timing out.
-
-    Why is the client not receiving packets sent from the server?

@@ -375,6 +375,9 @@ SEC("server_xdp") int server_xdp_filter( struct xdp_md *ctx )
 
                     // todo: hard coded for now
 
+                    // const __u32 server_address = 0x97954345;
+                    const __u16 server_port = 16540;
+
                     if ( /*ip->daddr == server_address &&*/ udp->dest == server_port )
                     {
                         __u8 * packet_data = (unsigned char*) (void*)udp + sizeof(struct udphdr);

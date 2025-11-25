@@ -1,0 +1,52 @@
+AF_XDP
+
+    It seems that I have to first set the maximum combined queues via:
+
+    	sudo ethtool -L <nic> combined 8
+
+    And then if no XDP program is loaded, XDP queues in the driver will be 0 (they're not loaded until an XDP program is active...)
+
+    I wonder if I really want 64 queues for XDP, or if it will drive them from the combined queues set *before* the XDP program is loaded.
+
+    Let's find out...
+
+	-------
+
+    I'm seeing the NIC flapping on my test linux box.
+
+    What I need to do is disable AF_XDP stuff until this can run without the NIC going up/down.
+
+    The network driver is not happy. Here is the source for it: https://github.com/intel/ethernet-linux-ixgbe
+
+    I can also look at the kernel messages via:
+
+        sudo dmesg -w
+
+    The ixgbe driver advises I can get more messages by doing this:
+
+    	dmesg -n 8
+
+    Can look at the configuration of the ixgbe driver via:
+
+        sudo ethtool -g enp8s0f0
+
+    From this we see that RX/TX maximums on the hardware are 512, but can be set up to 8k, which is promising. 
+
+    -------
+
+    Why are the num xdp queue set to 64, while the others are set to 8 via ethtool?
+
+    -------
+
+    What does irqbalance do? Do I need to do anything beyond installing it?
+
+    Seems like it's automatic.
+
+    "Manual configuration: If you are manually assigning IRQs to specific CPUs for a performance tuning reason, you should disable irqbalance to avoid interference."
+
+    So it's not something I should do if I want to assign IRQs to the specific 8 CPUs that I'm also doing the XDP stuff on, but if I'm not tuning at that level (yet), it might be a good idea.
+
+    Ultimately, it's probably not something I want, since the idea is to basically say, OK this many cores are doing network work, this many cores are doing game sim work...
+
+
+    -------

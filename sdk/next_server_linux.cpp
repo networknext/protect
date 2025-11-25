@@ -36,6 +36,7 @@
 #include <stdio.h>
 #include <atomic>
 
+// todo: want to be able to dynamically adjust to # of queues on the NIC
 #define NUM_SERVER_XDP_SOCKETS 8
 
 struct next_server_xdp_send_buffer_t
