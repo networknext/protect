@@ -12,6 +12,12 @@ DONE
 
     Fixed disconnect packet not getting through by changing to packet_bytes >= 18
 
-TODO
-
     Server is not resetting the send sequence number for a client when it times out.
+
+TODO
+    
+    Implement the map setting the public address and port, and only pass packets down to the server AF_XDP socket if they match.
+
+    ---------
+
+    Update hulk with https://github.com/networknext/ethernet-linux-ixgbe
