@@ -1,5 +1,24 @@
 AF_XDP
 
+	--------
+
+	It is suggested to do this, but I'm not 100% sure what it does:
+
+		echo 2 | sudo tee /sys/class/net/<interface>/napi_defer_hard_irqs
+		echo 200000 | sudo tee /sys/class/net/<interface>/gro_flush_timeout
+
+	--------
+
+	Things that I can try:
+
+		1. Try disabling zero copy mode. If it works after zero copy mode is disabled, it's probably a driver problem.
+
+		2. Try building the i40e driver from source and installing that
+
+		3. Try adjusting the size of the umem and the ring buffers in AF_XDP and look up the ideal values I should be setting them to for this card and driver
+
+	--------
+
 	Consider disabling hyperthreading
 
 	To see current status:
@@ -9,7 +28,6 @@ AF_XDP
 	To turn hyperthreading off:
 
 		echo off > /sys/devices/system/cpu/smt/control
-
 
 	--------
 
