@@ -373,11 +373,12 @@ SEC("server_xdp") int server_xdp_filter( struct xdp_md *ctx )
                         return XDP_PASS;
                     }
 
-                    // todo: config later
-                    /*
-                    if ( ip->daddr == config->public_address && udp->dest == config->port )
-                    */
-                    if ( bpf_htons( udp->dest ) > 1000 )        // hack to just get packets sent down to AF_XDP socket
+                    // todo: hard coded for now
+
+                    const __u32 server_address = 0x97954345;
+                    const __u16 server_port = 16540;
+
+                    if ( ip->daddr == server_address && udp->dest == server_port )
                     {
                         __u8 * packet_data = (unsigned char*) (void*)udp + sizeof(struct udphdr);
 
