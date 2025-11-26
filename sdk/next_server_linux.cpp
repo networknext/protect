@@ -455,12 +455,22 @@ next_server_t * next_server_create( void * context, const char * bind_address_st
 
     // look up the gateway ethernet address for the network interface
 
+    // todo
+    /*
     if ( !get_gateway_mac_address( interface_name, server->gateway_ethernet_address ) )
     {
         next_error( "server could not get gateway mac address" );
         next_server_destroy( server );
         return NULL;
     }
+    */
+
+    server->gateway_ethernet_address[0] = 0xd0;
+    server->gateway_ethernet_address[1] = 0x81;
+    server->gateway_ethernet_address[2] = 0x7a;
+    server->gateway_ethernet_address[3] = 0xd8;
+    server->gateway_ethernet_address[4] = 0x3a;
+    server->gateway_ethernet_address[5] = 0xec;
 
     next_info( "gateway ethernet address is %02x.%02x.%02x.%02x.%02x.%02x", 
         server->gateway_ethernet_address[0], 
