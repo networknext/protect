@@ -53,6 +53,9 @@ int main()
         {
             if ( next_server_client_connected( server, i ) )
             {
+                // todo
+                next_info( "send packets to client %d", i );
+
                 for ( int j = 0; j < 20; j++ )
                 {
                     uint64_t sequence;
