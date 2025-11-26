@@ -229,7 +229,7 @@ uint16_t next_platform_htons( uint16_t in )
     return (uint16_t)( ( ( in << 8 ) & 0xFF00 ) | ( ( in >> 8 ) & 0x00FF ) );
 }
 
-int next_platform_inet_pton4( const char * address_string, uint32_t * address_out )
+bool next_platform_inet_pton4( const char * address_string, uint32_t * address_out )
 {
     sockaddr_in sockaddr4;
     bool success = inet_pton( AF_INET, address_string, &sockaddr4.sin_addr ) == 1;
@@ -237,12 +237,12 @@ int next_platform_inet_pton4( const char * address_string, uint32_t * address_ou
     return success;
 }
 
-int next_platform_inet_pton6( const char * address_string, uint16_t * address_out )
+bool next_platform_inet_pton6( const char * address_string, uint16_t * address_out )
 {
     return inet_pton( AF_INET6, address_string, address_out ) == 1;
 }
 
-int next_platform_inet_ntop6( const uint16_t * address, char * address_string, size_t address_string_size )
+bool next_platform_inet_ntop6( const uint16_t * address, char * address_string, size_t address_string_size )
 {
     return inet_ntop( AF_INET6, (void*)address, address_string, address_string_size ) != NULL;
 }
