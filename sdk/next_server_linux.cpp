@@ -36,6 +36,8 @@
 #include <stdio.h>
 #include <atomic>
 
+#define MOCK_1000_CLIENTS 1
+
 #define NUM_SERVER_XDP_SOCKETS 8
 
 struct next_server_xdp_send_buffer_t
@@ -811,6 +813,28 @@ next_server_t * next_server_create( void * context, const char * bind_address_st
         }
     }
 
+    // mock 1000 clients
+
+#if MOCK_1000_CLIENT
+
+    for ( int i = 0; i < 1000; i++ )
+    {
+        server->client_connected[i] = true;
+        server->client_direct[i] = true;
+        next_address_parse( &server->client_address[i], "192.168.1.3" );
+        server->client_address[i].port = 30000 + i;
+        server->client_address_big_endian[i] = next_address_ipv4( &server->client_address[i] );
+        server->client_port_big_endian[i] = next_platform_htons( server->client_address[i].port );
+        server->client_eth[i][0] = 0xd0;
+        server->client_eth[i][1] = 0x81;
+        server->client_eth[i][2] = 0x7a;
+        server->client_eth[i][3] = 0xd8;
+        server->client_eth[i][4] = 0x3a;
+        server->client_eth[i][5] = 0xec;
+    }
+
+#endif // #if MOCK_1000_CLIENTS
+
     // the server has started successfully
 
     char address_string[NEXT_MAX_ADDRESS_STRING_LENGTH];
@@ -935,6 +959,8 @@ void next_server_update_timeout( next_server_t * server )
 {
     double current_time = next_platform_time();
 
+#if !MOCK_1000_CLIENTS
+
     for ( int i = 0; i < NEXT_MAX_CLIENTS; i++ )
     {
         if ( server->client_connected[i] )
@@ -952,6 +978,8 @@ void next_server_update_timeout( next_server_t * server )
             }
         }
     }
+
+#endif // #if MOCK_1000_CLIENTS
 }
 
 void next_server_update( next_server_t * server )
