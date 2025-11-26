@@ -1478,8 +1478,7 @@ static void xdp_send_thread_function( void * data )
 
             // setup descriptors for packets in batch to be sent
 
-            // todo
-            // next_info( "sent batch of %d packets on queue %d", batch_packets, socket->queue );
+            next_info( "sent batch of %d packets on queue %d", batch_packets, socket->queue );
 
             for ( int i = 0; i < batch_packets; i++ )
             {
