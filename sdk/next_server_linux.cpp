@@ -1293,8 +1293,6 @@ void next_server_send_packets( struct next_server_t * server )
 
         while ( true )
         {
-            next_platform_mutex_acquire( &socket->send_mutex );
-
             next_server_xdp_send_buffer_t * send_buffer = &socket->send_buffer[socket->send_buffer_on_index];
 
             // IMPORTANT: We have to clamp this because of atomic increment
