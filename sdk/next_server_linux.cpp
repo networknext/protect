@@ -1383,8 +1383,6 @@ void next_server_send_packets( struct next_server_t * server )
 
         for ( int i = 0; i < batch_packets; i++ )
         {
-            const int packet_index = send_packet_index[i];
-
             struct xdp_desc * desc = xsk_ring_prod__tx_desc( &socket->send_queue, send_queue_index + i );
 
             int frame = alloc_send_frame( socket );
@@ -1397,12 +1395,12 @@ void next_server_send_packets( struct next_server_t * server )
 
             uint8_t * packet_data = (uint8_t*)socket->buffer + frame;
 
-            const int payload_bytes = send_buffer->packet_bytes[packet_index];
+            const int payload_bytes = send_buffer->packet_bytes[i];
 
-            memcpy( packet_data + sizeof(struct ethhdr) + sizeof(struct iphdr) + sizeof(struct udphdr), send_buffer->packet_data + packet_index * NEXT_MAX_PACKET_BYTES, payload_bytes );
+            memcpy( packet_data + sizeof(struct ethhdr) + sizeof(struct iphdr) + sizeof(struct udphdr), send_buffer->packet_data + i * NEXT_MAX_PACKET_BYTES, payload_bytes );
 
-            uint32_t to_address_big_endian = next_address_ipv4( &send_buffer->to[packet_index] );
-            uint16_t to_port_big_endian = next_platform_htons( send_buffer->to[packet_index].port );
+            uint32_t to_address_big_endian = next_address_ipv4( &send_buffer->to[i] );
+            uint16_t to_port_big_endian = next_platform_htons( send_buffer->to[i].port );
 
             int packet_bytes = generate_packet_header( packet_data, socket->server_ethernet_address, socket->gateway_ethernet_address, socket->server_address_big_endian, to_address_big_endian, socket->server_port_big_endian, to_port_big_endian, payload_bytes );
 
