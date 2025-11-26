@@ -242,7 +242,7 @@ static bool get_gateway_mac_address( const char * interface_name, uint8_t * mac_
     char ip_buffer[1024];
     while ( fgets( ip_buffer, sizeof(ip_buffer), file ) != NULL )
     {
-        if ( strlen( ip_buffer ) > 0 && strstr( ip_buffer, gateway_ip_string ) && strstr( ip_buffer, interface_name ) && strstr( ip_buffer, "REACHABLE" ) )
+        if ( strlen( ip_buffer ) > 0 && strstr( ip_buffer, gateway_ip_string ) && strstr( ip_buffer, interface_name ) )
         {
             char * p = strstr( ip_buffer, " lladdr " );
             if ( p )
