@@ -1280,8 +1280,6 @@ void next_server_send_packets( struct next_server_t * server )
 
         // todo: try XDP in main thread
 
-#if 0
-
         if ( xsk_ring_prod__needs_wakeup( &socket->send_queue ) )
         {
             sendto( xsk_socket__fd( socket->xsk ), NULL, 0, MSG_DONTWAIT, NULL, 0 );
@@ -1293,19 +1291,24 @@ void next_server_send_packets( struct next_server_t * server )
 
         unsigned int num_completed = xsk_ring_cons__peek( &socket->complete_queue, XSK_RING_CONS__DEFAULT_NUM_DESCS, &complete_index );
 
-        if ( num_completed == 0 )
-            break;
-
-        // todo
-        next_info( "marked %d send frames completed on queue %d", num_completed, socket->queue );
-
-        for ( int i = 0; i < num_completed; i++ )
+        if ( num_completed != 0 )
         {
-            uint64_t frame = *xsk_ring_cons__comp_addr( &socket->complete_queue, complete_index + i );
-            free_send_frame( socket, frame );
+            // todo
+            next_info( "marked %d send frames completed on queue %d", num_completed, socket->queue );
+
+            for ( int i = 0; i < num_completed; i++ )
+            {
+                uint64_t frame = *xsk_ring_cons__comp_addr( &socket->complete_queue, complete_index + i );
+                free_send_frame( socket, frame );
+            }
+
+            xsk_ring_cons__release( &socket->complete_queue, num_completed );
         }
 
-        xsk_ring_cons__release( &socket->complete_queue, num_completed );
+#if 0
+
+
+
 
         while ( true )
         {
