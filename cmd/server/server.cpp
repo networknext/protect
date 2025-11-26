@@ -77,8 +77,6 @@ int main()
             {
                 for ( int j = 0; j < 1; j++ )
                 {
-                    next_info( "sending packet to client %d", i );
-
                     uint64_t sequence;
                     uint8_t * packet_data = next_server_start_packet( server, i, &sequence );
                     if ( packet_data )
