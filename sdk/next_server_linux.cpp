@@ -36,7 +36,7 @@
 #include <stdio.h>
 #include <atomic>
 
-#define MOCK_1000_CLIENTS 1
+//#define MOCK_1000_CLIENTS 1
 
 #define NUM_SERVER_XDP_SOCKETS 8
 
@@ -826,12 +826,12 @@ next_server_t * next_server_create( void * context, const char * bind_address_st
         server->client_address_big_endian[i] = next_address_ipv4( &server->client_address[i] );
         server->client_port_big_endian[i] = next_platform_htons( server->client_address[i].port );
 
-        server->client_eth[client_index][0] = 0xd0;
-        server->client_eth[client_index][1] = 0x81;
-        server->client_eth[client_index][2] = 0x7a;
-        server->client_eth[client_index][3] = 0xd8;
-        server->client_eth[client_index][4] = 0x3a;
-        server->client_eth[client_index][5] = 0xec;
+        server->client_eth[i][0] = 0xd0;
+        server->client_eth[i][1] = 0x81;
+        server->client_eth[i][2] = 0x7a;
+        server->client_eth[i][3] = 0xd8;
+        server->client_eth[i][4] = 0x3a;
+        server->client_eth[i][5] = 0xec;
     }
 
 #endif // #if MOCK_1000_CLIENTS
