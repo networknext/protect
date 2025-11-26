@@ -1377,7 +1377,7 @@ static void xdp_send_thread_function( void * data )
             }
 
             // todo
-            // usleep(0);
+            usleep(0);
 
             // mark any completed send packet frames as free to be reused
 
@@ -1389,7 +1389,7 @@ static void xdp_send_thread_function( void * data )
                 break;
 
             // todo
-            // next_info( "marked %d send frames completed on queue %d", num_completed, socket->queue );
+            next_info( "marked %d send frames completed on queue %d", num_completed, socket->queue );
 
             for ( int i = 0; i < num_completed; i++ )
             {
