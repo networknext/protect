@@ -17,11 +17,11 @@
 #ifdef __linux__
 
 #define NEXT_XDP_NUM_FRAMES                                         65536
-#define NEXT_XDP_FRAME_SIZE                                          ( 2048 * 4 )
-#define NEXT_XDP_SEND_QUEUE_SIZE                                     ( 4096 * 4 )
-#define NEXT_XDP_RECV_QUEUE_SIZE                                     ( 4096 * 4 )
+#define NEXT_XDP_FRAME_SIZE                                          ( 2048 * 8 )
+#define NEXT_XDP_SEND_QUEUE_SIZE                                     ( 4096 * 8 )
+#define NEXT_XDP_RECV_QUEUE_SIZE                                     ( 4096 * 8 )
 #define NEXT_XDP_FILL_QUEUE_SIZE                                     2048
-#define NEXT_XDP_SEND_BATCH_SIZE                                     ( 4096 * 4 )
+#define NEXT_XDP_SEND_BATCH_SIZE                                     ( 4096 * 8 )
 
 #else // #ifdef __linux__
 
