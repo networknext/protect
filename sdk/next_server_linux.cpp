@@ -1404,6 +1404,9 @@ void next_server_send_packets( struct next_server_t * server )
                 sendto( xsk_socket__fd( socket->xsk ), NULL, 0, MSG_DONTWAIT, NULL, 0 );
             }
 
+            // todo
+            break;
+            /*
             // go to next iteration or stop if there are no more packets to send
 
             send_buffer->packet_start_index = send_packet_index[batch_packets-1] + 1;
@@ -1412,6 +1415,7 @@ void next_server_send_packets( struct next_server_t * server )
 
             if ( stop )
                 break;
+            */
         }
 
 // ====================================================================================================
