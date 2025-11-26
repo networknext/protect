@@ -1364,7 +1364,7 @@ static void xdp_send_thread_function( void * data )
 {
     next_server_xdp_socket_t * socket = (next_server_xdp_socket_t*) data;
 
-    pin_thread_to_cpu( socket->queue );
+    // pin_thread_to_cpu( socket->queue );
 
     struct pollfd fds[1];
     fds[0].fd = socket->send_event_fd;
