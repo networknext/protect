@@ -16,6 +16,8 @@ DONE
 
     Update hulk with https://github.com/networknext/ethernet-linux-ixgbe
 
+    Lock in gateway eth address approach for sending out packets
+
 TODO
     
     Implement env vars read by the server, where you can specify the public address and port so we can stop hard coding this.
