@@ -826,7 +826,6 @@ next_server_t * next_server_create( void * context, const char * bind_address_st
     char address_string[NEXT_MAX_ADDRESS_STRING_LENGTH];
     next_info( "server started on %s [xdp]", next_address_to_string( &public_address, address_string ) );
 
-    server->bind_address = bind_address;
     server->public_address = public_address;
     server->state = NEXT_SERVER_RUNNING;
     server->server_id = next_hash_string( public_address_string );
