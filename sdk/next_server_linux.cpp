@@ -1128,7 +1128,11 @@ uint8_t * next_server_start_packet( struct next_server_t * server, int client_in
     next_assert( out_sequence );
 
     if ( !server->client_connected[client_index] )
+    {
+        // todo
+        next_info( "client not connected" );
         return NULL;
+    }
 
     uint64_t sequence = server->client_send_sequence[client_index].fetch_add(1);
 
@@ -1140,7 +1144,11 @@ uint8_t * next_server_start_packet( struct next_server_t * server, int client_in
 
         uint8_t * packet_data = next_server_start_packet_internal( server, queue, &server->client_address[client_index], NEXT_PACKET_DIRECT );
         if ( !packet_data )
+        {
+            // todo
+            next_info( "start packet internal null" );
             return NULL;
+        }
 
         uint64_t endian_sequence = sequence;
         next_endian_fix( &endian_sequence );
