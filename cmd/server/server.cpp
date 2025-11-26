@@ -75,7 +75,7 @@ int main()
         {
             if ( next_server_client_connected( server, i ) )
             {
-                for ( int j = 0; j < 1; j++ )
+                for ( int j = 0; j < 10; j++ )
                 {
                     uint64_t sequence;
                     uint8_t * packet_data = next_server_start_packet( server, i, &sequence );
