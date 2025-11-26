@@ -1305,6 +1305,17 @@ void next_server_send_packets( struct next_server_t * server )
             xsk_ring_cons__release( &socket->complete_queue, num_completed );
         }
 
+        next_server_xdp_send_buffer_t * send_buffer = &socket->send_buffer[socket->send_buffer_on_index];
+
+        // IMPORTANT: We have to clamp this because of atomic increment
+        if ( send_buffer->num_packets > NEXT_XDP_SEND_QUEUE_SIZE )
+        {
+            send_buffer->num_packets = NEXT_XDP_SEND_QUEUE_SIZE;
+        }
+
+        // todo
+        next_info( "want to send %d packets on queue %d", send_buffer->num_packets, socket->queue );
+
 #if 0
 
 
@@ -1312,13 +1323,6 @@ void next_server_send_packets( struct next_server_t * server )
 
         while ( true )
         {
-            next_server_xdp_send_buffer_t * send_buffer = &socket->send_buffer[socket->send_buffer_on_index];
-
-            // IMPORTANT: We have to clamp this because of atomic increment
-            if ( send_buffer->num_packets > NEXT_XDP_SEND_QUEUE_SIZE )
-            {
-                send_buffer->num_packets = NEXT_XDP_SEND_QUEUE_SIZE;
-            }
 
             // count how many packets we have to send in the send buffer
 
