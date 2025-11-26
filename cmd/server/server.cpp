@@ -47,6 +47,7 @@ int main()
         const char * public_address_env = getenv( "SERVER_PUBLIC_ADDRESS" );
         if ( public_address_env )
         {
+            next_info( "public address override: '%s'", public_address_env );
             public_address = public_address_env;
         }
     }
