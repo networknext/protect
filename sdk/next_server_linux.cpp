@@ -1376,9 +1376,6 @@ static void xdp_send_thread_function( void * data )
                 sendto( xsk_socket__fd( socket->xsk ), NULL, 0, MSG_DONTWAIT, NULL, 0 );
             }
 
-            // todo
-            usleep(0);
-
             // mark any completed send packet frames as free to be reused
 
             uint32_t complete_index;
