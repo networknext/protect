@@ -14,10 +14,38 @@ DONE
 
     Server is not resetting the send sequence number for a client when it times out.
 
+    Update hulk with https://github.com/networknext/ethernet-linux-ixgbe
+
 TODO
     
-    Implement the map setting the public address and port, and only pass packets down to the server AF_XDP socket if they match.
+    Implement env vars read by the server, where you can specify the public address and port so we can stop hard coding this.
+
+    Default should still remain 127.0.0.1:40000 for local testing, but the env var will override this so the service is configurable.
 
     ---------
 
-    Update hulk with https://github.com/networknext/ethernet-linux-ixgbe
+    Implement the map setting the public address and port, and only pass packets down to the server AF_XDP socket if they match.
+    
+    ---------
+
+    Add an env var for the number of queues and then dynamically allocate these # of queues on the next server.
+
+    This way we can adjust from one machine type to another. Right now the number of queues is hard coded and this is very inflexible.
+
+    ---------
+
+    Setup space1 server so it sends 10gbps of traffic to space2 server and see how much CPU it takes on the send side.
+
+    ---------
+
+    Debug why I'm not seeing packets sent on ixgbe driver, but it's working fine on i40e driver.
+
+    ---------
+
+    Need to work out how to reserve CPUs cores for AF_XDP so they are available for packet processing and not taking up by game code and physics.
+
+    ---------
+
+    Get started integrating the new network next sockets with space game.
+
+    ---------

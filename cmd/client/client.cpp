@@ -50,7 +50,8 @@ int main()
 
     // const char * connect = "127.0.0.1:40000";
     // const char * connect = "192.168.1.4:40000";       // hulk 10G
-    const char * connect = "69.67.149.151:40000";
+    const char * connect = "69.67.149.151:40000";        // space 1
+    // const char * connect = "64.34.88.117:40000";         // space 2
 
 #else // #if CLIENT_DIRECT
 
