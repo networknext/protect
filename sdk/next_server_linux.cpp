@@ -1362,7 +1362,7 @@ static void xdp_send_thread_function( void * data )
 
     while ( true )
     {
-        int poll_result = poll( fds, 1, 0 );
+        int poll_result = poll( fds, 1, 1 );
         if ( poll_result < 0 ) 
         {
             next_error( "poll error on socket send queue %d (%d)", socket->queue, poll_result );
