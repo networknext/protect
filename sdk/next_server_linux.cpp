@@ -1348,46 +1348,35 @@ void next_server_send_packets( struct next_server_t * server )
             continue;
         }
 
-#if 0
+        // reserve entries in the send queue. we *must* send all entries we reserve
 
+        uint32_t send_queue_index;
+        int batch_packets = xsk_ring_prod__reserve( &socket->send_queue, num_packets_to_send, &send_queue_index );
 
+        next_info( "reserved %d entries in send queue %d", batch_packets, socket->queue );
 
+        // it's possible to reserve fewer entries in the send queue than requested. when this happens wind back the packet start index for sending packets
 
-        while ( true )
+        if ( batch_packets < num_packets_to_send )
         {
-
-
-            if ( num_packets_to_send == 0 )
+            // todo
+            if ( batch_packets == 0 )
             {
-                break;
+                next_warn( "send queue %d is full", socket->queue );
+            }
+            else
+            {
+                next_warn( "could only reserve %d/%d packets in send queue %d", batch_packets, num_packets_to_send, socket->queue );
             }
 
-            // reserve entries in the send queue. we *must* send all entries we reserve
-
-            uint32_t send_queue_index;
-            int batch_packets = xsk_ring_prod__reserve( &socket->send_queue, num_packets_to_send, &send_queue_index );
-
-            // it's possible to reserve fewer entries in the send queue than requested. when this happens wind back the packet start index for sending packets
-
-            if ( batch_packets < num_packets_to_send )
+            send_buffer->packet_start_index = send_packet_index[batch_packets];
+            if ( batch_packets == 0 )
             {
-                // todo
-                if ( batch_packets == 0 )
-                {
-                    next_warn( "send queue %d is full", socket->queue );
-                }
-                else
-                {
-                    next_warn( "could only reserve %d/%d packets in send queue %d", batch_packets, num_packets_to_send, socket->queue );
-                }
-
-                send_buffer->packet_start_index = send_packet_index[batch_packets];
-                if ( batch_packets == 0 )
-                {
-                    break;
-                }
+                continue;
             }
+        }
 
+#if 0
             // setup descriptors for packets in batch to be sent
 
             next_info( "sent batch of %d packets on queue %d", batch_packets, socket->queue );
