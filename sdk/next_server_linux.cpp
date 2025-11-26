@@ -1287,12 +1287,15 @@ void next_server_send_packets( struct next_server_t * server )
 
         // mark any completed send packet frames as free to be reused
 
-        uint32_t complete_index;
-
-        unsigned int num_completed = xsk_ring_cons__peek( &socket->complete_queue, XSK_RING_CONS__DEFAULT_NUM_DESCS, &complete_index );
-
-        if ( num_completed != 0 )
+        while ( true )
         {
+            uint32_t complete_index;
+
+            unsigned int num_completed = xsk_ring_cons__peek( &socket->complete_queue, XSK_RING_CONS__DEFAULT_NUM_DESCS, &complete_index );
+
+            if ( num_completed == 0 )
+                break;
+
             // todo
             next_info( "marked %d send frames completed on queue %d", num_completed, socket->queue );
 
