@@ -317,7 +317,7 @@ int main()
 
     // force the NIC to use the number of NIC queues we want
 
-    sender.num_queues = 8;
+    sender.num_queues = 1;
     {
         next_info( "initializing %d queues", sender.num_queues );
 
