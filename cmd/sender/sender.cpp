@@ -27,6 +27,7 @@
 #include <memory.h>
 #include <stdio.h>
 #include <atomic>
+#include <signal>
 
 static volatile int quit;
 
