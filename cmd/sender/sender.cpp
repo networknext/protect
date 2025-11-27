@@ -522,6 +522,33 @@ int main()
         socket->sender_port_big_endian = sender.sender_port_big_endian;
     }
 
+    // setup send threads
+
+    for ( int queue = 0; queue < num_queues; queue++ )
+    {
+        next_xdp_socket_t * socket = &sender.socket[queue];
+
+        // initialize send frame allocator
+
+        for ( int i = 0; i < NEXT_XDP_NUM_FRAMES; i++ )
+        {
+            sender.send_frames[i] = i * NEXT_XDP_FRAME_SIZE;
+        }
+
+        socket->num_free_send_frames = NEXT_XDP_NUM_FRAMES;
+
+        // start send thread for queue
+
+        next_info( "starting send thread for socket queue %d", socket->queue );
+
+        socket->send_thread = next_platform_thread_create( NULL, xdp_send_thread_function, socket );
+        if ( !socket->send_thread )
+        {
+            next_error( "server could not create send thread %d", queue );
+            return 1;
+        }
+    }
+
     // ----------------------------------------------------------------------------------
 
     while ( !quit )
