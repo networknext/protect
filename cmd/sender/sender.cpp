@@ -32,7 +32,11 @@
 
 // todo: we do need to run this on start: sudo xdp-loader unload -a
 
-uint32_t destination_address_big_endian = 0x40 | ( 0x22 << 8 ) | ( 0x58 << 16 ) | ( 0x75 << 24 );
+const char * source_address_string = "192.168.1.4:40000"; // "69.67.149.151:40000";
+
+uint32_t destination_address_big_endian = 0xC0 | ( 0xA8 << 8 ) | ( 0x01 << 16 ) | ( 0x03 << 24 ); // 192.168.1.3
+
+//space2: 0x40 | ( 0x22 << 8 ) | ( 0x58 << 16 ) | ( 0x75 << 24 );
 
 static volatile int quit;
 
@@ -41,10 +45,11 @@ void interrupt_handler( int signal )
     (void) signal; quit = 1;
 }
 
-#define NEXT_XDP_NUM_FRAMES                  8192
+#define NEXT_NUM_XDP_QUEUES                     2
+#define NEXT_XDP_NUM_FRAMES               ( 8192 * 2 )
 #define NEXT_XDP_FRAME_SIZE                  2048
-#define NEXT_XDP_SEND_QUEUE_SIZE             4096
-#define NEXT_XDP_SEND_BATCH_SIZE              256
+#define NEXT_XDP_SEND_QUEUE_SIZE            ( 4096 * 2 )
+#define NEXT_XDP_SEND_BATCH_SIZE               64
 
 struct next_xdp_socket_t
 {
@@ -318,20 +323,28 @@ int main()
         return 1;        
     }
 
-    // find the network interface that matches the address
-
-    const char * address_string = "69.67.149.151:40000";
-
-    next_info( "address is %s", address_string );
-
-    next_address_t address;
-    if ( !next_address_parse( &address, address_string ) )
+    // disable hyperthreading
     {
-        next_error( "could not parse address" );
+        char command[2048];
+        snprintf( command, sizeof(command), "echo off > /sys/devices/system/cpu/smt/control" );
+        FILE * file = popen( command, "r" );
+        char buffer[1024];
+        while ( fgets( buffer, sizeof(buffer), file ) != NULL ) {}
+        pclose( file );
+    }
+
+    // find the network interface that matches the source address
+
+    next_info( "source address is %s", source_address_string );
+
+    next_address_t source_address;
+    if ( !next_address_parse( &source_address, source_address_string ) )
+    {
+        next_error( "could not parse source address" );
         return 1;
     }
 
-    uint32_t address_ipv4 = next_address_ipv4( &address );
+    uint32_t source_address_ipv4 = next_address_ipv4( &source_address );
 
     char interface_name[1024];
     memset( interface_name, 0, sizeof(interface_name) );
@@ -350,7 +363,7 @@ int main()
             if ( iap->ifa_addr && ( iap->ifa_flags & IFF_UP ) && iap->ifa_addr->sa_family == AF_INET )
             {
                 struct sockaddr_in * sa = (struct sockaddr_in*) iap->ifa_addr;
-                if ( sa->sin_addr.s_addr == address_ipv4 )
+                if ( sa->sin_addr.s_addr == source_address_ipv4 )
                 {
                     strncpy( interface_name, iap->ifa_name, sizeof(interface_name) );
                     next_info( "found network interface: %s", interface_name );
@@ -379,7 +392,7 @@ int main()
 
     // force the NIC to use the number of NIC queues we want
 
-    sender.num_queues = 8;
+    sender.num_queues = NEXT_NUM_XDP_QUEUES;
     {
         next_info( "initializing %d queues", sender.num_queues );
 
@@ -410,21 +423,21 @@ int main()
 
     // look up the gateway ethernet address for the network interface
 
+    /*
     if ( !get_gateway_mac_address( interface_name, sender.gateway_ethernet_address ) )
     {
         next_error( "could not get gateway mac address" );
         return 1;
     }
+    */
 
     // hulk
-    /*
     sender.gateway_ethernet_address[0] = 0xd0;
     sender.gateway_ethernet_address[1] = 0x81;
     sender.gateway_ethernet_address[2] = 0x7a;
     sender.gateway_ethernet_address[3] = 0xd8;
     sender.gateway_ethernet_address[4] = 0x3a;
     sender.gateway_ethernet_address[5] = 0xec;
-    */
 
     next_info( "gateway ethernet address is %02x.%02x.%02x.%02x.%02x.%02x", 
         sender.gateway_ethernet_address[0], 
@@ -514,8 +527,8 @@ int main()
 
     // save the public address and port in network order (big endian)
 
-    sender.sender_address_big_endian = address_ipv4;
-    sender.sender_port_big_endian = next_platform_htons( address.port );
+    sender.sender_address_big_endian = source_address_ipv4;
+    sender.sender_port_big_endian = next_platform_htons( source_address.port );
 
     // initialize xdp sockets (one socket per-NIC queue)
 
