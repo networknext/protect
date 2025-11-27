@@ -532,7 +532,7 @@ int main()
 
         for ( int i = 0; i < NEXT_XDP_NUM_FRAMES; i++ )
         {
-            sender.send_frames[i] = i * NEXT_XDP_FRAME_SIZE;
+            socket->send_frames[i] = i * NEXT_XDP_FRAME_SIZE;
         }
 
         socket->num_free_send_frames = NEXT_XDP_NUM_FRAMES;
