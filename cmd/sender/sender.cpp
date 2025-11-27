@@ -63,7 +63,6 @@ struct next_server_xdp_socket_t
     uint32_t server_address_big_endian;
     uint16_t server_port_big_endian;
     next_platform_thread_t * send_thread;
-    struct next_server_xdp_send_buffer_t send_buffer;
 
     uint8_t padding_3[1024];
 };
