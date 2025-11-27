@@ -70,6 +70,7 @@ struct next_server_xdp_socket_t
     uint8_t padding_0[1024];
 
     int queue;
+    int num_queues;
 
     uint8_t padding_1[1024];
 
@@ -635,6 +636,7 @@ next_server_t * next_server_create( void * context, const char * bind_address_st
         next_server_xdp_socket_t * socket = &server->socket[queue];
 
         socket->queue = queue;
+        socket->num_queues = num_queues;
 
         // allocate umem
 
@@ -1536,7 +1538,7 @@ static void xdp_receive_thread_function( void * data )
 {
     next_server_xdp_socket_t * socket = (next_server_xdp_socket_t*) data;
 
-    pin_thread_to_cpu( socket->queue );
+    pin_thread_to_cpu( socket->num_queues + socket->queue );
 
     struct pollfd fds[2];
     fds[0].fd = xsk_socket__fd( socket->xsk );
