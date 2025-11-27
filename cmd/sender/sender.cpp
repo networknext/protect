@@ -30,6 +30,8 @@
 #include <atomic>
 #include <signal.h>
 
+// todo: we do need to run this on start: sudo xdp-loader unload -a
+
 uint32_t destination_address_big_endian = 0x40 | ( 0x22 << 8 ) | ( 0x58 << 16 ) | ( 0x75 << 24 );
 
 static volatile int quit;
@@ -645,7 +647,7 @@ static void xdp_send_thread_function( void * data )
         unsigned int num_completed = xsk_ring_cons__peek( &socket->complete_queue, XSK_RING_CONS__DEFAULT_NUM_DESCS, &complete_index );
 
         if ( num_completed == 0 )
-            break;
+            continue;
 
         next_info( "marked %d send frames completed on queue %d", num_completed, socket->queue );
 
