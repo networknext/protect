@@ -479,7 +479,7 @@ int main()
             return 1;
         }
 
-        int result = xsk_umem__create( &socket->umem, socket->buffer, buffer_size, &socket->fill_queue, &socket->complete_queue, NULL );
+        int result = xsk_umem__create( &socket->umem, socket->buffer, buffer_size, NULL, &socket->complete_queue, NULL );
         if ( result ) 
         {
             next_error( "could not create umem" );
