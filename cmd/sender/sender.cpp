@@ -322,6 +322,16 @@ int main()
         return 1;        
     }
 
+    // disable hyperthreading
+    {
+        char command[2048];
+        snprintf( command, sizeof(command), "echo off > /sys/devices/system/cpu/smt/control" );
+        FILE * file = popen( command, "r" );
+        char buffer[1024];
+        while ( fgets( buffer, sizeof(buffer), file ) != NULL ) {}
+        pclose( file );
+    }
+
     // find the network interface that matches the source address
 
     next_info( "source address is %s", source_address_string );
@@ -525,7 +535,7 @@ int main()
     if ( sender.socket == NULL )
     {
         next_error( "could not allocate sockets" );
-        return 1;
+     q   return 1;
     }
 
     for ( int queue = 0; queue < sender.num_queues; queue++ )

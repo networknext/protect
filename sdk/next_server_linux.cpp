@@ -661,13 +661,13 @@ next_server_t * next_server_create( void * context, const char * bind_address_st
 
         memset( &xsk_config, 0, sizeof(xsk_config) );
 
-        xsk_config.rx_size = 4096;  // blah
+        xsk_config.rx_size = 0; // NEXT_XDP_RECV_QUEUE_SIZE;
         xsk_config.tx_size = NEXT_XDP_SEND_QUEUE_SIZE;
         xsk_config.xdp_flags = XDP_ZEROCOPY;     
         xsk_config.bind_flags = XDP_USE_NEED_WAKEUP;
         xsk_config.libbpf_flags = XSK_LIBBPF_FLAGS__INHIBIT_PROG_LOAD;
 
-        result = xsk_socket__create( &socket->xsk, interface_name, queue, socket->umem, &socket->receive_queue, &socket->send_queue, &xsk_config );
+        result = xsk_socket__create( &socket->xsk, interface_name, queue, socket->umem, NULL /*&socket->receive_queue*/, &socket->send_queue, &xsk_config );
         if ( result )
         {
             next_error( "server could not create xsk socket for queue %d", queue );
