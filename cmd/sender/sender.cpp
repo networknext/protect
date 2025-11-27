@@ -92,6 +92,7 @@ static void free_send_frame( next_server_xdp_socket_t * socket, uint64_t frame )
 struct sender_t
 {
     int interface_index;
+    int num_queues;
 };
 
 static sender_t sender;
@@ -172,6 +173,20 @@ int main()
     }
 
     next_info( "network interface is %s", interface_name );
+
+    // force the NIC to use the number of NIC queues we want
+
+    sender.num_queues = 8;
+    {
+        next_info( "initializing %d queues", sender.num_queues );
+
+        char command[2048];
+        snprintf( command, sizeof(command), "ethtool -L %s combined %d", interface_name, sender.num_queues );
+        FILE * file = popen( command, "r" );
+        char buffer[1024];
+        while ( fgets( buffer, sizeof(buffer), file ) != NULL ) {}
+        pclose( file );
+    }
 
     while ( !quit )
     {
