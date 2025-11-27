@@ -197,6 +197,62 @@ static bool get_gateway_mac_address( const char * interface_name, uint8_t * mac_
     return true;
 }
 
+static uint16_t ipv4_checksum( const void * data, size_t header_length )
+{
+    unsigned long sum = 0;
+    const uint16_t * p = (const uint16_t*) data;
+    while ( header_length > 1 )
+    {
+        sum += *p++;
+        if ( sum & 0x80000000 )
+        {
+            sum = ( sum & 0xFFFF ) + ( sum >> 16 );
+        }
+        header_length -= 2;
+    }
+    while ( sum >> 16 )
+    {
+        sum = (sum & 0xFFFF) + (sum >> 16);
+    }
+    return ~sum;
+}
+
+int generate_packet_header( void * data, uint8_t * server_ethernet_address, uint8_t * gateway_ethernet_address, uint32_t server_address_big_endian, uint32_t client_address_big_endian, uint16_t server_port_big_endian, uint16_t client_port_big_endian, int payload_bytes )
+{
+    struct ethhdr * eth = (ethhdr*) data;
+    struct iphdr  * ip  = (iphdr*) ( (uint8_t*)data + sizeof( struct ethhdr ) );
+    struct udphdr * udp = (udphdr*) ( (uint8_t*)ip + sizeof( struct iphdr ) );
+
+    // generate ethernet header
+
+    memcpy( eth->h_source, server_ethernet_address, ETH_ALEN );
+    memcpy( eth->h_dest, gateway_ethernet_address, ETH_ALEN );
+    eth->h_proto = __constant_htons( ETH_P_IP );
+
+    // generate ip header
+
+    ip->ihl      = 5;
+    ip->version  = 4;
+    ip->tos      = 0x0;
+    ip->id       = 0;
+    ip->frag_off = __constant_htons( 0x4000 );
+    ip->ttl      = 64;
+    ip->tot_len  = __constant_htons( sizeof(struct iphdr) + sizeof(struct udphdr) + payload_bytes );
+    ip->protocol = IPPROTO_UDP;
+    ip->saddr    = server_address_big_endian;
+    ip->daddr    = client_address_big_endian;
+    ip->check    = ipv4_checksum( ip, sizeof( struct iphdr ) );
+
+    // generate udp header
+
+    udp->source  = server_port_big_endian;
+    udp->dest    = client_port_big_endian;
+    udp->len     = __constant_htons( sizeof(struct udphdr) + payload_bytes );
+    udp->check   = 0;
+
+    return sizeof(struct ethhdr) + sizeof(struct iphdr) + sizeof(struct udphdr) + payload_bytes; 
+}
+
 #define INVALID_FRAME UINT64_MAX
 
 static uint64_t alloc_send_frame( next_xdp_socket_t * socket )
@@ -557,7 +613,7 @@ int main()
     {
         // ...
 
-        next_platform_sleep( 1.0 / 100.0 );
+        next_platform_sleep( 1.0 / 10.0 );
     }
 
     next_term();
@@ -567,52 +623,90 @@ int main()
 
 static void xdp_send_thread_function( void * data )
 {
+    next_xdp_socket_t * socket = (next_xdp_socket_t*) data;
+
+    pin_thread_to_cpu( socket->queue );
+
+    while ( !quit )
+    {
+        if ( xsk_ring_prod__needs_wakeup( &socket->send_queue ) )
+        {
+            sendto( xsk_socket__fd( socket->xsk ), NULL, 0, MSG_DONTWAIT, NULL, 0 );
+        }
+
+        // process completed send frames
+
+        uint32_t complete_index;
+
+        unsigned int num_completed = xsk_ring_cons__peek( &socket->complete_queue, XSK_RING_CONS__DEFAULT_NUM_DESCS, &complete_index );
+
+        if ( num_completed == 0 )
+            break;
+
+        next_info( "marked %d send frames completed on queue %d", num_completed, socket->queue );
+
+        for ( int i = 0; i < num_completed; i++ )
+        {
+            uint64_t frame = *xsk_ring_cons__comp_addr( &socket->complete_queue, complete_index + i );
+            free_send_frame( socket, frame );
+        }
+
+        xsk_ring_cons__release( &socket->complete_queue, num_completed );
+
+        // reserve entries in the send queue. we *must* send all entries we reserve
+
+        uint32_t send_queue_index;
+        
+        int num_packets = xsk_ring_prod__reserve( &socket->send_queue, NEXT_XDP_SEND_BATCH_SIZE, &send_queue_index );
+
+        for ( int i = 0; i < num_packets; i++ )
+        {
+            struct xdp_desc * desc = xsk_ring_prod__tx_desc( &socket->send_queue, send_queue_index + i );
+
+            int frame = alloc_send_frame( socket );
+            next_assert( frame != INVALID_FRAME );
+            if ( frame == INVALID_FRAME )
+            {
+                next_error( "fatal error. this cannot happen unless you have too few frames. please adjust NEXT_XDP_NUM_FRAMES to the next highest power of two!" );
+                exit(1);
+            }
+
+            uint8_t * packet_data = (uint8_t*)socket->buffer + frame;
+
+            const int payload_bytes = 1200;
+
+            uint32_t to_address_big_endian = next_address_ipv4( &send_buffer->to[packet_index] );
+            uint16_t to_port_big_endian = next_platform_htons( send_buffer->to[packet_index].port );
+
+            int packet_bytes = generate_packet_header( packet_data, socket->server_ethernet_address, socket->gateway_ethernet_address, socket->server_address_big_endian, to_address_big_endian, socket->server_port_big_endian, to_port_big_endian, payload_bytes );
+
+            desc->addr = frame;
+            desc->len = packet_bytes;
+        }
+    }
+
+
 #if 0
 
-    next_server_xdp_socket_t * socket = (next_server_xdp_socket_t*) data;
+        // mark any completed send packet frames as free to be reused
 
-    // pin_thread_to_cpu( socket->queue );
+        uint32_t complete_index;
 
-    struct pollfd fds[1];
-    fds[0].fd = socket->send_event_fd;
-    fds[0].events = POLLIN;
+        unsigned int num_completed = xsk_ring_cons__peek( &socket->complete_queue, XSK_RING_CONS__DEFAULT_NUM_DESCS, &complete_index );
 
-    while ( true )
-    {
-        int poll_result = poll( fds, 1, 0 );
-        if ( poll_result < 0 ) 
-        {
-            next_error( "poll error on socket send queue %d (%d)", socket->queue, poll_result );
+        if ( num_completed == 0 )
             break;
-        }
 
-        while ( true )
+        // todo
+        // next_info( "marked %d send frames completed on queue %d", num_completed, socket->queue );
+
+        for ( int i = 0; i < num_completed; i++ )
         {
-            if ( xsk_ring_prod__needs_wakeup( &socket->send_queue ) )
-            {
-                sendto( xsk_socket__fd( socket->xsk ), NULL, 0, MSG_DONTWAIT, NULL, 0 );
-            }
-
-            // mark any completed send packet frames as free to be reused
-
-            uint32_t complete_index;
-
-            unsigned int num_completed = xsk_ring_cons__peek( &socket->complete_queue, XSK_RING_CONS__DEFAULT_NUM_DESCS, &complete_index );
-
-            if ( num_completed == 0 )
-                break;
-
-            // todo
-            // next_info( "marked %d send frames completed on queue %d", num_completed, socket->queue );
-
-            for ( int i = 0; i < num_completed; i++ )
-            {
-                uint64_t frame = *xsk_ring_cons__comp_addr( &socket->complete_queue, complete_index + i );
-                free_send_frame( socket, frame );
-            }
-
-            xsk_ring_cons__release( &socket->complete_queue, num_completed );
+            uint64_t frame = *xsk_ring_cons__comp_addr( &socket->complete_queue, complete_index + i );
+            free_send_frame( socket, frame );
         }
+
+        xsk_ring_cons__release( &socket->complete_queue, num_completed );
 
         uint64_t value;
         ssize_t bytes_read = read( socket->send_event_fd, &value, sizeof(uint64_t) );
