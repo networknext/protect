@@ -625,9 +625,26 @@ int main()
     return 0;
 }
 
+static void pin_thread_to_cpu( int cpu ) 
+{
+    int num_cpus = sysconf( _SC_NPROCESSORS_ONLN );
+    next_assert( cpu >= 0 );
+    next_assert( cpu < num_cpus );
+
+    cpu_set_t cpuset;
+    CPU_ZERO( &cpuset );
+    CPU_SET( cpu, &cpuset );
+
+    pthread_t current_thread = pthread_self();    
+
+    pthread_setaffinity_np( current_thread, sizeof(cpu_set_t), &cpuset );
+}
+
 static void xdp_send_thread_function( void * data )
 {
     next_xdp_socket_t * socket = (next_xdp_socket_t*) data;
+
+    pin_thread_to_cpu( socket->queue );
 
     uint64_t sequence = 0;
 
