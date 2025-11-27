@@ -18,7 +18,7 @@ struct next_server_t;
 #define NEXT_SERVER_RUNNING    1
 #define NEXT_SERVER_STOPPING   2
 
-struct next_server_t * next_server_create( void * context, const char * bind_address, const char * public_address, int num_queues = 8 );
+struct next_server_t * next_server_create( void * context, const char * bind_address, const char * public_address, int num_queues = 2 );
 
 void next_server_destroy( struct next_server_t * server );
 

@@ -36,7 +36,7 @@
 #include <stdio.h>
 #include <atomic>
 
-#define MOCK_1000_CLIENTS 1
+//#define MOCK_1000_CLIENTS 1
 
 struct next_server_xdp_send_buffer_t
 {
@@ -455,22 +455,22 @@ next_server_t * next_server_create( void * context, const char * bind_address_st
 
     // look up the gateway ethernet address for the network interface
 
-    // todo
-    /*
     if ( !get_gateway_mac_address( interface_name, server->gateway_ethernet_address ) )
     {
         next_error( "server could not get gateway mac address" );
         next_server_destroy( server );
         return NULL;
     }
-    */
 
+    // hulk -> batman
+    /*
     server->gateway_ethernet_address[0] = 0xd0;
     server->gateway_ethernet_address[1] = 0x81;
     server->gateway_ethernet_address[2] = 0x7a;
     server->gateway_ethernet_address[3] = 0xd8;
     server->gateway_ethernet_address[4] = 0x3a;
     server->gateway_ethernet_address[5] = 0xec;
+    */
 
     next_info( "gateway ethernet address is %02x.%02x.%02x.%02x.%02x.%02x", 
         server->gateway_ethernet_address[0], 
@@ -1255,163 +1255,18 @@ void next_server_send_packets( struct next_server_t * server )
 
         // double buffer swap the send buffer
 
-        /*
         next_platform_mutex_acquire( &socket->send_mutex );
-        */
         socket->send_buffer_off_index = socket->send_buffer_off_index ? 0 : 1;
         socket->send_buffer_on_index = socket->send_buffer_off_index ? 0 : 1;
         socket->send_buffer[socket->send_buffer_off_index].num_packets = 0;
         socket->send_buffer[socket->send_buffer_on_index].packet_start_index = 0;
-        /*
         next_platform_mutex_release( &socket->send_mutex );
-        */
 
         // trigger the send queue to wake up and send the packets in the off send buffer
 
-        /*
         uint64_t value = 1;
         int result = write( socket->send_event_fd, &value, sizeof(uint64_t) );
         (void) result;
-        */
-
-        // todo: just tell xdp to do its thing here
-
-// ====================================================================================================
-
-        // todo: try XDP in main thread
-
-        if ( xsk_ring_prod__needs_wakeup( &socket->send_queue ) )
-        {
-            sendto( xsk_socket__fd( socket->xsk ), NULL, 0, MSG_DONTWAIT, NULL, 0 );
-        }
-
-        // mark any completed send packet frames as free to be reused
-
-        while ( true )
-        {
-            uint32_t complete_index;
-
-            unsigned int num_completed = xsk_ring_cons__peek( &socket->complete_queue, XSK_RING_CONS__DEFAULT_NUM_DESCS, &complete_index );
-
-            if ( num_completed == 0 )
-                break;
-
-            // todo
-            next_info( "marked %d send frames completed on queue %d", num_completed, socket->queue );
-
-            for ( int i = 0; i < num_completed; i++ )
-            {
-                uint64_t frame = *xsk_ring_cons__comp_addr( &socket->complete_queue, complete_index + i );
-                free_send_frame( socket, frame );
-            }
-
-            xsk_ring_cons__release( &socket->complete_queue, num_completed );
-        }
-
-        next_server_xdp_send_buffer_t * send_buffer = &socket->send_buffer[socket->send_buffer_on_index];
-
-        // IMPORTANT: We have to clamp this because of atomic increment
-        if ( send_buffer->num_packets > NEXT_XDP_SEND_QUEUE_SIZE )
-        {
-            send_buffer->num_packets = NEXT_XDP_SEND_QUEUE_SIZE;
-        }
-
-        // todo
-        next_info( "want to send %d packets on queue %d", (int) send_buffer->num_packets, socket->queue );
-
-        // reserve entries in the send queue. we *must* send all entries we reserve
-
-        const int num_packets_to_send = send_buffer->num_packets;
-
-        uint32_t send_queue_index;
-        int batch_packets = xsk_ring_prod__reserve( &socket->send_queue, num_packets_to_send, &send_queue_index );
-
-        next_info( "reserved %d entries in send queue %d", batch_packets, socket->queue );
-
-        if ( batch_packets != num_packets_to_send )
-        {
-            // todo
-            if ( batch_packets == 0 )
-            {
-                next_warn( "send queue %d is full", socket->queue );
-                // todo
-                exit(1);
-            }
-            else
-            {
-                next_warn( "could only reserve %d/%d packets in send queue %d", batch_packets, num_packets_to_send, socket->queue );
-            }
-        }
-
-        if ( batch_packets == 0 )
-        {
-            continue;
-        }
-
-        // setup descriptors for packets in batch to be sent
-
-        next_info( "sent batch of %d packets on queue %d", batch_packets, socket->queue );
-
-        for ( int i = 0; i < batch_packets; i++ )
-        {
-            struct xdp_desc * desc = xsk_ring_prod__tx_desc( &socket->send_queue, send_queue_index + i );
-
-            int frame = alloc_send_frame( socket );
-            next_assert( frame != INVALID_FRAME );
-            if ( frame == INVALID_FRAME )
-            {
-                next_error( "fatal error. this cannot happen unless you have too few frames. please adjust NEXT_XDP_NUM_FRAMES to the next highest power of two!" );
-                exit(1);
-            }
-
-            uint8_t * packet_data = (uint8_t*)socket->buffer + frame;
-
-            const int payload_bytes = send_buffer->packet_bytes[i];
-
-            memcpy( packet_data + sizeof(struct ethhdr) + sizeof(struct iphdr) + sizeof(struct udphdr), send_buffer->packet_data + i * NEXT_MAX_PACKET_BYTES, payload_bytes );
-
-            uint32_t to_address_big_endian = next_address_ipv4( &send_buffer->to[i] );
-            uint16_t to_port_big_endian = next_platform_htons( send_buffer->to[i].port );
-
-            int packet_bytes = generate_packet_header( packet_data, socket->server_ethernet_address, socket->gateway_ethernet_address, socket->server_address_big_endian, to_address_big_endian, socket->server_port_big_endian, to_port_big_endian, payload_bytes );
-
-            desc->addr = frame;
-            desc->len = packet_bytes;
-        }
-
-        // submit send queue to driver
-
-        xsk_ring_prod__submit( &socket->send_queue, batch_packets );
-
-        // actually send the packets
-
-        if ( xsk_ring_prod__needs_wakeup( &socket->send_queue ) )
-        {
-            sendto( xsk_socket__fd( socket->xsk ), NULL, 0, MSG_DONTWAIT, NULL, 0 );
-        }
-
-        // todo: hack hack hack
-        send_buffer->num_packets = 0;
-
-#if 0
-
-            // todo
-            break;
-            /*
-            // go to next iteration or stop if there are no more packets to send
-
-            send_buffer->packet_start_index = send_packet_index[batch_packets-1] + 1;
-
-            bool stop = send_buffer->packet_start_index >= send_buffer->num_packets;
-
-            if ( stop )
-                break;
-            */
-        }
-
-#endif // #if 0
-
-// ====================================================================================================
     }
 }
 
@@ -1517,11 +1372,9 @@ static void pin_thread_to_cpu( int cpu )
 
 static void xdp_send_thread_function( void * data )
 {
-#if 0
-
     next_server_xdp_socket_t * socket = (next_server_xdp_socket_t*) data;
 
-    // pin_thread_to_cpu( socket->queue );
+    pin_thread_to_cpu( socket->queue );
 
     struct pollfd fds[1];
     fds[0].fd = socket->send_event_fd;
@@ -1552,9 +1405,6 @@ static void xdp_send_thread_function( void * data )
             if ( num_completed == 0 )
                 break;
 
-            // todo
-            // next_info( "marked %d send frames completed on queue %d", num_completed, socket->queue );
-
             for ( int i = 0; i < num_completed; i++ )
             {
                 uint64_t frame = *xsk_ring_cons__comp_addr( &socket->complete_queue, complete_index + i );
@@ -1573,17 +1423,23 @@ static void xdp_send_thread_function( void * data )
 
         while ( true )
         {
-            next_platform_mutex_acquire( &socket->send_mutex );
-
             next_server_xdp_send_buffer_t * send_buffer = &socket->send_buffer[socket->send_buffer_on_index];
 
-            // IMPORTANT: We have to clamp this because of atomic increment
+            next_platform_mutex_acquire( &socket->send_mutex );
+
+            // make sure the driver gets updated
+
+            if ( xsk_ring_prod__needs_wakeup( &socket->send_queue ) )
+            {
+                sendto( xsk_socket__fd( socket->xsk ), NULL, 0, MSG_DONTWAIT, NULL, 0 );
+            }
+
+            // count how many packets we have to send in the send buffer
+
             if ( send_buffer->num_packets > NEXT_XDP_SEND_QUEUE_SIZE )
             {
                 send_buffer->num_packets = NEXT_XDP_SEND_QUEUE_SIZE;
             }
-
-            // count how many packets we have to send in the send buffer
 
             const int start_index = send_buffer->packet_start_index;
 
@@ -1609,103 +1465,75 @@ static void xdp_send_thread_function( void * data )
                 }
             }
 
-            if ( num_packets_to_send == 0 )
+            if ( num_packets_to_send > 0 )
             {
-                next_platform_mutex_release( &socket->send_mutex );   
-                break;
-            }
+                // reserve entries in the send queue. we *must* send all entries we reserve
 
-            // reserve entries in the send queue. we *must* send all entries we reserve
+                uint32_t send_queue_index;
+                int batch_packets = xsk_ring_prod__reserve( &socket->send_queue, num_packets_to_send, &send_queue_index );
 
-            uint32_t send_queue_index;
-            int batch_packets = xsk_ring_prod__reserve( &socket->send_queue, num_packets_to_send, &send_queue_index );
+                // it's possible to reserve fewer entries in the send queue than requested. when this happens wind back the packet start index for sending packets
 
-            // it's possible to reserve fewer entries in the send queue than requested. when this happens wind back the packet start index for sending packets
-
-            if ( batch_packets < num_packets_to_send )
-            {
-                // todo
-                if ( batch_packets == 0 )
+                if ( batch_packets < num_packets_to_send )
                 {
-                    next_warn( "send queue %d is full", socket->queue );
-                }
-                else
-                {
-                    next_warn( "could only reserve %d/%d packets in send queue %d", batch_packets, num_packets_to_send, socket->queue );
+                    send_buffer->packet_start_index = send_packet_index[batch_packets];
+                    if ( batch_packets == 0 )
+                    {
+                        next_platform_mutex_release( &socket->send_mutex );   
+                        break;
+                    }
                 }
 
-                send_buffer->packet_start_index = send_packet_index[batch_packets];
-                if ( batch_packets == 0 )
+                // setup descriptors for packets in batch to be sent
+
+                for ( int i = 0; i < batch_packets; i++ )
                 {
-                    next_platform_mutex_release( &socket->send_mutex );   
-                    break;
+                    const int packet_index = send_packet_index[i];
+
+                    struct xdp_desc * desc = xsk_ring_prod__tx_desc( &socket->send_queue, send_queue_index + i );
+
+                    int frame = alloc_send_frame( socket );
+                    next_assert( frame != INVALID_FRAME );
+                    if ( frame == INVALID_FRAME )
+                    {
+                        next_error( "fatal error. this cannot happen unless you have too few frames. please adjust NEXT_XDP_NUM_FRAMES to the next highest power of two!" );
+                        exit(1);
+                    }
+
+                    uint8_t * packet_data = (uint8_t*)socket->buffer + frame;
+
+                    const int payload_bytes = send_buffer->packet_bytes[packet_index];
+
+                    memcpy( packet_data + sizeof(struct ethhdr) + sizeof(struct iphdr) + sizeof(struct udphdr), send_buffer->packet_data + packet_index * NEXT_MAX_PACKET_BYTES, payload_bytes );
+
+                    uint32_t to_address_big_endian = next_address_ipv4( &send_buffer->to[packet_index] );
+                    uint16_t to_port_big_endian = next_platform_htons( send_buffer->to[packet_index].port );
+
+                    int packet_bytes = generate_packet_header( packet_data, socket->server_ethernet_address, socket->gateway_ethernet_address, socket->server_address_big_endian, to_address_big_endian, socket->server_port_big_endian, to_port_big_endian, payload_bytes );
+
+                    desc->addr = frame;
+                    desc->len = packet_bytes;
                 }
-            }
 
-            // setup descriptors for packets in batch to be sent
+                // submit send queue to driver
 
-            // next_info( "sent batch of %d packets on queue %d", batch_packets, socket->queue );
+                xsk_ring_prod__submit( &socket->send_queue, batch_packets );
 
-            for ( int i = 0; i < batch_packets; i++ )
-            {
-                const int packet_index = send_packet_index[i];
+                // advance our send index past sent packets
 
-                struct xdp_desc * desc = xsk_ring_prod__tx_desc( &socket->send_queue, send_queue_index + i );
-
-                int frame = alloc_send_frame( socket );
-                next_assert( frame != INVALID_FRAME );
-                if ( frame == INVALID_FRAME )
-                {
-                    next_error( "fatal error. this cannot happen unless you have too few frames. please adjust NEXT_XDP_NUM_FRAMES to the next highest power of two!" );
-                    exit(1);
-                }
-
-                uint8_t * packet_data = (uint8_t*)socket->buffer + frame;
-
-                const int payload_bytes = send_buffer->packet_bytes[packet_index];
-
-                memcpy( packet_data + sizeof(struct ethhdr) + sizeof(struct iphdr) + sizeof(struct udphdr), send_buffer->packet_data + packet_index * NEXT_MAX_PACKET_BYTES, payload_bytes );
-
-                uint32_t to_address_big_endian = next_address_ipv4( &send_buffer->to[packet_index] );
-                uint16_t to_port_big_endian = next_platform_htons( send_buffer->to[packet_index].port );
-
-                int packet_bytes = generate_packet_header( packet_data, socket->server_ethernet_address, socket->gateway_ethernet_address, socket->server_address_big_endian, to_address_big_endian, socket->server_port_big_endian, to_port_big_endian, payload_bytes );
-
-                desc->addr = frame;
-                desc->len = packet_bytes;
-            }
-
-            // submit send queue to driver
-
-            xsk_ring_prod__submit( &socket->send_queue, batch_packets );
-
-            // actually send the packets
-
-            if ( xsk_ring_prod__needs_wakeup( &socket->send_queue ) )
-            {
-                sendto( xsk_socket__fd( socket->xsk ), NULL, 0, MSG_DONTWAIT, NULL, 0 );
-            }
-
-            // go to next iteration or stop if there are no more packets to send
-
-            send_buffer->packet_start_index = send_packet_index[batch_packets-1] + 1;
-
-            bool stop = send_buffer->packet_start_index >= send_buffer->num_packets;
+                send_buffer->packet_start_index = send_packet_index[batch_packets-1] + 1;
+            }            
 
             next_platform_mutex_release( &socket->send_mutex );
 
-            if ( stop )
+            if ( num_packets_to_send == 0 && socket->num_free_send_frames == NEXT_XDP_NUM_FRAMES )
                 break;
         }
     }
-#endif
 }
 
 static void xdp_receive_thread_function( void * data )
 {
-    // todo: try disable
-
-    /*
     next_server_xdp_socket_t * socket = (next_server_xdp_socket_t*) data;
 
     pin_thread_to_cpu( socket->queue );
@@ -1800,7 +1628,6 @@ static void xdp_receive_thread_function( void * data )
 
         next_platform_mutex_release( &socket->receive_mutex );
     }
-    */
 }
 
 void next_server_receive_packets( next_server_t * server )
