@@ -81,7 +81,7 @@ int main()
                     uint8_t * packet_data = next_server_start_packet( server, i, &sequence );
                     if ( packet_data )
                     {
-                        memset( packet_data, 0, NEXT_MTU );
+                        memset( packet_data, 0, 100 ); // NEXT_MTU );
                         next_server_finish_packet( server, sequence, packet_data, NEXT_MTU );
                     }
                     else
