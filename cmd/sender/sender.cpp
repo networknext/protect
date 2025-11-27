@@ -188,6 +188,52 @@ int main()
         pclose( file );
     }
 
+    // look up the ethernet address of the network interface
+
+    if ( !get_interface_mac_address( interface_name, server->server_ethernet_address ) )
+    {
+        next_error( "server could not get mac address of network interface" );
+        next_server_destroy( server );
+        return NULL;
+    }
+
+    next_info( "server ethernet address is %02x.%02x.%02x.%02x.%02x.%02x", 
+        server->server_ethernet_address[0], 
+        server->server_ethernet_address[1], 
+        server->server_ethernet_address[2], 
+        server->server_ethernet_address[3], 
+        server->server_ethernet_address[4], 
+        server->server_ethernet_address[5] 
+    );
+
+    // look up the gateway ethernet address for the network interface
+
+    if ( !get_gateway_mac_address( interface_name, server->gateway_ethernet_address ) )
+    {
+        next_error( "server could not get gateway mac address" );
+        next_server_destroy( server );
+        return NULL;
+    }
+
+    // hulk
+    /*
+    server->gateway_ethernet_address[0] = 0xd0;
+    server->gateway_ethernet_address[1] = 0x81;
+    server->gateway_ethernet_address[2] = 0x7a;
+    server->gateway_ethernet_address[3] = 0xd8;
+    server->gateway_ethernet_address[4] = 0x3a;
+    server->gateway_ethernet_address[5] = 0xec;
+    */
+
+    next_info( "gateway ethernet address is %02x.%02x.%02x.%02x.%02x.%02x", 
+        server->gateway_ethernet_address[0], 
+        server->gateway_ethernet_address[1], 
+        server->gateway_ethernet_address[2], 
+        server->gateway_ethernet_address[3], 
+        server->gateway_ethernet_address[4], 
+        server->gateway_ethernet_address[5] 
+    );
+
     while ( !quit )
     {
         // ...
