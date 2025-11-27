@@ -463,6 +463,57 @@ int main()
         return 1;
     }
 
+    for ( int queue = 0; queue < num_queues; queue++ )
+    {
+        next_xdp_socket_t * socket = &server->socket[queue];
+
+        socket->queue = queue;
+
+        // allocate umem
+
+        const int buffer_size = NEXT_XDP_NUM_FRAMES * NEXT_XDP_FRAME_SIZE;
+
+        if ( posix_memalign( &socket->buffer, getpagesize(), buffer_size ) ) 
+        {
+            next_error( "could allocate buffer" );
+            return 1;
+        }
+
+        int result = xsk_umem__create( &socket->umem, socket->buffer, buffer_size, &socket->fill_queue, &socket->complete_queue, NULL );
+        if ( result ) 
+        {
+            next_error( "could not create umem" );
+            return 1;
+        }
+
+        // create xdp socket
+
+        struct xsk_socket_config xsk_config;
+
+        memset( &xsk_config, 0, sizeof(xsk_config) );
+
+        xsk_config.rx_size = 0;
+        xsk_config.tx_size = NEXT_XDP_SEND_QUEUE_SIZE;
+        xsk_config.xdp_flags = XDP_ZEROCOPY;     
+        xsk_config.bind_flags = XDP_USE_NEED_WAKEUP;
+        xsk_config.libbpf_flags = XSK_LIBBPF_FLAGS__INHIBIT_PROG_LOAD;
+
+        result = xsk_socket__create( &socket->xsk, interface_name, queue, socket->umem, NULL, &socket->send_queue, &xsk_config );
+        if ( result )
+        {
+            next_error( "server could not create xsk socket for queue %d", queue );
+            next_server_destroy( server );
+            return NULL;
+        }
+
+        // copy across data needed by the socket to send packets
+
+        memcpy( socket->server_ethernet_address, server->server_ethernet_address, ETH_ALEN );
+        memcpy( socket->gateway_ethernet_address, server->gateway_ethernet_address, ETH_ALEN );
+        socket->server_address_big_endian = server->server_address_big_endian;
+        socket->server_port_big_endian = server->server_port_big_endian;
+    }
+
     // ----------------------------------------------------------------------------------
 
     while ( !quit )
