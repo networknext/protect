@@ -45,11 +45,11 @@ void interrupt_handler( int signal )
     (void) signal; quit = 1;
 }
 
-#define NEXT_NUM_XDP_QUEUES                     1
+#define NEXT_NUM_XDP_QUEUES                     2
 #define NEXT_XDP_NUM_FRAMES               ( 8192 * 2 )
 #define NEXT_XDP_FRAME_SIZE                  2048
 #define NEXT_XDP_SEND_QUEUE_SIZE            ( 4096 * 2 )
-#define NEXT_XDP_SEND_BATCH_SIZE              256
+#define NEXT_XDP_SEND_BATCH_SIZE               64
 
 struct next_xdp_socket_t
 {
