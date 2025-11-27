@@ -682,7 +682,7 @@ static void xdp_send_thread_function( void * data )
             uint32_t to_address_big_endian = destination_address_big_endian;
             uint16_t to_port_big_endian = next_platform_htons( ( sequence & 1000 ) + 30000 );
 
-            int packet_bytes = generate_packet_header( packet_data, socket->sender_ethernet_address, socket->gateway_ethernet_address, socket->sender_address_big_endian, to_address_big_endian, socket->server_port_big_endian, to_port_big_endian, payload_bytes );
+            int packet_bytes = generate_packet_header( packet_data, socket->sender_ethernet_address, socket->gateway_ethernet_address, socket->sender_address_big_endian, to_address_big_endian, socket->sender_port_big_endian, to_port_big_endian, payload_bytes );
 
             desc->addr = frame;
             desc->len = packet_bytes;
