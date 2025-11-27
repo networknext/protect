@@ -1334,6 +1334,8 @@ void next_server_send_packets( struct next_server_t * server )
             if ( batch_packets == 0 )
             {
                 next_warn( "send queue %d is full", socket->queue );
+                // todo
+                exit(1);
             }
             else
             {
