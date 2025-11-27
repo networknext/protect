@@ -463,7 +463,7 @@ int main()
         return 1;
     }
 
-    for ( int queue = 0; queue < num_queues; queue++ )
+    for ( int queue = 0; queue < sender.num_queues; queue++ )
     {
         next_xdp_socket_t * socket = &server->socket[queue];
 
