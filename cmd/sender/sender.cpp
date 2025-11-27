@@ -157,7 +157,7 @@ int main()
 
         if ( !found )
         {
-            next_error( "server could not find any network interface matching public address" );
+            next_error( "server could not find any network interface matching address" );
             next_server_destroy( server );
             return NULL;
         }
