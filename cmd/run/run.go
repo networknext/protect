@@ -89,6 +89,10 @@ func main() {
 		client()
 	} else if command == "server" {
 		server()
+	} else if command == "sender" {
+		sender()
+	} else if command == "receiver" {
+		receiver()
 	} else if command == "test" {
 		test()
 	} else if command == "keygen" {
@@ -123,6 +127,18 @@ func server() {
 		bash("cd dist && sudo -E ./server")
 	} else {
 		bash("cd dist && ./server")
+	}
+}
+
+func sender() {
+	if runtime.GOOS == "linux" {
+		bash("cd dist && sudo -E ./sender")
+	}
+}
+
+func receiver() {
+	if runtime.GOOS == "linux" {
+		bash("cd dist && sudo -E ./receiver")
 	}
 }
 

@@ -163,3 +163,17 @@ add_executable(keygen ../cmd/keygen/keygen.cpp)
 target_include_directories(keygen PRIVATE ../sdk)
 add_dependencies(keygen next)
 target_link_libraries(keygen next)
+
+
+if (LINUX)
+
+# sender
+
+project(sender)
+enable_language(CXX)
+add_executable(sender ../cmd/sender/sender.cpp)
+target_include_directories(sender PRIVATE ../sdk)
+add_dependencies(sender next)
+target_link_libraries(sender next bpf xdp)
+
+endif()
