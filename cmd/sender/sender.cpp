@@ -507,10 +507,10 @@ int main()
 
         // copy across data needed by the socket to send packets
 
-        memcpy( socket->server_ethernet_address, sender.server_ethernet_address, ETH_ALEN );
+        memcpy( socket->sender_ethernet_address, sender.sender_ethernet_address, ETH_ALEN );
         memcpy( socket->gateway_ethernet_address, sender.gateway_ethernet_address, ETH_ALEN );
-        socket->server_address_big_endian = sender.server_address_big_endian;
-        socket->server_port_big_endian = sender.server_port_big_endian;
+        socket->sender_address_big_endian = sender.sender_address_big_endian;
+        socket->sender_port_big_endian = sender.sender_port_big_endian;
     }
 
     // ----------------------------------------------------------------------------------
