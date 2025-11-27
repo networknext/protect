@@ -410,6 +410,16 @@ next_server_t * next_server_create( void * context, const char * bind_address_st
 
     next_info( "server network interface is %s", interface_name );
 
+    // make sure no xdp programs are loaded on the NIC
+    {
+        char command[2048];
+        snprintf( command, sizeof(command), "xdp-tool unload -a %d", interface_name );
+        FILE * file = popen( command, "r" );
+        char buffer[1024];
+        while ( fgets( buffer, sizeof(buffer), file ) != NULL ) {}
+        pclose( file );
+    }
+
     // disable hyperthreading
     {
         char command[2048];
