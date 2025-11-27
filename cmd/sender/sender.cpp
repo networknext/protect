@@ -517,7 +517,7 @@ int main()
     // save the public address and port in network order (big endian)
 
     sender.sender_address_big_endian = source_address_ipv4;
-    sender.sender_port_big_endian = next_platform_htons( address.port );
+    sender.sender_port_big_endian = next_platform_htons( source_address.port );
 
     // initialize xdp sockets (one socket per-NIC queue)
 
