@@ -1079,8 +1079,6 @@ uint8_t * next_server_start_packet_internal( struct next_server_t * server, int 
 
     if ( packet_index >= NEXT_XDP_SEND_QUEUE_SIZE )
     {
-        // todo
-        next_info( "packet index is %d", packet_index );
         return NULL;
     }
 
@@ -1104,8 +1102,6 @@ uint8_t * next_server_start_packet( struct next_server_t * server, int client_in
 
     if ( !server->client_connected[client_index] )
     {
-        // todo
-        next_info( "client not connected" );
         return NULL;
     }
 
@@ -1495,14 +1491,16 @@ static void xdp_receive_thread_function( void * data )
 
         next_platform_mutex_acquire( &socket->receive_mutex );
 
-/*
         next_server_xdp_receive_buffer_t * receive_buffer = &socket->receive_buffer[socket->receive_buffer_on_index];
 
         uint32_t receive_index;
         
         uint32_t num_packets = xsk_ring_cons__peek( &socket->receive_queue, NEXT_XDP_RECV_QUEUE_SIZE, &receive_index );
-
+        
         next_info( "peek %d receive packets on queue %d", num_packets, socket->queue );
+
+/*
+
 
         if ( num_packets > 0 )
         {
