@@ -1548,7 +1548,7 @@ static void xdp_receive_thread_function( void * data )
 
     while ( true )
     {
-        int poll_result = poll( fds, 2, -1 );
+        int poll_result = poll( fds, 2, 0 );
         if ( poll_result < 0 ) 
         {
             next_error( "poll error on socket receive queue %d (%d)", socket->queue, poll_result );
