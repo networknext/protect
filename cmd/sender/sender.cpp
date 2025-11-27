@@ -633,6 +633,8 @@ static void xdp_send_thread_function( void * data )
     {
         if ( xsk_ring_prod__needs_wakeup( &socket->send_queue ) )
         {
+            next_info( "wake up send queue %d", socket->queue );
+
             sendto( xsk_socket__fd( socket->xsk ), NULL, 0, MSG_DONTWAIT, NULL, 0 );
         }
 
