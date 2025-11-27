@@ -661,13 +661,13 @@ next_server_t * next_server_create( void * context, const char * bind_address_st
 
         memset( &xsk_config, 0, sizeof(xsk_config) );
 
-        xsk_config.rx_size = 0; // NEXT_XDP_RECV_QUEUE_SIZE;
+        xsk_config.rx_size = NEXT_XDP_RECV_QUEUE_SIZE;
         xsk_config.tx_size = NEXT_XDP_SEND_QUEUE_SIZE;
         xsk_config.xdp_flags = XDP_ZEROCOPY;     
         xsk_config.bind_flags = XDP_USE_NEED_WAKEUP;
         xsk_config.libbpf_flags = XSK_LIBBPF_FLAGS__INHIBIT_PROG_LOAD;
 
-        result = xsk_socket__create( &socket->xsk, interface_name, queue, socket->umem, NULL /*&socket->receive_queue*/, &socket->send_queue, &xsk_config );
+        result = xsk_socket__create( &socket->xsk, interface_name, queue, socket->umem, &socket->receive_queue, &socket->send_queue, &xsk_config );
         if ( result )
         {
             next_error( "server could not create xsk socket for queue %d", queue );
@@ -1496,11 +1496,6 @@ static void xdp_receive_thread_function( void * data )
         uint32_t receive_index;
         
         uint32_t num_packets = xsk_ring_cons__peek( &socket->receive_queue, NEXT_XDP_RECV_QUEUE_SIZE, &receive_index );
-        
-        next_info( "peek %d receive packets on queue %d", num_packets, socket->queue );
-
-/*
-
 
         if ( num_packets > 0 )
         {
@@ -1522,9 +1517,6 @@ static void xdp_receive_thread_function( void * data )
 
                 if ( packet_bytes >= 18 && receive_buffer->num_packets < NEXT_XDP_RECV_QUEUE_SIZE )
                 {
-                    // todo
-                    next_info( "received %d byte packet on queue %d", packet_bytes, socket->queue );
-
                     const int index = receive_buffer->num_packets++;
 
                     struct ethhdr * eth = (ethhdr*) packet_data;
@@ -1559,7 +1551,6 @@ static void xdp_receive_thread_function( void * data )
 
             xsk_ring_prod__submit( &socket->fill_queue, num_reserved );
         }
-        */
 
         next_platform_mutex_release( &socket->receive_mutex );
     }
