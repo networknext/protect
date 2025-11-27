@@ -501,9 +501,8 @@ int main()
         result = xsk_socket__create( &socket->xsk, interface_name, queue, socket->umem, NULL, &socket->send_queue, &xsk_config );
         if ( result )
         {
-            next_error( "server could not create xsk socket for queue %d", queue );
-            next_server_destroy( server );
-            return NULL;
+            next_error( "could not create xsk socket for queue %d", queue );
+            return 1;
         }
 
         // copy across data needed by the socket to send packets
