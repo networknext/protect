@@ -42,7 +42,7 @@ void interrupt_handler( int signal )
 #define NEXT_XDP_SEND_QUEUE_SIZE             4096
 #define NEXT_XDP_SEND_BATCH_SIZE               32
 
-struct next_server_xdp_socket_t
+struct next_xdp_socket_t
 {
     uint8_t padding_0[1024];
 
@@ -62,8 +62,8 @@ struct next_server_xdp_socket_t
     uint64_t send_frames[NEXT_XDP_NUM_FRAMES];
     uint8_t sender_ethernet_address[ETH_ALEN];
     uint8_t gateway_ethernet_address[ETH_ALEN];
-    uint32_t server_address_big_endian;
-    uint16_t server_port_big_endian;
+    uint32_t sender_address_big_endian;
+    uint16_t sender_port_big_endian;
     next_platform_thread_t * send_thread;
 
     uint8_t padding_3[1024];
@@ -198,7 +198,7 @@ static bool get_gateway_mac_address( const char * interface_name, uint8_t * mac_
 
 #define INVALID_FRAME UINT64_MAX
 
-static uint64_t alloc_send_frame( next_server_xdp_socket_t * socket )
+static uint64_t alloc_send_frame( next_xdp_socket_t * socket )
 {
     uint64_t frame = INVALID_FRAME;
     if ( socket->num_free_send_frames > 0 )
@@ -210,7 +210,7 @@ static uint64_t alloc_send_frame( next_server_xdp_socket_t * socket )
     return frame;
 }
 
-static void free_send_frame( next_server_xdp_socket_t * socket, uint64_t frame )
+static void free_send_frame( next_xdp_socket_t * socket, uint64_t frame )
 {
     next_assert( socket->num_free_send_frames < NEXT_XDP_NUM_FRAMES );
     socket->send_frames[socket->num_free_send_frames] = frame;
@@ -443,7 +443,21 @@ int main()
 
     if ( setrlimit( RLIMIT_MEMLOCK, &rlim ) ) 
     {
-        next_error( "server could not setrlimit" );
+        next_error( "could not setrlimit" );
+        return 1;
+    }
+
+    // save the public address and port in network order (big endian)
+
+    sender.sender_address_big_endian = address_ipv4;
+    sender.sender_port_big_endian = next_platform_htons( address.port );
+
+    // initialize xdp sockets (one socket per-NIC queue)
+
+    sender.socket = (next_server_xdp_socket_t*) next_malloc( server->context, num_queues * sizeof(next_server_xdp_socket_t) );
+    if ( server->socket == NULL )
+    {
+        next_error( "could not allocate sockets" );
         return 1;
     }
 
