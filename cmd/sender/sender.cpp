@@ -231,6 +231,8 @@ struct sender_t
     struct xdp_program * program;
     bool attached_native;
     bool attached_skb;
+
+    next_xdp_socket_t * socket;
 };
 
 static sender_t sender;
