@@ -1495,6 +1495,7 @@ static void xdp_receive_thread_function( void * data )
 
         next_platform_mutex_acquire( &socket->receive_mutex );
 
+/*
         next_server_xdp_receive_buffer_t * receive_buffer = &socket->receive_buffer[socket->receive_buffer_on_index];
 
         uint32_t receive_index;
@@ -1503,7 +1504,6 @@ static void xdp_receive_thread_function( void * data )
 
         next_info( "peek %d receive packets on queue %d", num_packets, socket->queue );
 
-/*
         if ( num_packets > 0 )
         {
             // receive packets
