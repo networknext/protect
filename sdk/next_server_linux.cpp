@@ -1491,8 +1491,6 @@ static void xdp_receive_thread_function( void * data )
             break;
         }
 
-    // todo: there is a crash below. I've screwed something up with the receive processing
-    /*
         // receive packets
 
         next_platform_mutex_acquire( &socket->receive_mutex );
@@ -1503,6 +1501,9 @@ static void xdp_receive_thread_function( void * data )
         
         uint32_t num_packets = xsk_ring_cons__peek( &socket->receive_queue, NEXT_XDP_RECV_QUEUE_SIZE, &receive_index );
 
+        next_info( "peek %d receive packets on queue %d", num_packets, socket->queue );
+
+/*
         if ( num_packets > 0 )
         {
             // receive packets
@@ -1560,9 +1561,9 @@ static void xdp_receive_thread_function( void * data )
 
             xsk_ring_prod__submit( &socket->fill_queue, num_reserved );
         }
+        */
 
         next_platform_mutex_release( &socket->receive_mutex );
-    */
     }
 }
 
