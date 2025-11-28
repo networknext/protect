@@ -1578,7 +1578,7 @@ void next_server_receive_packets( next_server_t * server )
 
         socket->receive_counter_main_thread++;
 
-        while ( socket->receive_counter_send_thread != socket->receive_counter_main_thread ) {}
+        while ( socket->receive_counter_receive_thread != socket->receive_counter_main_thread ) {}
 
         int off_index = ( socket->receive_counter_main_thread + 1 ) % 2;
 
