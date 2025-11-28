@@ -1479,8 +1479,6 @@ static void xdp_send_thread_function( void * data )
                 send_buffer->packet_start_index = send_packet_index[batch_packets-1] + 1;
             }
         }            
-
-        next_platform_mutex_release( &socket->send_mutex );
     }
 }
 
