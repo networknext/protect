@@ -15,6 +15,8 @@
 #include <unistd.h>
 #endif // #ifdef __linux__
 
+#define NUM_SEND_THREADS 8
+
 static volatile int quit;
 
 void interrupt_handler( int signal )
@@ -439,7 +441,19 @@ void send_packets_thread( void * arg )
 
     for ( int i = start_index; i < finish_index; i++ )
     {
-        // ...
+        if ( next_server_client_connected( server, i ) )
+        {
+            for ( int j = 0; j < 10; j++ )
+            {
+                uint64_t sequence;
+                uint8_t * packet_data = next_server_start_packet( server, i, &sequence );
+                if ( packet_data )
+                {
+                    memset( packet_data, 0, NEXT_MTU );
+                    next_server_finish_packet( server, sequence, packet_data, NEXT_MTU );
+                }
+            }
+        }
     }
 }
 
@@ -487,7 +501,20 @@ int main()
         return 1;
     }
 
-    ThreadPool send( num_queues );
+    ThreadPool send_thread_pool( NUM_SEND_THREADS );
+
+    send_packets_data_t send_data[NUM_SEND_THREADS];
+
+    for ( int i = 0; i < NUM_SEND_THREADS; i++ )
+    {
+        send_data[i].server = server;
+        send_data[i].start_index = i * (1000/NUM_SEND_THREADS);
+        send_data[i].finish_index = (i+1) * (1000/NUM_SEND_THREADS);
+        if ( send_data[i].finish_index >= 1000 )
+        {
+            send_data[i].finish_index = 999;
+        }
+    }
 
     while ( !quit )
     {
@@ -502,26 +529,14 @@ int main()
 
         next_server_update( server );
 
-        for ( int i = 0; i < 1000; i++ )
+        for ( int i = 0; i < NUM_SEND_THREADS; i++ )
         {
-            if ( next_server_client_connected( server, i ) )
-            {
-                for ( int j = 0; j < 10; j++ )
-                {
-                    uint64_t sequence;
-                    uint8_t * packet_data = next_server_start_packet( server, i, &sequence );
-                    if ( packet_data )
-                    {
-                        memset( packet_data, 0, NEXT_MTU );
-                        next_server_finish_packet( server, sequence, packet_data, NEXT_MTU );
-                    }
-                }
-            }
+            send_thread_pool.AddTask( send_packets_thread, send_data + i );
         }
 
-        next_server_send_packets( server );
-
         next_platform_sleep( 1.0 / 100.0 );       
+
+        next_server_send_packets( server );
     }
 
     next_info( "stopping" );
