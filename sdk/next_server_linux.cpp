@@ -1081,7 +1081,9 @@ uint8_t * next_server_start_packet_internal( struct next_server_t * server, int 
 {
     next_server_xdp_socket_t * socket = &server->socket[queue];
 
-    next_server_xdp_send_buffer_t * send_buffer = &socket->send_buffer[socket->send_buffer_off_index];
+    const int off_index = ( socket->send_counter_main_thread + 1 ) % 2;
+
+    next_server_xdp_send_buffer_t * send_buffer = &socket->send_buffer[off_index];
 
     int packet_index = send_buffer->num_packets.fetch_add(1);
 
@@ -1155,7 +1157,9 @@ void next_server_finish_packet( struct next_server_t * server, uint64_t sequence
 
     next_server_xdp_socket_t * socket = &server->socket[queue];
 
-    next_server_xdp_send_buffer_t * send_buffer = &socket->send_buffer[socket->send_buffer_off_index];
+    const int off_index = ( socket->send_counter_main_thread + 1 ) % 2;
+
+    next_server_xdp_send_buffer_t * send_buffer = &socket->send_buffer[off_index];
 
     size_t offset = ( packet_data - send_buffer->packet_data );
 
@@ -1204,7 +1208,9 @@ void next_server_abort_packet( struct next_server_t * server, uint64_t sequence,
 
     next_server_xdp_socket_t * socket = &server->socket[queue];
 
-    next_server_xdp_send_buffer_t * send_buffer = &socket->send_buffer[socket->send_buffer_off_index];
+    const int off_index = ( socket->send_counter_main_thread + 1 ) % 2;
+
+    next_server_xdp_send_buffer_t * send_buffer = &socket->send_buffer[off_index];
 
     size_t offset = ( packet_data - send_buffer->packet_data );
 
