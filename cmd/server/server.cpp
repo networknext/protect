@@ -510,6 +510,7 @@ int main()
 #endif // #if LOAD_TEST
 
     next_address_t client_address;
+    double last_client_packet_time;
 
     while ( !quit )
     {
@@ -535,7 +536,17 @@ int main()
 
 #else // #if LOAD_TEST
 
-        // ...
+        if ( client_address.type == NEXT_ADDRESS_IPV4 && last_client_packet_time + 10.0 >= next_platform_time() )
+        {
+            uint64_t packet_id;
+            uint8_t * packet_data = next_server_start_packet( server, &client_address, &packet_id );
+            if ( packet_data )
+            {
+                memset( packet_data, 0, NEXT_MTU );
+                next_server_finish_packet( server, packet_id, packet_data, NEXT_MTU );
+                last_client_packet_time = next_platform_time();
+            }
+        }
 
 #endif // #if LOAD_TEST
 
