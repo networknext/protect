@@ -523,6 +523,7 @@ int main()
             char buffer[NEXT_MAX_ADDRESS_STRING_LENGTH];
             next_info( "server received %d byte packet from %s", packets->packet_bytes[i], next_address_to_string( &packets->from[i], buffer ) );
             client_address = packets->from[i];
+            last_client_packet_time = next_platform_time();
         }
 
         next_server_update( server );
@@ -544,7 +545,6 @@ int main()
             {
                 memset( packet_data, 0, NEXT_MTU );
                 next_server_finish_packet( server, packet_id, packet_data, NEXT_MTU );
-                last_client_packet_time = next_platform_time();
             }
         }
 
