@@ -11,6 +11,8 @@
 #include <signal.h>
 #include <stdlib.h>
 
+#define LOAD_TEST 0
+
 #ifdef __linux__
 #include <unistd.h>
 #endif // #ifdef __linux__
@@ -25,6 +27,8 @@ void interrupt_handler( int signal )
 }
 
 // ---------------------------------------------------------------------------
+
+#if LOAD_TEST
 
 #if NEXT_PLATFORM == NEXT_PLATFORM_LINUX || NEXT_PLATFORM == NEXT_PLATFORM_MAC
 
@@ -458,6 +462,8 @@ void send_packets_thread( void * arg )
     }
 }
 
+#endif // #if LOAD_TEST
+
 int main()
 {
     signal( SIGINT, interrupt_handler ); signal( SIGTERM, interrupt_handler );
@@ -484,6 +490,8 @@ int main()
     pin_thread_to_cpu( num_queues * 2 );
 #endif // #ifdef __linux__
 
+#if LOAD_TEST
+
     ThreadPool send_thread_pool( NUM_SEND_THREADS );
 
     send_packets_data_t send_data[NUM_SEND_THREADS];
@@ -498,6 +506,8 @@ int main()
             send_data[i].finish_index = 999;
         }
     }
+
+#endif // #if LOAD_TEST
 
     next_address_t client_address;
 
@@ -516,10 +526,18 @@ int main()
 
         next_server_update( server );
 
+#if LOAD_TEST
+
         for ( int i = 0; i < NUM_SEND_THREADS; i++ )
         {
             send_thread_pool.AddTask( send_packets_thread, send_data + i );
         }
+
+#else // #if LOAD_TEST
+
+        // ...
+
+#endif // #if LOAD_TEST
 
         next_platform_sleep( 1.0 / 100.0 );
 
