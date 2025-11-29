@@ -36,6 +36,7 @@ struct next_server_receive_buffer_t
 struct next_server_t
 {
     void * context;
+    int num_queues;
     int state;
     next_address_t bind_address;
     next_address_t public_address;
@@ -58,6 +59,24 @@ next_server_t * next_server_create( void * context, const char * bind_address_st
 
     next_assert( bind_address_string );
     next_assert( public_address_string );
+
+    const char * num_queues_env = getenv( "NEXT_SERVER_NUM_QUEUES" );
+    if ( num_queues_env )
+    {
+        num_queues = atoi( num_queues_env );
+    }
+
+    const char * bind_address_env = getenv( "NEXT_SERVER_BIND_ADDRESS" );
+    if ( bind_address_env )
+    {
+        bind_address_string = bind_address_env;
+    }
+
+    const char * public_address_env = getenv( "NEXT_SERVER_PUBLIC_ADDRESS" );
+    if ( public_address_env )
+    {
+        public_address_string = public_address_env;
+    }
 
     next_info( "server public address is %s", public_address_string );
 
@@ -88,6 +107,8 @@ next_server_t * next_server_create( void * context, const char * bind_address_st
     memset( server, 0, sizeof( next_server_t) );
     
     server->context = context;
+
+    server->num_queues = num_queues;
 
     server->socket = next_platform_socket_create( server->context, &bind_address, NEXT_PLATFORM_SOCKET_NON_BLOCKING, 0.0f, NEXT_SOCKET_SEND_BUFFER_SIZE, NEXT_SOCKET_RECEIVE_BUFFER_SIZE );
     if ( server->socket == NULL )
@@ -367,6 +388,12 @@ struct next_server_process_packets_t * next_server_process_packets( struct next_
 {
     next_assert( server );
     return &server->process_packets;
+}
+
+int next_server_num_queues( struct next_server_t * server )
+{
+    next_assert( server );
+    return server->num_queues;
 }
 
 #else // #ifndef __linux__

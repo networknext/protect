@@ -327,6 +327,18 @@ next_server_t * next_server_create( void * context, const char * bind_address_st
     
     (void) bind_address_string;  // not used
 
+    const char * num_queues_env = getenv( "NEXT_SERVER_NUM_QUEUES" );
+    if ( num_queues_env )
+    {
+        num_queues = atoi( num_queues_env );
+    }
+
+    const char * public_address_env = getenv( "NEXT_SERVER_PUBLIC_ADDRESS" );
+    if ( public_address_env )
+    {
+        public_address_string = public_address_env;
+    }
+
     next_info( "server public address is %s", public_address_string );
 
     next_address_t public_address;
@@ -1429,6 +1441,12 @@ struct next_server_process_packets_t * next_server_process_packets( struct next_
 {
     next_assert( server );
     return &server->process_packets;
+}
+
+int next_server_num_queues( struct next_server_t * server )
+{
+    next_assert( server );
+    return server->num_queues;
 }
 
 #else // #ifdef __linux__

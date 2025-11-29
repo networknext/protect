@@ -30,6 +30,8 @@ int next_server_state( struct next_server_t * server );
 
 uint64_t next_server_id( struct next_server_t * server );
 
+int next_server_num_queues( struct next_server_t * server );
+
 // send packets (zero copy)
 
 uint8_t * next_server_start_packet( struct next_server_t * server, const next_address_t * to, uint64_t * packet_id );
