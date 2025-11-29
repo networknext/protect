@@ -499,6 +499,8 @@ int main()
         }
     }
 
+    next_address_t client_address;
+
     while ( !quit )
     {
         next_server_receive_packets( server );
@@ -509,6 +511,7 @@ int main()
         {
             char buffer[NEXT_MAX_ADDRESS_STRING_LENGTH];
             next_info( "server received %d byte packet from %s", packets->packet_bytes[i], next_address_to_string( &packets->from[i], buffer ) );
+            client_address = packets->from[i];
         }
 
         next_server_update( server );
