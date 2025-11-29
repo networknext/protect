@@ -32,6 +32,7 @@
 #include "next_server_xdp.h"
 
 #include <memory.h>
+#include <stdlib.h>
 #include <stdio.h>
 #include <atomic>
 
