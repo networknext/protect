@@ -823,10 +823,10 @@ next_server_socket_t * next_server_socket_create( void * context, const char * p
     next_info( "server id is %016" PRIx64, server_socket->server_id );
     next_info( "match id is %016" PRIx64, server_socket->match_id );
 
-    return server;    
+    return server_socket;
 }
 
-void next_server_socket_destroy( next_server_socket_t * server )
+void next_server_socket_destroy( next_server_socket_t * server_socket )
 {
     next_assert( server_socket );
     next_assert( server_socket->state == NEXT_SERVER_SOCKET_STOPPED );        // IMPORTANT: Please stop the server and wait until state is NEXT_SERVER_STOPPED before destroying it
@@ -886,7 +886,7 @@ void next_server_socket_destroy( next_server_socket_t * server )
     next_clear_and_free( server_socket->context, server, sizeof(next_server_socket_t) );
 }
 
-void next_server_socket_update( next_server_socket_t * server )
+void next_server_socket_update( next_server_socket_t * server_socket )
 {
     next_assert( server_socket );
 
@@ -896,19 +896,19 @@ void next_server_socket_update( next_server_socket_t * server )
     }
 }
 
-void next_server_socket_stop( next_server_socket_t * server )
+void next_server_socket_stop( next_server_socket_t * server_socket )
 {
     next_assert( server_socket );
     server_socket->state = NEXT_SERVER_SOCKET_STOPPING;
 }
 
-int next_server_socket_state( next_server_socket_t * server )
+int next_server_socket_state( next_server_socket_t * server_socket )
 {
     next_assert( server_socket );
     return server_socket->state;
 }
 
-uint64_t next_server_socket_id( next_server_socket_t * server )
+uint64_t next_server_socket_id( next_server_socket_t * server_socket )
 {
     next_assert( server_socket );
     return server_socket->server_id;
@@ -970,7 +970,7 @@ int generate_packet_header( void * data, uint8_t * server_ethernet_address, uint
     return sizeof(struct ethhdr) + sizeof(struct iphdr) + sizeof(struct udphdr) + payload_bytes; 
 }
 
-uint8_t * next_server_socket_start_packet_internal( struct next_server_socket_t * server, int queue, const next_address_t * to, uint8_t packet_type )
+uint8_t * next_server_socket_start_packet_internal( struct next_server_socket_t * server_socket, int queue, const next_address_t * to, uint8_t packet_type )
 {
     next_server_xdp_socket_t * socket = &server_socket->socket[queue];
 
@@ -996,7 +996,7 @@ uint8_t * next_server_socket_start_packet_internal( struct next_server_socket_t 
     return packet_data;
 }
 
-uint8_t * next_server_socket_start_packet( struct next_server_socket_t * server, const next_address_t * to, uint64_t * packet_id )
+uint8_t * next_server_socket_start_packet( struct next_server_socket_t * server_socket, const next_address_t * to, uint64_t * packet_id )
 {
     next_assert( server_socket );
     next_assert( to );
@@ -1017,7 +1017,7 @@ uint8_t * next_server_socket_start_packet( struct next_server_socket_t * server,
     return packet_data;
 }
 
-void next_server_socket_finish_packet( struct next_server_socket_t * server, uint64_t packet_id, uint8_t * packet_data, int packet_bytes )
+void next_server_socket_finish_packet( struct next_server_socket_t * server_socket, uint64_t packet_id, uint8_t * packet_data, int packet_bytes )
 {
     next_assert( server_socket );
     next_assert( packet_bytes >= 0 );
@@ -1070,7 +1070,7 @@ void next_server_socket_finish_packet( struct next_server_socket_t * server, uin
     next_generate_chonkle( b, magic, from_address_data, to_address_data, packet_bytes );
 }
 
-void next_server_socket_abort_packet( struct next_server_socket_t * server, uint64_t packet_id, uint8_t * packet_data )
+void next_server_socket_abort_packet( struct next_server_socket_t * server_socket, uint64_t packet_id, uint8_t * packet_data )
 {
     next_assert( server_socket );
 
@@ -1096,7 +1096,7 @@ void next_server_socket_abort_packet( struct next_server_socket_t * server, uint
     send_buffer->packet_bytes[packet_index] = 0;
 }
 
-void next_server_socket_send_packets( struct next_server_socket_t * server )
+void next_server_socket_send_packets( struct next_server_socket_t * server_socket )
 {
     next_assert( server_socket );
 
@@ -1117,7 +1117,7 @@ void next_server_socket_send_packets( struct next_server_socket_t * server )
     }
 }
 
-void next_server_socket_process_packet_internal( next_server_socket_t * server, uint8_t * eth, next_address_t * from, uint8_t * packet_data, int packet_bytes )
+void next_server_socket_process_packet_internal( next_server_socket_t * server_socket, uint8_t * eth, next_address_t * from, uint8_t * packet_data, int packet_bytes )
 {
     const uint8_t packet_type = packet_data[0];
 
@@ -1126,7 +1126,7 @@ void next_server_socket_process_packet_internal( next_server_socket_t * server, 
     (void) packet_type;
 }
 
-void next_server_socket_process_direct_packet( next_server_socket_t * server, uint8_t * eth, next_address_t * from, uint8_t * packet_data, int packet_bytes )
+void next_server_socket_process_direct_packet( next_server_socket_t * server_socket, uint8_t * eth, next_address_t * from, uint8_t * packet_data, int packet_bytes )
 {   
     if ( packet_bytes < NEXT_HEADER_BYTES )
         return;
@@ -1384,7 +1384,7 @@ static void xdp_receive_thread_function( void * data )
     }
 }
 
-void next_server_socket_receive_packets( next_server_socket_t * server )
+void next_server_socket_receive_packets( next_server_socket_t * server_socket )
 {
     next_assert( server_socket );
 
