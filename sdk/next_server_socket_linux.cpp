@@ -883,7 +883,7 @@ void next_server_socket_destroy( next_server_socket_t * server_socket )
 
     next_free( server_socket->context, server_socket->socket );
 
-    next_clear_and_free( server_socket->context, server, sizeof(next_server_socket_t) );
+    next_clear_and_free( server_socket->context, server_socket, sizeof(next_server_socket_t) );
 }
 
 void next_server_socket_update( next_server_socket_t * server_socket )
@@ -1008,7 +1008,7 @@ uint8_t * next_server_socket_start_packet( struct next_server_socket_t * server_
 
     // direct packet
 
-    uint8_t * packet_data = next_server_socket_start_packet_internal( server, queue, to, NEXT_PACKET_DIRECT );
+    uint8_t * packet_data = next_server_socket_start_packet_internal( server_socket, queue, to, NEXT_PACKET_DIRECT );
     if ( !packet_data )
     {
         return NULL;
@@ -1424,11 +1424,11 @@ void next_server_socket_receive_packets( next_server_socket_t * server_socket )
 
             if ( packet_type == NEXT_PACKET_DIRECT )
             { 
-                next_server_socket_process_direct_packet( server, eth, &from, packet_data, packet_bytes );
+                next_server_socket_process_direct_packet( server_socket, eth, &from, packet_data, packet_bytes );
             }
             else
             {
-                next_server_socket_process_packet_internal( server, eth, &from, packet_data, packet_bytes );
+                next_server_socket_process_packet_internal( server_socket, eth, &from, packet_data, packet_bytes );
             }
         }
 
