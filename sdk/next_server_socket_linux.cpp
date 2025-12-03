@@ -36,7 +36,7 @@
 #include <stdio.h>
 #include <atomic>
 
-struct next_server_xdp_send_buffer_t
+struct next_server_socket_send_buffer_t
 {
     uint8_t padding_0[1024];
 
@@ -50,7 +50,7 @@ struct next_server_xdp_send_buffer_t
     uint8_t padding_1[1024];
 };
 
-struct next_server_xdp_receive_buffer_t
+struct next_server_socket_receive_buffer_t
 {
     uint8_t padding_0[1024];
 
@@ -88,7 +88,7 @@ struct next_server_xdp_socket_t
     next_platform_thread_t * receive_thread;
     std::atomic<uint64_t> receive_counter_main_thread;
     std::atomic<uint64_t> receive_counter_receive_thread;
-    struct next_server_xdp_receive_buffer_t receive_buffer[2];
+    struct next_server_socket_receive_buffer_t receive_buffer[2];
 
     uint8_t padding_3[1024];
 
@@ -102,7 +102,7 @@ struct next_server_xdp_socket_t
     next_platform_thread_t * send_thread;
     std::atomic<uint64_t> send_counter_main_thread;
     std::atomic<uint64_t> send_counter_send_thread;
-    struct next_server_xdp_send_buffer_t send_buffer[2];
+    struct next_server_socket_send_buffer_t send_buffer[2];
 
     uint8_t padding_4[1024];
 };
@@ -134,10 +134,10 @@ struct next_server_socket_t
     int num_queues;
     next_server_xdp_socket_t * socket;
 
-    next_server_process_packets_t process_packets;
+    next_server_socket_process_packets_t process_packets;
 };
 
-void next_server_destroy( next_server_socket_t * server );
+void next_server_socket_destroy( next_server_socket_t * server );
 
 static bool get_interface_mac_address( const char * interface_name, uint8_t * mac_address ) 
 {
