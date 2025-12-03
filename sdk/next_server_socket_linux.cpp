@@ -368,7 +368,7 @@ next_server_socket_t * next_server_create( void * context, const char * bind_add
     if ( geteuid() != 0 ) 
     {
         next_error( "server must run as root" );
-        next_server_destroy( server_socket );
+        next_server_socket_destroy( server_socket );
         return NULL;
     }
 
@@ -385,7 +385,7 @@ next_server_socket_t * next_server_create( void * context, const char * bind_add
         if ( getifaddrs( &addrs ) != 0 )
         {
             next_error( "server getifaddrs failed" );
-            next_server_destroy( server_socket );
+            next_server_socket_destroy( server_socket );
             return NULL;
         }
 
@@ -402,7 +402,7 @@ next_server_socket_t * next_server_create( void * context, const char * bind_add
                     if ( !server_socket->interface_index ) 
                     {
                         next_error( "server if_nametoindex failed" );
-                        next_server_destroy( server_socket );
+                        next_server_socket_destroy( server_socket );
                         return NULL;
                     }
                     found = true;
@@ -416,7 +416,7 @@ next_server_socket_t * next_server_create( void * context, const char * bind_add
         if ( !found )
         {
             next_error( "server could not find any network interface matching public address" );
-            next_server_destroy( server_socket );
+            next_server_socket_destroy( server_socket );
             return NULL;
         }
     }
@@ -472,7 +472,7 @@ next_server_socket_t * next_server_create( void * context, const char * bind_add
     if ( !get_interface_mac_address( interface_name, server_socket->server_ethernet_address ) )
     {
         next_error( "server could not get mac address of network interface" );
-        next_server_destroy( server_socket );
+        next_server_socket_destroy( server_socket );
         return NULL;
     }
 
@@ -490,7 +490,7 @@ next_server_socket_t * next_server_create( void * context, const char * bind_add
     if ( !get_gateway_mac_address( interface_name, server_socket->gateway_ethernet_address ) )
     {
         next_error( "server could not get gateway mac address" );
-        next_server_destroy( server_socket );
+        next_server_socket_destroy( server_socket );
         return NULL;
     }
 
@@ -536,7 +536,7 @@ next_server_socket_t * next_server_create( void * context, const char * bind_add
         if ( !file )
         {
             next_error( "could not open server_xdp_source.tar.gz for writing" );
-            next_server_destroy( server_socket );
+            next_server_socket_destroy( server_socket );
             return NULL;
         }
 
@@ -571,7 +571,7 @@ next_server_socket_t * next_server_create( void * context, const char * bind_add
     if ( libxdp_get_error( server_socket->program ) ) 
     {
         next_error( "could not load server_xdp program" );
-        next_server_destroy( server_socket );
+        next_server_socket_destroy( server_socket );
         return NULL;
     }
 
@@ -595,7 +595,7 @@ next_server_socket_t * next_server_create( void * context, const char * bind_add
         else
         {
             next_error( "failed to attach server_xdp program to interface %s", interface_name );
-            next_server_destroy( server_socket );
+            next_server_socket_destroy( server_socket );
             return NULL;
         }
     }
@@ -607,7 +607,7 @@ next_server_socket_t * next_server_create( void * context, const char * bind_add
     if ( setrlimit( RLIMIT_MEMLOCK, &rlim ) ) 
     {
         next_error( "server could not setrlimit" );
-        next_server_destroy( server_socket );
+        next_server_socket_destroy( server_socket );
         return NULL;
     }
 
@@ -617,7 +617,7 @@ next_server_socket_t * next_server_create( void * context, const char * bind_add
     if ( server_socket->config_map_fd <= 0 )
     {
         next_error( "server could not get config map: %s", strerror(errno) );
-        next_server_destroy( server_socket );
+        next_server_socket_destroy( server_socket );
         return NULL;
     }
 
@@ -625,7 +625,7 @@ next_server_socket_t * next_server_create( void * context, const char * bind_add
     if ( server_socket->state_map_fd <= 0 )
     {
         next_error( "server could not get state map: %s", strerror(errno) );
-        next_server_destroy( server_socket );
+        next_server_socket_destroy( server_socket );
         return NULL;
     }
 
@@ -633,7 +633,7 @@ next_server_socket_t * next_server_create( void * context, const char * bind_add
     if ( server_socket->socket_map_fd <= 0 )
     {
         next_error( "server could not get socket map: %s", strerror(errno) );
-        next_server_destroy( server_socket );
+        next_server_socket_destroy( server_socket );
         return NULL;
     }
 
@@ -648,7 +648,7 @@ next_server_socket_t * next_server_create( void * context, const char * bind_add
     if ( server_socket->socket == NULL )
     {
         next_error( "server could not allocate sockets" );
-        next_server_destroy( server_socket );
+        next_server_socket_destroy( server_socket );
         return NULL;
     }
 
@@ -666,7 +666,7 @@ next_server_socket_t * next_server_create( void * context, const char * bind_add
         if ( posix_memalign( &socket->buffer, getpagesize(), buffer_size ) ) 
         {
             next_error( "server could allocate buffer" );
-            next_server_destroy( server_socket );
+            next_server_socket_destroy( server_socket );
             return NULL;
         }
 
@@ -674,7 +674,7 @@ next_server_socket_t * next_server_create( void * context, const char * bind_add
         if ( result ) 
         {
             next_error( "server could not create umem" );
-            next_server_destroy( server_socket );
+            next_server_socket_destroy( server_socket );
             return NULL;
         }
 
@@ -694,7 +694,7 @@ next_server_socket_t * next_server_create( void * context, const char * bind_add
         if ( result )
         {
             next_error( "server could not create xsk socket for queue %d", queue );
-            next_server_destroy( server_socket );
+            next_server_socket_destroy( server_socket );
             return NULL;
         }
 
@@ -706,7 +706,7 @@ next_server_socket_t * next_server_create( void * context, const char * bind_add
         if ( bpf_map_update_elem( server_socket->socket_map_fd, &key, &value, BPF_ANY ) < 0 ) 
         {
             next_error( "server failed to add xdp socket for queue %d to map", queue );
-            next_server_destroy( server_socket );
+            next_server_socket_destroy( server_socket );
             return NULL;
         }
 
@@ -744,7 +744,7 @@ next_server_socket_t * next_server_create( void * context, const char * bind_add
         if ( !socket->send_thread )
         {
             next_error( "server could not create send thread %d", queue );
-            next_server_destroy( server_socket );
+            next_server_socket_destroy( server_socket );
             return NULL;
         }
     }
@@ -773,7 +773,7 @@ next_server_socket_t * next_server_create( void * context, const char * bind_add
             if ( result != NEXT_XDP_FILL_QUEUE_SIZE )
             {
                 next_error( "server failed to populate fill queue: %d", result );
-                next_server_destroy( server_socket );
+                next_server_socket_destroy( server_socket );
                 return NULL;
             }
 
@@ -784,7 +784,7 @@ next_server_socket_t * next_server_create( void * context, const char * bind_add
                 if ( frames[i] == INVALID_FRAME )
                 {
                     next_error( "server could not allocate receive frame for fill queue" );
-                    next_server_destroy( server_socket );
+                    next_server_socket_destroy( server_socket );
                     return NULL;
                 }
             }
@@ -807,7 +807,7 @@ next_server_socket_t * next_server_create( void * context, const char * bind_add
         if ( !socket->receive_thread )
         {
             next_error( "server could not create receive thread" );
-            next_server_destroy( server_socket );
+            next_server_socket_destroy( server_socket );
             return NULL;
         }
     }
@@ -828,7 +828,7 @@ next_server_socket_t * next_server_create( void * context, const char * bind_add
     return server;    
 }
 
-void next_server_destroy( next_server_socket_t * server )
+void next_server_socket_destroy( next_server_socket_t * server )
 {
     next_assert( server_socket );
     next_assert( server_socket->state == NEXT_SERVER_STOPPED );        // IMPORTANT: Please stop the server and wait until state is NEXT_SERVER_STOPPED before destroying it
@@ -888,7 +888,7 @@ void next_server_destroy( next_server_socket_t * server )
     next_clear_and_free( server_socket->context, server, sizeof(next_server_socket_t) );
 }
 
-void next_server_update( next_server_socket_t * server )
+void next_server_socket_update( next_server_socket_t * server )
 {
     next_assert( server_socket );
 
@@ -898,19 +898,19 @@ void next_server_update( next_server_socket_t * server )
     }
 }
 
-void next_server_stop( next_server_socket_t * server )
+void next_server_socket_stop( next_server_socket_t * server )
 {
     next_assert( server_socket );
     server_socket->state = NEXT_SERVER_STOPPING;
 }
 
-int next_server_state( next_server_socket_t * server )
+int next_server_socket_state( next_server_socket_t * server )
 {
     next_assert( server_socket );
     return server_socket->state;
 }
 
-uint64_t next_server_id( next_server_socket_t * server )
+uint64_t next_server_socket_id( next_server_socket_t * server )
 {
     next_assert( server_socket );
     return server_socket->server_id;
@@ -972,7 +972,7 @@ int generate_packet_header( void * data, uint8_t * server_ethernet_address, uint
     return sizeof(struct ethhdr) + sizeof(struct iphdr) + sizeof(struct udphdr) + payload_bytes; 
 }
 
-uint8_t * next_server_start_packet_internal( struct next_server_socket_t * server, int queue, const next_address_t * to, uint8_t packet_type )
+uint8_t * next_server_socket_start_packet_internal( struct next_server_socket_t * server, int queue, const next_address_t * to, uint8_t packet_type )
 {
     next_server_xdp_socket_t * socket = &server_socket->socket[queue];
 
@@ -998,7 +998,7 @@ uint8_t * next_server_start_packet_internal( struct next_server_socket_t * serve
     return packet_data;
 }
 
-uint8_t * next_server_start_packet( struct next_server_socket_t * server, const next_address_t * to, uint64_t * packet_id )
+uint8_t * next_server_socket_start_packet( struct next_server_socket_t * server, const next_address_t * to, uint64_t * packet_id )
 {
     next_assert( server_socket );
     next_assert( to );
@@ -1010,7 +1010,7 @@ uint8_t * next_server_start_packet( struct next_server_socket_t * server, const 
 
     // direct packet
 
-    uint8_t * packet_data = next_server_start_packet_internal( server, queue, to, NEXT_PACKET_DIRECT );
+    uint8_t * packet_data = next_server_socket_start_packet_internal( server, queue, to, NEXT_PACKET_DIRECT );
     if ( !packet_data )
     {
         return NULL;
@@ -1019,7 +1019,7 @@ uint8_t * next_server_start_packet( struct next_server_socket_t * server, const 
     return packet_data;
 }
 
-void next_server_finish_packet( struct next_server_socket_t * server, uint64_t packet_id, uint8_t * packet_data, int packet_bytes )
+void next_server_socket_finish_packet( struct next_server_socket_t * server, uint64_t packet_id, uint8_t * packet_data, int packet_bytes )
 {
     next_assert( server_socket );
     next_assert( packet_bytes >= 0 );
@@ -1072,7 +1072,7 @@ void next_server_finish_packet( struct next_server_socket_t * server, uint64_t p
     next_generate_chonkle( b, magic, from_address_data, to_address_data, packet_bytes );
 }
 
-void next_server_abort_packet( struct next_server_socket_t * server, uint64_t packet_id, uint8_t * packet_data )
+void next_server_socket_abort_packet( struct next_server_socket_t * server, uint64_t packet_id, uint8_t * packet_data )
 {
     next_assert( server_socket );
 
@@ -1098,7 +1098,7 @@ void next_server_abort_packet( struct next_server_socket_t * server, uint64_t pa
     send_buffer->packet_bytes[packet_index] = 0;
 }
 
-void next_server_send_packets( struct next_server_socket_t * server )
+void next_server_socket_send_packets( struct next_server_socket_t * server )
 {
     next_assert( server_socket );
 
@@ -1119,7 +1119,7 @@ void next_server_send_packets( struct next_server_socket_t * server )
     }
 }
 
-void next_server_process_packet_internal( next_server_socket_t * server, uint8_t * eth, next_address_t * from, uint8_t * packet_data, int packet_bytes )
+void next_server_socket_process_packet_internal( next_server_socket_t * server, uint8_t * eth, next_address_t * from, uint8_t * packet_data, int packet_bytes )
 {
     const uint8_t packet_type = packet_data[0];
 
@@ -1128,7 +1128,7 @@ void next_server_process_packet_internal( next_server_socket_t * server, uint8_t
     (void) packet_type;
 }
 
-void next_server_process_direct_packet( next_server_socket_t * server, uint8_t * eth, next_address_t * from, uint8_t * packet_data, int packet_bytes )
+void next_server_socket_process_direct_packet( next_server_socket_t * server, uint8_t * eth, next_address_t * from, uint8_t * packet_data, int packet_bytes )
 {   
     if ( packet_bytes < NEXT_HEADER_BYTES )
         return;
@@ -1386,7 +1386,7 @@ static void xdp_receive_thread_function( void * data )
     }
 }
 
-void next_server_receive_packets( next_server_socket_t * server )
+void next_server_socket_receive_packets( next_server_socket_t * server )
 {
     next_assert( server_socket );
 
@@ -1426,11 +1426,11 @@ void next_server_receive_packets( next_server_socket_t * server )
 
             if ( packet_type == NEXT_PACKET_DIRECT )
             { 
-                next_server_process_direct_packet( server, eth, &from, packet_data, packet_bytes );
+                next_server_socket_process_direct_packet( server, eth, &from, packet_data, packet_bytes );
             }
             else
             {
-                next_server_process_packet_internal( server, eth, &from, packet_data, packet_bytes );
+                next_server_socket_process_packet_internal( server, eth, &from, packet_data, packet_bytes );
             }
         }
 
@@ -1438,13 +1438,13 @@ void next_server_receive_packets( next_server_socket_t * server )
     }
 }
 
-struct next_server_process_packets_t * next_server_process_packets( struct next_server_socket_t * server )
+struct next_server_socket_process_packets_t * next_server_socket_process_packets( struct next_server_socket_t * server_socket )
 {
     next_assert( server_socket );
     return &server_socket->process_packets;
 }
 
-int next_server_num_queues( struct next_server_socket_t * server )
+int next_server_socket_num_queues( struct next_server_socket_t * server_socket )
 {
     next_assert( server_socket );
     return server_socket->num_queues;
@@ -1452,6 +1452,6 @@ int next_server_num_queues( struct next_server_socket_t * server )
 
 #else // #ifdef __linux__
 
-int next_server_linux_cpp_dummy = 0;
+int next_server_socket_linux_cpp_dummy = 0;
 
 #endif // #ifdef __linux__
