@@ -26,6 +26,29 @@ void interrupt_handler( int signal )
     (void) signal; quit = 1;
 }
 
+static inline int generate_packet( uint8_t * packet_data, int max_size )
+{
+    const int packet_bytes = 1 + rand() % ( max_size - 1 );
+    packet_data[0] = (uint8_t) ( packet_bytes % 256 );
+    const int start = packet_bytes % 256;
+    for ( int i = 0; i < packet_bytes; i++ )
+    {
+        packet_data[1+i] = (uint8_t) ( start + i ) % 256;
+    }
+    return packet_bytes;
+}
+
+static inline bool verify_packet( uint8_t * packet_data, int packet_bytes )
+{
+    const int start = packet_bytes % 256;
+    for ( int i = 0; i < packet_bytes; i++ )
+    {
+        if ( packet_data[1+i] != (uint8_t) ( ( start + i ) % 256 ) )
+            return false;
+    }
+    return true;
+}
+
 int main()
 {
     signal( SIGINT, interrupt_handler ); signal( SIGTERM, interrupt_handler );
@@ -79,9 +102,6 @@ int main()
 
     bool previous_connected = false;
 
-    uint8_t packet_data[100];
-    memset( packet_data, 0, sizeof(packet_data) );
-
     int count = 0;
 
     while ( !quit )
@@ -97,10 +117,19 @@ int main()
             int packet_bytes = next_client_socket_receive_packet( client_socket, packet_data );
             if ( packet_bytes == 0 )
                 break;
+
             next_info( "client received %d byte packet from server", packet_bytes );
+            
+            if ( !verify_packet( packet_data, packet_bytes ) )
+            {
+                next_error( "packet did not verify" );
+                exit( 1 );
+            }
         }
 
-        next_client_socket_send_packet( client_socket, packet_data, (int) sizeof(packet_data) );
+        uint8_t packet_data[NEXT_MTU];
+        const int packet_bytes = generate_packet( packet_data, NEXT_MTU );
+        next_client_socket_send_packet( client_socket, packet_data, packet_bytes );
 
         if ( !previous_connected )
         {
