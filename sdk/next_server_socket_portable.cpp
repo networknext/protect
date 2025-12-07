@@ -292,7 +292,8 @@ void next_server_socket_send_packets( struct next_server_socket_t * server_socke
         {
             next_assert( packet_data );
             next_assert( packet_bytes <= NEXT_MAX_PACKET_BYTES );
-            next_platform_socket_send_packet( server_socket->socket, &server_socket->send_buffer.to[i], packet_data, (int) server_socket->send_buffer.packet_bytes[i] );
+\
+            next_platform_socket_send_packet( server_socket->socket, &server_socket->send_buffer.to[i], packet_data, packet_bytes );
         }
     }
 

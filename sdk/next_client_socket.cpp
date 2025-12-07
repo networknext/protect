@@ -14,6 +14,7 @@
 
 #include <memory.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <atomic>
 
 struct next_client_socket_backend_init_data_t
@@ -692,8 +693,8 @@ void next_client_socket_receive_packets( next_client_socket_t * client_socket )
     next_assert( client_socket );
 
     next_platform_mutex_acquire( &client_socket->mutex );
+
     next_client_socket_receive_buffer_t * receive_buffer = &client_socket->receive_buffer[client_socket->receive_buffer_index ? 0 : 1];
-    next_platform_mutex_release( &client_socket->mutex );
 
     while ( 1 )
     {
@@ -723,6 +724,8 @@ void next_client_socket_receive_packets( next_client_socket_t * client_socket )
 
         receive_buffer->num_packets++;
     }
+
+    next_platform_mutex_release( &client_socket->mutex );
 }
 
 static void next_client_socket_thread_function( void * data )

@@ -466,12 +466,11 @@ static void pin_thread_to_cpu( int cpu )
 
 static inline int generate_packet( uint8_t * packet_data, int max_size )
 {
-    const int packet_bytes = 100; // 1 + rand() % ( max_size - 1 );
-    packet_data[0] = (uint8_t) ( packet_bytes % 256 );
+    const int packet_bytes = 1 + rand() % ( max_size - 1 );
     const int start = packet_bytes % 256;
     for ( int i = 0; i < packet_bytes; i++ )
     {
-        packet_data[1+i] = (uint8_t) ( start + i ) % 256;
+        packet_data[i] = (uint8_t) ( start + i ) % 256;
     }
     return packet_bytes;
 }
@@ -481,7 +480,7 @@ static inline bool verify_packet( uint8_t * packet_data, int packet_bytes )
     const int start = packet_bytes % 256;
     for ( int i = 0; i < packet_bytes; i++ )
     {
-        if ( packet_data[1+i] != (uint8_t) ( ( start + i ) % 256 ) )
+        if ( packet_data[i] != (uint8_t) ( ( start + i ) % 256 ) )
             return false;
     }
     return true;
