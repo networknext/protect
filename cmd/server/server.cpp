@@ -542,8 +542,9 @@ int main()
 
         for ( int i = 0; i < packets->num_packets; i++ )
         {
-            char buffer[NEXT_MAX_ADDRESS_STRING_LENGTH];
-            next_info( "server received %d byte packet from %s", packets->packet_bytes[i], next_address_to_string( &packets->from[i], buffer ) );
+            // todo
+            // char buffer[NEXT_MAX_ADDRESS_STRING_LENGTH];
+            // next_info( "server received %d byte packet from %s", packets->packet_bytes[i], next_address_to_string( &packets->from[i], buffer ) );
             client_address = packets->from[i];
             last_client_packet_time = next_platform_time();
         }
@@ -561,12 +562,18 @@ int main()
 
         if ( client_address.type == NEXT_ADDRESS_IPV4 && last_client_packet_time + 10.0 >= next_platform_time() )
         {
-            uint64_t packet_id;
-            uint8_t * packet_data = next_server_socket_start_packet( server_socket, &client_address, &packet_id );
-            if ( packet_data )
+            for ( int j = 0; j < 10; j++ )
             {
-                const int packet_bytes = generate_packet( packet_data, NEXT_MTU );
-                next_server_socket_finish_packet( server_socket, packet_id, packet_data, packet_bytes );
+                uint64_t packet_id;
+                uint8_t * packet_data = next_server_socket_start_packet( server_socket, &client_address, &packet_id );
+                if ( packet_data )
+                {
+                    const int packet_bytes = generate_packet( packet_data, NEXT_MTU );
+                    next_server_socket_finish_packet( server_socket, packet_id, packet_data, packet_bytes );
+
+                    // todo
+                    printf( "server sent %d byte packet\n", packet_bytes );
+                }
             }
         }
 

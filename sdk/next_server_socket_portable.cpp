@@ -21,7 +21,7 @@ struct next_server_socket_send_buffer_t
     next_address_t to[NEXT_SERVER_SOCKET_MAX_SEND_PACKETS];
     size_t packet_bytes[NEXT_SERVER_SOCKET_MAX_SEND_PACKETS];
     uint8_t packet_type[NEXT_SERVER_SOCKET_MAX_SEND_PACKETS];
-    uint8_t data[NEXT_MAX_PACKET_BYTES*NEXT_SERVER_SOCKET_MAX_SEND_PACKETS];
+    uint8_t data[NEXT_FRAME_SIZE*NEXT_SERVER_SOCKET_MAX_SEND_PACKETS];
 };
 
 struct next_server_socket_receive_buffer_t
@@ -30,7 +30,7 @@ struct next_server_socket_receive_buffer_t
     next_address_t from[NEXT_SERVER_SOCKET_MAX_RECEIVE_PACKETS];
     uint8_t * packet_data[NEXT_SERVER_SOCKET_MAX_RECEIVE_PACKETS];
     size_t packet_bytes[NEXT_SERVER_SOCKET_MAX_RECEIVE_PACKETS];
-    uint8_t data[NEXT_MAX_PACKET_BYTES*NEXT_SERVER_SOCKET_MAX_RECEIVE_PACKETS];
+    uint8_t data[NEXT_FRAME_SIZE*NEXT_SERVER_SOCKET_MAX_RECEIVE_PACKETS];
 };
 
 struct next_server_socket_t
@@ -176,7 +176,7 @@ uint8_t * next_server_socket_start_packet_internal( struct next_server_socket_t 
     if ( packet_index >= NEXT_SERVER_SOCKET_MAX_SEND_PACKETS )
         return NULL;
 
-    uint8_t * packet_data = server_socket->send_buffer.data + packet_index * NEXT_MAX_PACKET_BYTES;
+    uint8_t * packet_data = server_socket->send_buffer.data + packet_index * NEXT_FRAME_SIZE;
 
     packet_data += NEXT_HEADER_BYTES;
 
@@ -215,11 +215,9 @@ void next_server_socket_finish_packet( struct next_server_socket_t * server_sock
 
     size_t offset = ( packet_data - server_socket->send_buffer.data );
 
-    offset -= offset % NEXT_MAX_PACKET_BYTES;
+    offset -= offset % NEXT_FRAME_SIZE;
 
-    next_assert( offset < NEXT_MAX_PACKET_BYTES*NEXT_SERVER_SOCKET_MAX_SEND_PACKETS );
-
-    const int packet_index = (int) ( offset / NEXT_MAX_PACKET_BYTES );
+    const int packet_index = (int) ( offset / NEXT_FRAME_SIZE );
 
     next_assert( packet_index >= 0 );  
     next_assert( packet_index < NEXT_SERVER_SOCKET_MAX_SEND_PACKETS );  
@@ -260,16 +258,29 @@ void next_server_socket_abort_packet( struct next_server_socket_t * server_socke
 
     size_t offset = ( packet_data - server_socket->send_buffer.data );
 
-    offset -= offset % NEXT_MAX_PACKET_BYTES;
+    offset -= offset % NEXT_FRAME_SIZE;
 
-    next_assert( offset < NEXT_MAX_PACKET_BYTES*NEXT_SERVER_SOCKET_MAX_SEND_PACKETS );
-
-    const int packet_index = (int) ( offset / NEXT_MAX_PACKET_BYTES );
+    const int packet_index = (int) ( offset / NEXT_FRAME_SIZE );
 
     next_assert( packet_index >= 0 );  
     next_assert( packet_index < NEXT_SERVER_SOCKET_MAX_SEND_PACKETS );  
 
     server_socket->send_buffer.packet_bytes[packet_index] = 0;
+}
+
+static inline bool verify_packet( uint8_t * packet_data, int packet_bytes )
+{
+    const int start = packet_bytes % 256;
+    for ( int i = 0; i < packet_bytes; i++ )
+    {
+        if ( packet_data[i] != (uint8_t) ( ( start + i ) % 256 ) )
+        {
+            // todo
+            printf( "%d: expected %d, got %d\n", i, (uint8_t) ( ( start + i ) % 256 ), packet_data[i] );
+            return false;
+        }
+    }
+    return true;
 }
 
 void next_server_socket_send_packets( struct next_server_socket_t * server_socket )
@@ -284,7 +295,7 @@ void next_server_socket_send_packets( struct next_server_socket_t * server_socke
 
     for ( int i = 0; i < num_packets; i++ )
     {
-        uint8_t * packet_data = server_socket->send_buffer.data + i * NEXT_MAX_PACKET_BYTES;
+        uint8_t * packet_data = server_socket->send_buffer.data + i * NEXT_FRAME_SIZE;
 
         const int packet_bytes = (int) server_socket->send_buffer.packet_bytes[i];
 
@@ -292,7 +303,9 @@ void next_server_socket_send_packets( struct next_server_socket_t * server_socke
         {
             next_assert( packet_data );
             next_assert( packet_bytes <= NEXT_MAX_PACKET_BYTES );
-\
+
+            verify_packet( packet_data + 18, packet_bytes - 18 );
+
             next_platform_socket_send_packet( server_socket->socket, &server_socket->send_buffer.to[i], packet_data, packet_bytes );
         }
     }
@@ -342,7 +355,7 @@ void next_server_socket_receive_packets( next_server_socket_t * server_socket )
         if ( server_socket->receive_buffer.current_packet >= NEXT_SERVER_SOCKET_MAX_RECEIVE_PACKETS )
             break;
 
-        uint8_t * packet_data = server_socket->receive_buffer.data + NEXT_MAX_PACKET_BYTES * server_socket->receive_buffer.current_packet;
+        uint8_t * packet_data = server_socket->receive_buffer.data + NEXT_FRAME_SIZE * server_socket->receive_buffer.current_packet;
 
         struct next_address_t from;
         int packet_bytes = next_platform_socket_receive_packet( server_socket->socket, &from, packet_data, NEXT_MAX_PACKET_BYTES );
@@ -373,6 +386,8 @@ void next_server_socket_receive_packets( next_server_socket_t * server_socket )
         {
             next_server_socket_process_packet_internal( server_socket, &from, packet_data, packet_bytes );            
         }
+
+        server_socket->receive_buffer.current_packet++;
     }
 }
 

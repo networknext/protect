@@ -10,6 +10,8 @@
 
 #include "next.h"
 
+#define NEXT_FRAME_SIZE                                              2048
+
 #define NEXT_SEND_PACKETS_PER_CLIENT                                   64
 
 #define NEXT_RECEIVE_PACKETS_PER_CLIENT                                16
