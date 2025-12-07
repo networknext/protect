@@ -126,12 +126,9 @@ int main()
             }
         }
 
-        for ( int i = 0; i < 10; i++ )
-        {
-            uint8_t packet_data[NEXT_MTU];
-            const int packet_bytes = generate_packet( packet_data, NEXT_MTU );
-            next_client_socket_send_packet( client_socket, packet_data, packet_bytes );
-        }
+        uint8_t packet_data[NEXT_MTU];
+        const int packet_bytes = generate_packet( packet_data, NEXT_MTU );
+        next_client_socket_send_packet( client_socket, packet_data, packet_bytes );
 
         if ( !previous_connected )
         {

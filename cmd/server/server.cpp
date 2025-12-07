@@ -561,15 +561,12 @@ int main()
 
         if ( client_address.type == NEXT_ADDRESS_IPV4 && last_client_packet_time + 10.0 >= next_platform_time() )
         {
-            for ( int j = 0; j < 10; j++ )
+            uint64_t packet_id;
+            uint8_t * packet_data = next_server_socket_start_packet( server_socket, &client_address, &packet_id );
+            if ( packet_data )
             {
-                uint64_t packet_id;
-                uint8_t * packet_data = next_server_socket_start_packet( server_socket, &client_address, &packet_id );
-                if ( packet_data )
-                {
-                    const int packet_bytes = generate_packet( packet_data, NEXT_MTU );
-                    next_server_socket_finish_packet( server_socket, packet_id, packet_data, packet_bytes );
-                }
+                const int packet_bytes = generate_packet( packet_data, NEXT_MTU );
+                next_server_socket_finish_packet( server_socket, packet_id, packet_data, packet_bytes );
             }
         }
 
