@@ -542,9 +542,8 @@ int main()
 
         for ( int i = 0; i < packets->num_packets; i++ )
         {
-            // todo
-            // char buffer[NEXT_MAX_ADDRESS_STRING_LENGTH];
-            // next_info( "server received %d byte packet from %s", packets->packet_bytes[i], next_address_to_string( &packets->from[i], buffer ) );
+            char buffer[NEXT_MAX_ADDRESS_STRING_LENGTH];
+            next_info( "server received %d byte packet from %s", packets->packet_bytes[i], next_address_to_string( &packets->from[i], buffer ) );
             client_address = packets->from[i];
             last_client_packet_time = next_platform_time();
         }
@@ -570,9 +569,6 @@ int main()
                 {
                     const int packet_bytes = generate_packet( packet_data, NEXT_MTU );
                     next_server_socket_finish_packet( server_socket, packet_id, packet_data, packet_bytes );
-
-                    // todo
-                    printf( "server sent %d byte packet\n", packet_bytes );
                 }
             }
         }
