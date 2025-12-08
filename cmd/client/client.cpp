@@ -26,9 +26,9 @@ void interrupt_handler( int signal )
     (void) signal; quit = 1;
 }
 
-static inline int generate_packet( uint8_t * packet_data, int max_size )
+static inline int generate_packet( uint8_t * packet_data, int min_size, int max_size )
 {
-    const int packet_bytes = 100; // + rand() % ( max_size - 1 );
+    const int packet_bytes = min_size + rand() % ( max_size - min_size );
     const int start = packet_bytes % 256;
     for ( int i = 0; i < packet_bytes; i++ )
     {
@@ -128,9 +128,12 @@ int main()
             }
         }
 
-        uint8_t packet_data[NEXT_MTU];
-        const int packet_bytes = generate_packet( packet_data, NEXT_MTU );
-        next_client_socket_send_packet( client_socket, packet_data, packet_bytes );
+        for ( int i = 0; i < 10; i++ )
+        {
+            uint8_t packet_data[256];
+            const int packet_bytes = generate_packet( packet_data, 100, 256 );
+            next_client_socket_send_packet( client_socket, packet_data, packet_bytes );
+        }
 
         if ( !previous_connected )
         {
