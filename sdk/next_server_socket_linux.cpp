@@ -1212,9 +1212,9 @@ void xdp_send_thread_function( void * data )
             for ( int i = 0; i < num_completed; i++ )
             {
                 uint64_t frame = *xsk_ring_cons__comp_addr( &socket->complete_queue, complete_index + i );
-                next_mutex_release( &socket->send_mutex );
+                next_platform_mutex_acquire( &socket->send_mutex );
                 free_send_frame( socket, frame );
-                next_mutex_acquire( &socket->send_mutex );
+                next_platform_mutex_release( &socket->send_mutex );
             }
 
             // todo
@@ -1279,9 +1279,9 @@ void xdp_send_thread_function( void * data )
 
                     struct xdp_desc * desc = xsk_ring_prod__tx_desc( &socket->send_queue, send_queue_index + j );
 
-                    next_mutex_acquire( &socket->send_mutex );
+                    next_platform_mutex_acquire( &socket->send_mutex );
                     int frame = alloc_send_frame( socket );
-                    next_mutex_release( &socket->send_mutex );
+                    next_platform_mutex_release( &socket->send_mutex );
 
                     // todo
                     printf( "--> %x\n", frame );
