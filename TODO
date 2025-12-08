@@ -31,3 +31,9 @@ TODO
 		4. There could be something wrong with how I am sending packets at the IP level (hashes, addresses etc...)
 
 		5. I could run the server on my hulk linux, and see if the random sized packets get through across the ethernet switch. If they do, then the problem is probably at the IP or UDP header level?
+
+		6. I could restructure the server so it sends n packets per-client (for example 10), and doesn't do it in response to the server receiving packets, but sends them each frame. Does this change anything?
+
+		7. I could change the client packets sent to the server and make them smaller (eg. 100 bytes fixed)
+
+		8. I could disable timeout for clients and print out when the XDP server receives packets from clients. Make sure the server is actually able to receive packets from all clients.

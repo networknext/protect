@@ -546,9 +546,8 @@ int main()
 
         for ( int i = 0; i < packets->num_packets; i++ )
         {
-            // todo
-            // char buffer[NEXT_MAX_ADDRESS_STRING_LENGTH];
-            // next_info( "server received %d byte packet from %s", packets->packet_bytes[i], next_address_to_string( &packets->from[i], buffer ) );
+            char buffer[NEXT_MAX_ADDRESS_STRING_LENGTH];
+            next_info( "server received %d byte packet from %s", packets->packet_bytes[i], next_address_to_string( &packets->from[i], buffer ) );
             client_address = packets->from[i];
             last_client_packet_time = next_platform_time();
 

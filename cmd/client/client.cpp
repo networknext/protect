@@ -28,7 +28,7 @@ void interrupt_handler( int signal )
 
 static inline int generate_packet( uint8_t * packet_data, int max_size )
 {
-    const int packet_bytes = 1 + rand() % ( max_size - 1 );
+    const int packet_bytes = 100; // + rand() % ( max_size - 1 );
     const int start = packet_bytes % 256;
     for ( int i = 0; i < packet_bytes; i++ )
     {
