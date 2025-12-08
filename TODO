@@ -70,7 +70,10 @@ DONE
 
 	Try disabling the memset 0 and see if the weird hitchy shit comes back by itself.
 
+	OK so the mystery is solved. Something is writing bad data to the header, and this is causing re-use of the same buffer to explode.
+
+	It was the ipv4 checksum. It was non-zero during calculation, leading to wrong checksum second time a packet header was used.
+
 TODO
 
-	OK so the mystery is solved. Something is writing bad data to the header, and this is causing re-use of the same buffer to explode.
-	
+	Alright. Let's go!
