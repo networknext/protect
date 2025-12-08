@@ -1176,10 +1176,7 @@ void xdp_send_thread_function( void * data )
     {
         socket->send_counter_send_thread = (uint64_t) socket->send_counter_main_thread;
 
-        const int on_index = socket->send_counter_send_thread;
-
-        next_assert( on_index >= 0 );
-        next_assert( on_index <= 1 );
+        const int on_index = socket->send_counter_main_thread % 2;
 
         next_server_socket_send_buffer_t * send_buffer = &socket->send_buffer[on_index];
 
