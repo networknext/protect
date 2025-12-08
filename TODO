@@ -24,66 +24,15 @@ DONE
 
 	It would be good to solve this problem, so at least we can be confident that the receive packet side is solid.
 
+	Simplest approach to fixing the fill queue stall seems to work. Added a fatal error in case non-zero fail to reserve can happen.
+
 TODO
 
-	Fix "could not reserve packets in fill queue".
+	OK I'm pretty confident I know what's going on. The same frame pointer is being used for multiple packets, thus, when the packets all have the same size, it does send a stream of them, but when teh packets have different sizes, they rarely get through.
 
-	Make it generic, so I can handle if it returns a non-zero I can reserve only x/y.
+	This explains both why the random size packets (mostly) fail, and why it fails similarly when mulitple addresses are added to the mix, again, these packet data is re-used so the packets get all messed up.
 
-	To do this I think I need a safety array of frames that couldn't be returned.
-
-	Keep adding to them, and again, if they are only partially finished, then we can memmove them.
-
-	This seems to be rare so this should be no problem.
-
-	Define this struct and see if this approach can work...
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+	Solution: Verify this is the case by printing out the pointer for the packet data for each packet sent.
 
 	-------------------------------
 
@@ -91,7 +40,7 @@ TODO
 
 		1. Wireshark the packets written by a non-XDP server vs. the packets written by the the AF_XDP server and see if there is any binary difference in them
 
-		2. Debug why we get this after a while, it could be clue: "error: could not reserve packets in fill queue" (although this is in receive so is probably unrelated)
+		2. Debug why we get this after a while, it could be clue: "error: could not reserve packets in fill queue" (although this is in receive so is probably unrelated) (done, sends are still broken).
 
 		3. There could be something wrong with how I am sending packets at the ethernet level (eg. gateway)
 
@@ -99,8 +48,16 @@ TODO
 
 		5. I could run the server on my hulk linux, and see if the random sized packets get through across the ethernet switch. If they do, then the problem is probably at the IP or UDP header level?
 
-		6. I could restructure the server so it sends n packets per-client (for example 10), and doesn't do it in response to the server receiving packets, but sends them each frame. Does this change anything?
+		6. Restructure the server so it sends n packets per-client (for example 10), and doesn't do it in response to the server receiving packets, but sends them each frame. Does this change anything?
 
 		7. I could change the client packets sent to the server and make them smaller (eg. 100 bytes fixed)
 
-		8. I could disable timeout for clients and print out when the XDP server receives packets from clients. Make sure the server is actually able to receive packets from all clients.
+		8. I could disable timeout for clients and print out when the XDP server receives packets from clients. Make sure the server is actually able to receive packets from all clients. (done, it can receive...)
+
+		9. It could just be that packets somehow don't get from the user app to the XDP program. There could be a logic error there, maybe timing related?
+
+		10. Look across *everything* related to packet size passed in from teh application. Can it trip different codepaths?
+
+		11. Force the packet size to 100 bytes in the XDP send thread, even though its passed in as random packet sizes from user. Disable client verify packet. Do the packets now get through?
+
+

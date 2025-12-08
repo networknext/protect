@@ -1267,6 +1267,10 @@ void xdp_send_thread_function( void * data )
                     struct xdp_desc * desc = xsk_ring_prod__tx_desc( &socket->send_queue, send_queue_index + j );
 
                     int frame = alloc_send_frame( socket );
+
+                    // todo
+                    printf( "--> %x\n", frame );
+
                     next_assert( frame != INVALID_FRAME );
                     if ( frame == INVALID_FRAME )
                     {
@@ -1387,6 +1391,13 @@ void xdp_receive_thread_function( void * data )
                 {
                     xsk_ring_prod__submit( &socket->fill_queue, num_reserved );
                     break;
+                }
+
+                if ( num_reserved > 0 )
+                {
+                    // IMPORTANT: If this ever trips we need to be smarter about how we return frames to the fill queue
+                    next_error( "edge case not handled" );
+                    exit(1);
                 }
 
                 poll( fds, 1, 0 );
