@@ -10,6 +10,7 @@
 #include <string.h>
 #include <signal.h>
 #include <stdlib.h>
+#include <map>
 
 #define LOAD_TEST 0
 
@@ -546,6 +547,14 @@ int main()
             next_info( "server received %d byte packet from %s", packets->packet_bytes[i], next_address_to_string( &packets->from[i], buffer ) );
             client_address = packets->from[i];
             last_client_packet_time = next_platform_time();
+
+            uint64_t packet_id;
+            uint8_t * packet_data = next_server_socket_start_packet( server_socket, &client_address, &packet_id );
+            if ( packet_data )
+            {
+                const int packet_bytes = generate_packet( packet_data, NEXT_MTU );
+                next_server_socket_finish_packet( server_socket, packet_id, packet_data, packet_bytes );
+            }
         }
 
         next_server_socket_update( server_socket );
@@ -555,22 +564,6 @@ int main()
         for ( int i = 0; i < NUM_SEND_THREADS; i++ )
         {
             send_thread_pool.AddTask( send_packets_thread, send_data + i );
-        }
-
-#else // #if LOAD_TEST
-
-        if ( client_address.type == NEXT_ADDRESS_IPV4 && last_client_packet_time + 10.0 >= next_platform_time() )
-        {
-            for ( int j = 0; j < 10; j++ )
-            {
-                uint64_t packet_id;
-                uint8_t * packet_data = next_server_socket_start_packet( server_socket, &client_address, &packet_id );
-                if ( packet_data )
-                {
-                    const int packet_bytes = generate_packet( packet_data, NEXT_MTU );
-                    next_server_socket_finish_packet( server_socket, packet_id, packet_data, packet_bytes );
-                }
-            }
         }
 
 #endif // #if LOAD_TEST

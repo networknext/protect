@@ -60,7 +60,7 @@ int main()
 
 #if CLIENT_DIRECT
 
-    const char * connect = "64.34.88.117:40000";
+    const char * connect = "127.0.0.1:40000";
 
 #else // #if CLIENT_DIRECT
 

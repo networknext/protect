@@ -268,21 +268,6 @@ void next_server_socket_abort_packet( struct next_server_socket_t * server_socke
     server_socket->send_buffer.packet_bytes[packet_index] = 0;
 }
 
-static inline bool verify_packet( uint8_t * packet_data, int packet_bytes )
-{
-    const int start = packet_bytes % 256;
-    for ( int i = 0; i < packet_bytes; i++ )
-    {
-        if ( packet_data[i] != (uint8_t) ( ( start + i ) % 256 ) )
-        {
-            // todo
-            printf( "%d: expected %d, got %d\n", i, (uint8_t) ( ( start + i ) % 256 ), packet_data[i] );
-            return false;
-        }
-    }
-    return true;
-}
-
 void next_server_socket_send_packets( struct next_server_socket_t * server_socket )
 {
     next_assert( server_socket );
@@ -303,9 +288,6 @@ void next_server_socket_send_packets( struct next_server_socket_t * server_socke
         {
             next_assert( packet_data );
             next_assert( packet_bytes <= NEXT_MAX_PACKET_BYTES );
-
-            verify_packet( packet_data + 18, packet_bytes - 18 );
-
             next_platform_socket_send_packet( server_socket->socket, &server_socket->send_buffer.to[i], packet_data, packet_bytes );
         }
     }
@@ -362,6 +344,8 @@ void next_server_socket_receive_packets( next_server_socket_t * server_socket )
         if ( packet_bytes == 0 )
             break;
 
+        const uint8_t packet_type = packet_data[0];
+
         // basic packet filter
 
         if ( !next_basic_packet_filter( packet_data, packet_bytes ) )
@@ -375,8 +359,6 @@ void next_server_socket_receive_packets( next_server_socket_t * server_socket )
         // todo: advanced packet filter
 
 #endif // #if NEXT_ADVANCED_PACKET_FILTER
-
-        const uint8_t packet_type = packet_data[0];
 
         if ( packet_type == NEXT_PACKET_DIRECT )
         {  

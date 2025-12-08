@@ -698,7 +698,15 @@ void next_client_socket_receive_packets( next_client_socket_t * client_socket )
 {
     next_assert( client_socket );
 
+    double start = next_platform_time();
     next_platform_mutex_acquire( &client_socket->mutex );
+    double finish = next_platform_time();
+
+    double dt = finish - start;
+    if ( dt > 0.1 )
+    {
+        printf( "mutex hitch %f seconds\n", dt );
+    }
 
     const int off_index = client_socket->receive_buffer_index ? 0 : 1;
 
