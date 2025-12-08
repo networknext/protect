@@ -29,3 +29,5 @@ TODO
 		3. There could be something wrong with how I am sending packets at the ethernet level (eg. gateway)
 
 		4. There could be something wrong with how I am sending packets at the IP level (hashes, addresses etc...)
+
+		5. I could run the server on my hulk linux, and see if the random sized packets get through across the ethernet switch. If they do, then the problem is probably at the IP or UDP header level?
