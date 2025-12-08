@@ -35,10 +35,10 @@ struct next_client_socket_receive_buffer_t
     double receive_time[NEXT_NUM_CLIENT_PACKETS];
     uint8_t * packet_data[NEXT_NUM_CLIENT_PACKETS];
     size_t packet_bytes[NEXT_NUM_CLIENT_PACKETS];
-    uint8_t data[NEXT_MAX_PACKET_BYTES*NEXT_NUM_CLIENT_PACKETS];
+    uint8_t data[NEXT_FRAME_SIZE*NEXT_NUM_CLIENT_PACKETS];
 };
 
-struct next_client_socket_receive_packets_t
+struct next_client_socket_received_packets_t
 {
     int num_packets;
     int receive_index;
@@ -78,7 +78,7 @@ struct next_client_socket_t
 
     int receive_buffer_index;
     double last_packet_receive_time;
-    next_client_socket_receive_packets_t receive_packets;
+    next_client_socket_received_packets_t received_packets;
     next_client_socket_receive_buffer_t receive_buffer[2];
 };
 
@@ -433,13 +433,13 @@ void next_client_socket_process_packet( next_client_socket_t * client_socket, ne
         {
             client_socket->last_packet_receive_time = next_platform_time();
 
-            const int index = client_socket->receive_packets.num_packets;
+            const int index = client_socket->received_packets.num_packets;
 
             if ( index < NEXT_NUM_CLIENT_PACKETS )
             {
-                client_socket->receive_packets.packet_data[index] = packet_data + NEXT_HEADER_BYTES;
-                client_socket->receive_packets.packet_bytes[index] = packet_bytes - NEXT_HEADER_BYTES;
-                client_socket->receive_packets.num_packets++;
+                client_socket->received_packets.packet_data[index] = packet_data + NEXT_HEADER_BYTES;
+                client_socket->received_packets.packet_bytes[index] = packet_bytes - NEXT_HEADER_BYTES;
+                client_socket->received_packets.num_packets++;
             }
         }
         // todo: address check on selected client backend address?
@@ -563,13 +563,17 @@ void next_client_socket_update_refresh_backend_token( next_client_socket_t * cli
     client_socket->last_request_backend_token_refresh_time = current_time;
 }
 
-void next_client_socket_update_receive_packets( next_client_socket_t * client_socket )
+void next_client_socket_update_swap_receive_buffers( next_client_socket_t * client_socket )
 {
     next_platform_mutex_acquire( &client_socket->mutex );
+
     client_socket->receive_buffer_index++;
     client_socket->receive_buffer_index &= 1;
+
     const int off_index = client_socket->receive_buffer_index ? 0 : 1;
+
     client_socket->receive_buffer[off_index].num_packets = 0;
+
     next_platform_mutex_release( &client_socket->mutex );
 }
 
@@ -577,8 +581,8 @@ void next_client_socket_update_process_packets( next_client_socket_t * client_so
 {
     next_client_socket_receive_buffer_t * receive_buffer = &client_socket->receive_buffer[client_socket->receive_buffer_index];
 
-    client_socket->receive_packets.num_packets = 0;
-    client_socket->receive_packets.receive_index = 0;
+    client_socket->received_packets.num_packets = 0;
+    client_socket->received_packets.receive_index = 0;
 
     const int num_packets = receive_buffer->num_packets;
 
@@ -590,11 +594,15 @@ void next_client_socket_update_process_packets( next_client_socket_t * client_so
     receive_buffer->num_packets = 0;
 }
 
+void next_client_socket_receive_packets( next_client_socket_t * client_socket );
+
 void next_client_socket_update( next_client_socket_t * client_socket )
 {
     next_assert( client_socket );
 
-    next_client_socket_update_receive_packets( client_socket );
+    next_client_socket_receive_packets( client_socket );
+
+    next_client_socket_update_swap_receive_buffers( client_socket );
 
     next_client_socket_update_process_packets( client_socket );
 
@@ -635,20 +643,21 @@ int next_client_socket_receive_packet( next_client_socket_t * client_socket, uin
     next_assert( client_socket );
     next_assert( packet_data );
 
-    const int receive_index = client_socket->receive_packets.receive_index;
-    const int num_packets = client_socket->receive_packets.num_packets;
+    const int receive_index = client_socket->received_packets.receive_index;
+
+    const int num_packets = client_socket->received_packets.num_packets;
 
     if ( receive_index >= num_packets )
         return 0;
 
-    const int packet_bytes = client_socket->receive_packets.packet_bytes[receive_index];
+    const int packet_bytes = client_socket->received_packets.packet_bytes[receive_index];
 
     next_assert( packet_bytes >= 0 );
     next_assert( packet_bytes <= NEXT_MTU );
 
-    memcpy( packet_data, client_socket->receive_packets.packet_data[receive_index], packet_bytes );
+    memcpy( packet_data, client_socket->received_packets.packet_data[receive_index], packet_bytes );
 
-    client_socket->receive_packets.receive_index++;
+    client_socket->received_packets.receive_index++;
 
     return packet_bytes;
 }
@@ -689,16 +698,26 @@ void next_client_socket_receive_packets( next_client_socket_t * client_socket )
 {
     next_assert( client_socket );
 
+    double start = next_platform_time();
     next_platform_mutex_acquire( &client_socket->mutex );
+    double finish = next_platform_time();
 
-    next_client_socket_receive_buffer_t * receive_buffer = &client_socket->receive_buffer[client_socket->receive_buffer_index ? 0 : 1];
+    double dt = finish - start;
+    if ( dt > 0.1 )
+    {
+        printf( "mutex hitch %f seconds\n", dt );
+    }
+
+    const int off_index = client_socket->receive_buffer_index ? 0 : 1;
+
+    next_client_socket_receive_buffer_t * receive_buffer = &client_socket->receive_buffer[off_index];
 
     while ( 1 )
     {
         if ( receive_buffer->num_packets >= NEXT_NUM_CLIENT_PACKETS )
             break;
 
-        uint8_t * packet_data = client_socket->receive_buffer->data + receive_buffer->num_packets * NEXT_MAX_PACKET_BYTES;
+        uint8_t * packet_data = receive_buffer->data + receive_buffer->num_packets * NEXT_FRAME_SIZE;
 
         struct next_address_t from;
         int packet_bytes = next_platform_socket_receive_packet( client_socket->socket, &from, packet_data, NEXT_MAX_PACKET_BYTES );

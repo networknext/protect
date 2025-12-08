@@ -3,7 +3,9 @@
     Licensed under the Network Next Source Available License 2.0
 */
 
-#ifdef __linux__
+#include "next.h"
+
+#if NEXT_XDP
 
 #include "next_server_socket.h"
 #include "next_constants.h"
@@ -1199,13 +1201,6 @@ static void xdp_send_thread_function( void * data )
             xsk_ring_cons__release( &socket->complete_queue, num_completed );
         }
 
-        // make sure the driver gets updated
-
-        if ( xsk_ring_prod__needs_wakeup( &socket->send_queue ) )
-        {
-            sendto( xsk_socket__fd( socket->xsk ), NULL, 0, MSG_DONTWAIT, NULL, 0 );
-        }
-
         // count how many packets we have to send in the send buffer
 
         if ( send_buffer->num_packets > NEXT_XDP_SEND_QUEUE_SIZE )
@@ -1287,6 +1282,13 @@ static void xdp_send_thread_function( void * data )
                 // submit send queue to driver
 
                 xsk_ring_prod__submit( &socket->send_queue, batch_packets );
+
+                // make sure the driver gets updated
+
+                if ( xsk_ring_prod__needs_wakeup( &socket->send_queue ) )
+                {
+                    sendto( xsk_socket__fd( socket->xsk ), NULL, 0, MSG_DONTWAIT, NULL, 0 );
+                }
 
                 // advance our send index past sent packets
 
@@ -1448,8 +1450,8 @@ int next_server_socket_num_queues( struct next_server_socket_t * server_socket )
     return server_socket->num_queues;
 }
 
-#else // #ifdef __linux__
+#else // #if NEXT_XDP
 
 int next_server_socket_linux_cpp_dummy = 0;
 
-#endif // #ifdef __linux__
+#endif // #if NEXT_XDP

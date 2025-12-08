@@ -43,9 +43,7 @@ static inline bool verify_packet( uint8_t * packet_data, int packet_bytes )
     for ( int i = 0; i < packet_bytes; i++ )
     {
         if ( packet_data[i] != (uint8_t) ( ( start + i ) % 256 ) )
-        {
             return false;
-        }
     }
     return true;
 }
@@ -62,7 +60,7 @@ int main()
 
 #if CLIENT_DIRECT
 
-    const char * connect = "127.0.0.1:40000";
+    const char * connect = "69.67.149.151:40000"; //"127.0.0.1:40000";
 
 #else // #if CLIENT_DIRECT
 
@@ -128,9 +126,12 @@ int main()
             }
         }
 
-        uint8_t packet_data[NEXT_MTU];
-        const int packet_bytes = generate_packet( packet_data, NEXT_MTU );
-        next_client_socket_send_packet( client_socket, packet_data, packet_bytes );
+        for ( int i = 0; i < 10; i++ )
+        {
+            uint8_t packet_data[NEXT_MTU];
+            const int packet_bytes = generate_packet( packet_data, NEXT_MTU );
+            next_client_socket_send_packet( client_socket, packet_data, packet_bytes );
+        }
 
         if ( !previous_connected )
         {
