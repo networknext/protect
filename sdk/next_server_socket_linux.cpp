@@ -1260,11 +1260,11 @@ void xdp_send_thread_function( void * data )
             {
                 // setup descriptors for packets in batch to be sent
 
-                for ( int i = 0; i < batch_packets; i++ )
+                for ( int j = 0; j < batch_packets; j++ )
                 {
-                    const int packet_index = send_packet_index[i];
+                    const int packet_index = send_packet_index[j];
 
-                    struct xdp_desc * desc = xsk_ring_prod__tx_desc( &socket->send_queue, send_queue_index + i );
+                    struct xdp_desc * desc = xsk_ring_prod__tx_desc( &socket->send_queue, send_queue_index + j );
 
                     int frame = alloc_send_frame( socket );
                     next_assert( frame != INVALID_FRAME );
