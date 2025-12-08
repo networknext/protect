@@ -60,4 +60,10 @@ DONE
 
 TODO
 	
-	Verify multiple clients work fine.
+	Verify multiple clients work fine...
+
+	But after a while, it wraps around, and then it starts fucking up again.
+
+	Is it possible that some fields are not being set properly or need to be cleared? They are uninitialized?
+
+	Maybe clearing the header post write is the correct test for this. Try it...
