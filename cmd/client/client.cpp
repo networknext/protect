@@ -126,7 +126,7 @@ int main()
             }
         }
 
-        for ( int i = 0; i < 10; i++ )
+        // for ( int i = 0; i < 10; i++ )
         {
             uint8_t packet_data[NEXT_MTU];
             const int packet_bytes = generate_packet( packet_data, NEXT_MTU );
