@@ -925,7 +925,7 @@ static uint16_t ipv4_checksum( const void * data, size_t header_length )
 
 int generate_packet_header( void * data, uint8_t * server_ethernet_address, uint8_t * gateway_ethernet_address, uint32_t server_address_big_endian, uint32_t client_address_big_endian, uint16_t server_port_big_endian, uint16_t client_port_big_endian, int payload_bytes )
 {
-    // todo: this is needed for some reason, but I don't know why
+    // IMPORTANT: this is needed for some reason, but I don't know why!
     memset( data, 0, sizeof(ethhdr) + sizeof(iphdr) + sizeof(udphdr) );
 
     struct ethhdr * eth = (ethhdr*) data;
