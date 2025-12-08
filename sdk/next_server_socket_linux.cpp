@@ -1189,17 +1189,23 @@ void xdp_send_thread_function( void * data )
 
         // mark any completed send packet frames as free to be reused
 
-        uint32_t complete_index;
-
-        unsigned int num_completed = xsk_ring_cons__peek( &socket->complete_queue, XSK_RING_CONS__DEFAULT_NUM_DESCS, &complete_index );
-
-        if ( num_completed > 0 )
+        while ( true )
         {
+            uint32_t complete_index;
+
+            unsigned int num_completed = xsk_ring_cons__peek( &socket->complete_queue, XSK_RING_CONS__DEFAULT_NUM_DESCS, &complete_index );
+
+            if ( num_completed == 0 )
+                break;
+
             for ( int i = 0; i < num_completed; i++ )
             {
                 uint64_t frame = *xsk_ring_cons__comp_addr( &socket->complete_queue, complete_index + i );
                 free_send_frame( socket, frame );
             }
+
+            // todo
+            printf( "completed %d packets on queue %d\n", num_completed, socket->queue );
 
             xsk_ring_cons__release( &socket->complete_queue, num_completed );
         }
