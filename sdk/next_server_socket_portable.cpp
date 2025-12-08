@@ -3,6 +3,8 @@
     Licensed under the Network Next Source Available License 2.0
 */
 
+#include "next.h"
+
 #if NEXT_XDP == 0
 
 #include "next_server_socket.h"
