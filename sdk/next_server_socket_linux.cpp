@@ -1288,6 +1288,7 @@ void xdp_send_thread_function( void * data )
 
         // mark any completed send packet frames as free to be reused
 
+        /*
         while ( true )
         {
             uint32_t complete_index;
@@ -1308,6 +1309,7 @@ void xdp_send_thread_function( void * data )
 
             xsk_ring_cons__release( &socket->complete_queue, num_completed );
         }
+        */
     }
 }
 

@@ -34,13 +34,35 @@ DONE
 
 	Alternatively, something is messed up with the descriptor causing this to be all jacked up. TBD.
 
-TODO
-
 	OK. It's really simple. The send frame allocator is written and read from multiple threads, but it's not protected by a mutex.
 
 	Thus the frames are getting trashed between the two threads...
 
 	Should be able to verify this is the case by putting a simple mutex around the frame allocator.
+
+	No. It is a threading issue, or it is an issue where frames are getting re-used incorrectly
+
+	BUT
+
+	It's not caused by lack of synchornization. Each send queue has its own umem and send/receive allocators, and these allocators and frames are only used by one thread.
+
+	What's going on here is that frames are getting completed and modified, before the driver actually sends the packet.
+
+	I'm certain of it.
+
+	If we could modify the frames so it rotates through them, instead of re-using the same frames over and over, it'd be more resilient.
+
+TODO
+	
+	Test this theory by not freeing completed send frames.
+
+	If the theory is true, the clients should receive packets again, because they are all the correct size.
+
+
+
+
+
+
 
 	-------------------------------
 
