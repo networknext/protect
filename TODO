@@ -67,3 +67,7 @@ TODO
 	Is it possible that some fields are not being set properly or need to be cleared? They are uninitialized?
 
 	Maybe clearing the header post write is the correct test for this. Try it...
+
+	It's working fine now, but it's possible that the trigger was trying to connect from the same ethernet address.
+
+	Try disabling the memset 0 and see if the weird hitchy shit comes back by itself.
