@@ -305,15 +305,12 @@ void next_client_socket_update_timeout( next_client_socket_t * client_socket )
 {
     if ( client_socket->direct )
     {
-        // todo: temporary disable
-        /*
         if ( client_socket->last_packet_receive_time + NEXT_DIRECT_TIMEOUT < next_platform_time() )
         {
             client_socket->state = NEXT_CLIENT_SOCKET_CONNECTION_TIMED_OUT;
             next_client_socket_connection_timed_out( client_socket );
             return;
         }
-        */
     }
     else
     {
