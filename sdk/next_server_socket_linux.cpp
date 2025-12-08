@@ -95,7 +95,7 @@ struct next_server_xdp_socket_t
     uint8_t padding_3[1024];
 
     std::atomic<bool> send_quit;
-    uint32_t num_free_send_frames;
+    uint32_t send_frame_index;
     uint64_t send_frames[NEXT_XDP_NUM_FRAMES/2];
     uint8_t server_ethernet_address[ETH_ALEN];
     uint8_t gateway_ethernet_address[ETH_ALEN];
@@ -284,6 +284,9 @@ static bool get_gateway_mac_address( const char * interface_name, uint8_t * mac_
 
 static uint64_t alloc_send_frame( next_server_xdp_socket_t * socket )
 {
+    uint64_t frame = socket->send_frames[socket->send_frame_index];
+    socket->send_frame_index++;
+    /*
     uint64_t frame = INVALID_FRAME;
     if ( socket->num_free_send_frames > 0 )
     {
@@ -292,13 +295,16 @@ static uint64_t alloc_send_frame( next_server_xdp_socket_t * socket )
         socket->send_frames[socket->num_free_send_frames] = INVALID_FRAME;
     }
     return frame;
+    */
 }
 
 static void free_send_frame( next_server_xdp_socket_t * socket, uint64_t frame )
 {
+    /*
     next_assert( socket->num_free_send_frames < NEXT_XDP_NUM_FRAMES );
     socket->send_frames[socket->num_free_send_frames] = frame;
     socket->num_free_send_frames++;
+    */
 }
 
 static uint64_t alloc_receive_frame( next_server_xdp_socket_t * socket )
@@ -1187,6 +1193,29 @@ void xdp_send_thread_function( void * data )
             sendto( xsk_socket__fd( socket->xsk ), NULL, 0, MSG_DONTWAIT, NULL, 0 );
         }
 
+        // mark any completed send packet frames as free to be reused
+
+        while ( true )
+        {
+            uint32_t complete_index;
+
+            unsigned int num_completed = xsk_ring_cons__peek( &socket->complete_queue, XSK_RING_CONS__DEFAULT_NUM_DESCS, &complete_index );
+
+            if ( num_completed == 0 )
+                break;
+
+            for ( int i = 0; i < num_completed; i++ )
+            {
+                uint64_t frame = *xsk_ring_cons__comp_addr( &socket->complete_queue, complete_index + i );
+                free_send_frame( socket, frame );
+            }
+
+            xsk_ring_cons__release( &socket->complete_queue, num_completed );
+
+            // todo
+            // printf( "completed %d packets on queue %d\n", num_completed, socket->queue );
+        }
+
         // count how many packets we have to send in the send buffer
 
         if ( send_buffer->num_packets > NEXT_XDP_SEND_QUEUE_SIZE )
@@ -1285,29 +1314,6 @@ void xdp_send_thread_function( void * data )
                 send_buffer->packet_start_index = send_packet_index[batch_packets-1] + 1;
             }
         }            
-
-        // mark any completed send packet frames as free to be reused
-
-        while ( true )
-        {
-            uint32_t complete_index;
-
-            unsigned int num_completed = xsk_ring_cons__peek( &socket->complete_queue, XSK_RING_CONS__DEFAULT_NUM_DESCS, &complete_index );
-
-            if ( num_completed == 0 )
-                break;
-
-            xsk_ring_cons__release( &socket->complete_queue, num_completed );
-
-            for ( int i = 0; i < num_completed; i++ )
-            {
-                uint64_t frame = *xsk_ring_cons__comp_addr( &socket->complete_queue, complete_index + i );
-                free_send_frame( socket, frame );
-            }
-
-            // todo
-            // printf( "completed %d packets on queue %d\n", num_completed, socket->queue );
-        }
     }
 }
 
