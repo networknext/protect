@@ -465,12 +465,9 @@ static void pin_thread_to_cpu( int cpu )
 
 #endif // #ifdef __linux__
 
-static inline int generate_packet( uint8_t * packet_data, int max_size )
+static inline int generate_packet( uint8_t * packet_data, int min_size, int max_size )
 {
-    // todo
-    max_size = 100;
-
-    const int packet_bytes = 1 + rand() % ( max_size - 1 );
+    const int packet_bytes = min_size + rand() % ( max_size - min_size );
     const int start = packet_bytes % 256;
     for ( int i = 0; i < packet_bytes; i++ )
     {
@@ -555,7 +552,7 @@ int main()
             uint8_t * packet_data = next_server_socket_start_packet( server_socket, &client_address, &packet_id );
             if ( packet_data )
             {
-                const int packet_bytes = generate_packet( packet_data, NEXT_MTU );
+                const int packet_bytes = generate_packet( packet_data, 1000, NEXT_MTU );
                 next_server_socket_finish_packet( server_socket, packet_id, packet_data, packet_bytes );
             }
         }

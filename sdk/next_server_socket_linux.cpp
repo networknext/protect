@@ -1189,9 +1189,6 @@ void xdp_send_thread_function( void * data )
             }
 
             xsk_ring_cons__release( &socket->complete_queue, num_completed );
-
-            // todo
-            // printf( "completed %d packets on queue %d\n", num_completed, socket->queue );
         }
 
         // count how many packets we have to send in the send buffer
@@ -1252,9 +1249,6 @@ void xdp_send_thread_function( void * data )
 
                     int frame = alloc_send_frame( socket );
 
-                    // todo
-                    printf( "--> %x [%d]\n", frame, send_queue_index + j );
-
                     next_assert( frame != INVALID_FRAME );
                     if ( frame == INVALID_FRAME )
                     {
@@ -1273,15 +1267,9 @@ void xdp_send_thread_function( void * data )
 
                     int packet_bytes = generate_packet_header( packet_data, socket->server_ethernet_address, socket->gateway_ethernet_address, socket->server_address_big_endian, to_address_big_endian, socket->server_port_big_endian, to_port_big_endian, payload_bytes );
 
-                    // todo
-                    // printf( "---> generate %d byte packet\n", packet_bytes );
-
                     desc->addr = frame;
                     desc->len = packet_bytes;
                 }
-
-                // todo
-                // printf( "sent %d packets on queue %d\n", batch_packets, socket->queue );
 
                 // submit send queue to driver
 
@@ -1385,8 +1373,6 @@ void xdp_receive_thread_function( void * data )
                 }
 
                 poll( fds, 1, 0 );
-
-                printf( "pump\n" );
             }
         }
     }
