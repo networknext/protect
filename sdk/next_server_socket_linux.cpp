@@ -971,9 +971,6 @@ static uint16_t ipv4_checksum( const void * data, size_t header_length )
 
 int generate_packet_header( void * data, uint8_t * server_ethernet_address, uint8_t * gateway_ethernet_address, uint32_t server_address_big_endian, uint32_t client_address_big_endian, uint16_t server_port_big_endian, uint16_t client_port_big_endian, int payload_bytes )
 {
-    // IMPORTANT: this is needed for some reason, but I don't know why!
-    memset( data, 0, sizeof(ethhdr) + sizeof(iphdr) + sizeof(udphdr) );
-
     struct ethhdr * eth = (ethhdr*) data;
     struct iphdr  * ip  = (iphdr*) ( (uint8_t*)data + sizeof( struct ethhdr ) );
     struct udphdr * udp = (udphdr*) ( (uint8_t*)ip + sizeof( struct iphdr ) );
@@ -989,13 +986,16 @@ int generate_packet_header( void * data, uint8_t * server_ethernet_address, uint
     ip->ihl      = 5;
     ip->version  = 4;
     ip->tos      = 0x0;
+    ip->tot_len  = __constant_htons( sizeof(struct iphdr) + sizeof(struct udphdr) + payload_bytes );
     ip->id       = 0;
     ip->frag_off = __constant_htons( 0x4000 );
     ip->ttl      = 64;
-    ip->tot_len  = __constant_htons( sizeof(struct iphdr) + sizeof(struct udphdr) + payload_bytes );
     ip->protocol = IPPROTO_UDP;
     ip->saddr    = server_address_big_endian;
     ip->daddr    = client_address_big_endian;
+
+    // IMPORTANT: clear before calculating checksum
+    ip->check    = 0;
     ip->check    = ipv4_checksum( ip, sizeof( struct iphdr ) );
 
     // generate udp header
