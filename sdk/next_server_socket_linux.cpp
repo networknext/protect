@@ -725,7 +725,7 @@ next_server_socket_t * next_server_socket_create( void * context, const char * p
 
     if ( !next_platform_mutex_create( &socket->send_mutex ) )
     {
-        next_error( "server could not create send mutex %d", queue );
+        next_error( "server could not create send mutex" );
         next_server_socket_destroy( server_socket );
         return NULL;
     }
