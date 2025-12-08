@@ -16,6 +16,10 @@
 #include <stddef.h>
 #include <stdbool.h>
 
+#ifdef __linux__
+#define NEXT_XDP 1
+#endif // #ifdef __linux__
+
 #define NEXT_ADVANCED_PACKET_FILTER                               0
 
 #if !defined( NEXT_DEVELOPMENT )
