@@ -1285,9 +1285,15 @@ void xdp_send_thread_function( void * data )
 
                     int packet_bytes = generate_packet_header( packet_data, socket->server_ethernet_address, socket->gateway_ethernet_address, socket->server_address_big_endian, to_address_big_endian, socket->server_port_big_endian, to_port_big_endian, payload_bytes );
 
+                    // todo
+                    printf( "---> generate %d byte packet\n", packet_bytes );
+
                     desc->addr = frame;
                     desc->len = packet_bytes;
                 }
+
+                // todo
+                printf( "sent %d packets on queue %d\n", batch_packets, socket->queue );
 
                 // submit send queue to driver
 
