@@ -88,6 +88,7 @@ struct next_server_xdp_socket_t
     uint32_t num_free_receive_frames;
     uint64_t receive_frames[NEXT_XDP_NUM_FRAMES/2];
     next_platform_thread_t * receive_thread;
+    next_platform_mutex_t receive_mutex;
     std::atomic<uint64_t> receive_counter_main_thread;
     std::atomic<uint64_t> receive_counter_receive_thread;
     struct next_server_socket_receive_buffer_t receive_buffer[2];
@@ -720,6 +721,15 @@ next_server_socket_t * next_server_socket_create( void * context, const char * p
         socket->server_port_big_endian = server_socket->server_port_big_endian;
     }
 
+    // create mutex for send threads
+
+    if ( !next_platform_mutex_create( &socket->send_mutex ) )
+    {
+        next_error( "server could not create send mutex %d", queue );
+        next_server_socket_destroy( server_socket );
+        return NULL;
+    }
+
     // setup send threads
 
     for ( int queue = 0; queue < num_queues; queue++ )
@@ -737,15 +747,6 @@ next_server_socket_t * next_server_socket_create( void * context, const char * p
         }
 
         socket->num_free_send_frames = NEXT_XDP_NUM_FRAMES / 2;
-
-        // create mutex for send threads
-
-        if ( !next_platform_mutex_create( &socket->send_mutex ) )
-        {
-            next_error( "server could not create send mutex %d", queue );
-            next_server_socket_destroy( server_socket );
-            return NULL;
-        }
 
         // start send thread for queue
 
@@ -1284,7 +1285,7 @@ void xdp_send_thread_function( void * data )
                     next_platform_mutex_release( &socket->send_mutex );
 
                     // todo
-                    printf( "--> %x\n", frame );
+                    printf( "--> %x [%d]\n", frame, send_queue_index + j );
 
                     next_assert( frame != INVALID_FRAME );
                     if ( frame == INVALID_FRAME )
