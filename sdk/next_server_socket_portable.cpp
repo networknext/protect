@@ -393,4 +393,4 @@ int next_server_socket_num_queues( struct next_server_socket_t * server_socket )
 
 int next_server_socket_portable_cpp_dummy = 0;
 
-#endif // #if !NEXT_XDP == 0
+#endif // #if NEXT_XDP == 0

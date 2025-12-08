@@ -467,6 +467,9 @@ static void pin_thread_to_cpu( int cpu )
 
 static inline int generate_packet( uint8_t * packet_data, int max_size )
 {
+    // todo
+    max_size = 100;
+
     const int packet_bytes = 1 + rand() % ( max_size - 1 );
     const int start = packet_bytes % 256;
     for ( int i = 0; i < packet_bytes; i++ )

@@ -1173,7 +1173,10 @@ static void xdp_send_thread_function( void * data )
     {
         socket->send_counter_send_thread = (uint64_t) socket->send_counter_main_thread;
 
-        const int on_index = socket->send_counter_send_thread % 2;
+        const int on_index = socket->send_counter_send_thread;
+
+        next_assert( on_index >= 0 );
+        next_assert( on_index <= 1 );
 
         next_server_socket_send_buffer_t * send_buffer = &socket->send_buffer[on_index];
 
@@ -1225,6 +1228,7 @@ static void xdp_send_thread_function( void * data )
         {
             if ( num_packets_to_send >= NEXT_XDP_SEND_BATCH_SIZE )
                 break;
+
             if ( send_buffer->packet_bytes[i] > 0 )
             {
                 send_packet_index[num_packets_to_send] = i;
@@ -1282,13 +1286,6 @@ static void xdp_send_thread_function( void * data )
                 // submit send queue to driver
 
                 xsk_ring_prod__submit( &socket->send_queue, batch_packets );
-
-                // make sure the driver gets updated
-
-                if ( xsk_ring_prod__needs_wakeup( &socket->send_queue ) )
-                {
-                    sendto( xsk_socket__fd( socket->xsk ), NULL, 0, MSG_DONTWAIT, NULL, 0 );
-                }
 
                 // advance our send index past sent packets
 
