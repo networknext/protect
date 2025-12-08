@@ -1288,7 +1288,6 @@ void xdp_send_thread_function( void * data )
 
         // mark any completed send packet frames as free to be reused
 
-        /*
         while ( true )
         {
             uint32_t complete_index;
@@ -1298,6 +1297,8 @@ void xdp_send_thread_function( void * data )
             if ( num_completed == 0 )
                 break;
 
+            xsk_ring_cons__release( &socket->complete_queue, num_completed );
+
             for ( int i = 0; i < num_completed; i++ )
             {
                 uint64_t frame = *xsk_ring_cons__comp_addr( &socket->complete_queue, complete_index + i );
@@ -1306,10 +1307,7 @@ void xdp_send_thread_function( void * data )
 
             // todo
             // printf( "completed %d packets on queue %d\n", num_completed, socket->queue );
-
-            xsk_ring_cons__release( &socket->complete_queue, num_completed );
         }
-        */
     }
 }
 

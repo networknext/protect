@@ -44,7 +44,7 @@ DONE
 
 	BUT
 
-	It's not caused by lack of synchornization. Each send queue has its own umem and send/receive allocators, and these allocators and frames are only used by one thread.
+	It's not caused by lack of synchronization. Each send queue has its own umem and send/receive allocators, and these allocators and frames are only used by one thread.
 
 	What's going on here is that frames are getting completed and modified, before the driver actually sends the packet.
 
@@ -52,11 +52,15 @@ DONE
 
 	If we could modify the frames so it rotates through them, instead of re-using the same frames over and over, it'd be more resilient.
 
-TODO
-	
 	Test this theory by not freeing completed send frames.
 
-	If the theory is true, the clients should receive packets again, because they are all the correct size.
+	If the theory is true, the clients should receive packets again, up till the point where the frames wrap around.
+
+	Yes. Confirmed.	
+
+TODO
+	
+
 
 
 
