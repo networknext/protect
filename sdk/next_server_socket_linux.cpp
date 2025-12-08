@@ -320,8 +320,9 @@ static void free_receive_frame( next_server_xdp_socket_t * socket, uint64_t fram
     socket->num_free_receive_frames++;
 }
 
-static void xdp_send_thread_function( void * data );
-static void xdp_receive_thread_function( void * data );
+void xdp_send_thread_function( void * data );
+
+void xdp_receive_thread_function( void * data );
 
 next_server_socket_t * next_server_socket_create( void * context, const char * public_address_string, int num_queues )
 {
@@ -1163,9 +1164,11 @@ static void pin_thread_to_cpu( int cpu )
     pthread_setaffinity_np( current_thread, sizeof(cpu_set_t), &cpuset );
 }
 
-static void xdp_send_thread_function( void * data )
+void xdp_send_thread_function( void * data )
 {
     next_server_xdp_socket_t * socket = (next_server_xdp_socket_t*) data;
+
+    next_assert( socket );
 
     pin_thread_to_cpu( socket->queue );
 
@@ -1295,9 +1298,11 @@ static void xdp_send_thread_function( void * data )
     }
 }
 
-static void xdp_receive_thread_function( void * data )
+void xdp_receive_thread_function( void * data )
 {
     next_server_xdp_socket_t * socket = (next_server_xdp_socket_t*) data;
+
+    next_assert( socket );
 
     pin_thread_to_cpu( socket->num_queues + socket->queue );
 

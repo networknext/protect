@@ -11,4 +11,4 @@ clean: build/Makefile
 	rm -rf dist/*
 
 build/Makefile: build/CMakeLists.txt
-	cd build && cmake -DCMAKE_BUILD_TYPE=Release .
+	cd build && cmake -DCMAKE_BUILD_TYPE=Debug .
