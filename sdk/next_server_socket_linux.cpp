@@ -323,6 +323,8 @@ static void free_receive_frame( next_server_xdp_socket_t * socket, uint64_t fram
     socket->num_free_receive_frames++;
 }
 
+void xdp_send_thread_function( void * data );
+
 void xdp_receive_thread_function( void * data );
 
 next_server_socket_t * next_server_socket_create( void * context, const char * public_address_string, int num_queues )
