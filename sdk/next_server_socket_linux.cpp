@@ -1452,7 +1452,7 @@ void xdp_receive_thread_function( void * data )
                         {
                             if ( !verify_packet( payload_data + 18, payload_bytes - 18 ) )
                             {
-                                printf( "*** failed to verify in receive thread (%x | %d bytes) ***\n", frames[i], payload_bytes - 18 );
+                                printf( "*** failed to verify in receive thread (%x | %d bytes) ***\n", frame[i], payload_bytes - 18 );
                             }
                         }
                     }
