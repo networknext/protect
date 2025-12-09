@@ -323,38 +323,6 @@ static void free_receive_frame( next_server_xdp_socket_t * socket, uint64_t fram
     socket->num_free_receive_frames++;
 }
 
-/*
-static uint64_t alloc_send_frame( next_server_xdp_socket_t * socket )
-{
-    uint64_t frame = socket->send_frames[socket->send_frame_index];
-    socket->send_frame_index++;
-    socket->send_frame_index %= NEXT_XDP_NUM_FRAMES / 2;
-    return frame;
-}
-
-static void free_send_frame( next_server_xdp_socket_t * socket, uint64_t frame )
-{
-    (void) frame;
-    // ...
-}
-
-static uint64_t alloc_receive_frame( next_server_xdp_socket_t * socket )
-{
-    uint64_t frame = socket->receive_frames[socket->receive_frame_index];
-    socket->receive_frame_index++;
-    socket->receive_frame_index %= NEXT_XDP_NUM_FRAMES / 2;
-    return frame;
-}
-
-static void free_receive_frame( next_server_xdp_socket_t * socket, uint64_t frame )
-{
-    (void) frame;
-    // ...
-}
-*/
-
-void xdp_send_thread_function( void * data );
-
 void xdp_receive_thread_function( void * data );
 
 next_server_socket_t * next_server_socket_create( void * context, const char * public_address_string, int num_queues )
@@ -1465,8 +1433,6 @@ void xdp_receive_thread_function( void * data )
 
             xsk_ring_cons__release( &socket->receive_queue, num_packets );
 
-            // todo
-            /*
             // return processed packets to fill queue
 
             while ( true )
@@ -1493,7 +1459,6 @@ void xdp_receive_thread_function( void * data )
 
                 poll( fds, 1, 0 );
             }
-            */
         }
         else
         {
