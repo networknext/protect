@@ -1442,7 +1442,7 @@ void xdp_receive_thread_function( void * data )
                     struct udphdr * udp = (udphdr*) ( (uint8_t*)ip + sizeof( struct iphdr ) );
 
                     // todo
-                    if ( !verify_packet( packet_data + header_bytes + 18, packet_bytes - header_bytes - 18 ) )
+                    if ( packet_data[header_bytes] == 6 && !verify_packet( packet_data + header_bytes + 18, packet_bytes - header_bytes - 18 ) )
                     {
                         printf( "*** packet did not verify on receive packets thread ***\n" );
                     }
