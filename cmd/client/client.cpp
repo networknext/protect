@@ -32,7 +32,7 @@ static inline int generate_packet( uint8_t * packet_data, int min_size, int max_
     const int start = packet_bytes % 256;
     for ( int i = 0; i < packet_bytes; i++ )
     {
-        packet_data[i] = (uint8_t) start; // (uint8_t) ( start + i ) % 256;
+        packet_data[i] = (uint8_t) ( start + i ) % 256;
     }
     return packet_bytes;
 }
@@ -42,7 +42,7 @@ static inline bool verify_packet( uint8_t * packet_data, int packet_bytes )
     const int start = packet_bytes % 256;
     for ( int i = 0; i < packet_bytes; i++ )
     {
-        if ( packet_data[i] != (uint8_t) start ) // (uint8_t) ( ( start + i ) % 256 ) )
+        if ( packet_data[i] != (uint8_t) ( ( start + i ) % 256 ) )
             return false;
     }
     return true;
