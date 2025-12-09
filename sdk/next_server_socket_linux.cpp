@@ -1331,7 +1331,7 @@ void xdp_send_thread_function( void * data )
             if ( send_packets > 0 && send_packets != num_batch_packets )
             {
                 // IMPORTANT: if this ever fires, we need to implement logic to handle partial batch sends
-                next_error( "need more complicated logic for batch packets" );
+                next_error( "need more complicated logic for send batch packets" );
                 exit(1);
             }
 
@@ -1451,7 +1451,7 @@ void xdp_receive_thread_function( void * data )
                 if ( num_reserved > 0 )
                 {
                     // IMPORTANT: If this ever trips we need to be smarter about how we return frames to the fill queue
-                    next_error( "edge case not handled" );
+                    next_error( "need more complicated logic for return to fill queue" );
                     exit(1);
                 }
 
@@ -1509,6 +1509,8 @@ void next_server_socket_receive_packets( next_server_socket_t * server_socket )
                 next_server_socket_process_packet_internal( server_socket, eth, &from, packet_data, packet_bytes );
             }
         }
+
+        // clear receive buffer num packets. makes it safe to call this multiple times
 
         receive_buffer->num_packets = 0;
     }

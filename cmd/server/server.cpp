@@ -482,7 +482,11 @@ static inline bool verify_packet( uint8_t * packet_data, int packet_bytes )
     for ( int i = 0; i < packet_bytes; i++ )
     {
         if ( packet_data[i] != (uint8_t) ( ( start + i ) % 256 ) )
+        {
+            // todo
+            printf("%d: expected %d, got %d\n", i, ( start + i ) % 256, packet_data[i] );
             return false;
+        }
     }
     return true;
 }
