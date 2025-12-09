@@ -1205,6 +1205,7 @@ void next_server_socket_process_direct_packet( next_server_socket_t * server_soc
     packet_data += NEXT_HEADER_BYTES;
     packet_bytes -= NEXT_HEADER_BYTES;
 
+    // todo
     if ( !verify_packet( packet_data, packet_bytes ) )
     {
         printf( "failed to verify direct packet\n" );
@@ -1426,28 +1427,46 @@ void xdp_receive_thread_function( void * data )
                 if ( receive_buffer->num_packets >= NEXT_XDP_RECV_QUEUE_SIZE )
                     break;
 
-                const struct xdp_desc * desc = xsk_ring_cons__rx_desc( &socket->receive_queue, receive_index + i );
+                const struct xdp_desc * __restrict__ desc = xsk_ring_cons__rx_desc( &socket->receive_queue, receive_index + i );
 
                 frame[i] = desc->addr;
 
-                uint8_t * packet_data = (uint8_t*)socket->buffer + desc->addr;
+                uint8_t * __restrict__ packet_data = (uint8_t*)socket->buffer + desc->addr;
 
                 const int header_bytes = sizeof(ethhdr) + sizeof(iphdr) + sizeof(udphdr);
 
-                int packet_bytes = desc->len - header_bytes;
+                const int packet_bytes = desc->len;
 
-                if ( packet_bytes >= 18 )
+                if ( packet_bytes >= header_bytes + NEXT_HEADER_BYTES )
                 {
                     const int index = receive_buffer->num_packets++;
 
-                    struct ethhdr * eth = (ethhdr*) packet_data;
-                    struct iphdr  * ip  = (iphdr*) ( (uint8_t*)packet_data + sizeof( struct ethhdr ) );
-                    struct udphdr * udp = (udphdr*) ( (uint8_t*)ip + sizeof( struct iphdr ) );
+                    struct ethhdr * __restrict__ eth = (ethhdr*) packet_data;
+                    struct iphdr  * __restrict__ ip  = (iphdr*) ( (uint8_t*)packet_data + sizeof( struct ethhdr ) );
+                    struct udphdr * __restrict__ udp = (udphdr*) ( (uint8_t*)ip + sizeof( struct iphdr ) );
+
+                    uint8_t * __restrict__ payload_data = packet_data + header_bytes;
+
+                    const int payload_bytes = packet_bytes - header_bytes;
+
+                    // todo: verify right off the network stack (!!!)
+                    {
+                        if ( payload_data[0] == NEXT_PACKET_DIRECT )
+                        {
+                            if ( !verify_packet( payload_data + 18, payload_bytes - 18 ) )
+                            {
+                                printf( "*** failed to verify in receive thread ***\n" );
+                            }
+                        }
+                    }
 
                     next_address_load_ipv4( &receive_buffer->from[index], (uint32_t) ip->saddr, udp->source );
-                    receive_buffer->packet_bytes[index] = packet_bytes;
+
                     memcpy( receive_buffer->eth[index], eth->h_source, ETH_ALEN );
-                    memcpy( receive_buffer->packet_data + index * NEXT_MAX_PACKET_BYTES, packet_data + header_bytes, packet_bytes );
+
+                    memcpy( receive_buffer->packet_data + index * NEXT_MAX_PACKET_BYTES, payload_data, payload_bytes );
+
+                    receive_buffer->packet_bytes[index] = payload_bytes;
                 }
             }
 
@@ -1502,10 +1521,10 @@ void next_server_socket_receive_packets( next_server_socket_t * server_socket )
         next_server_xdp_socket_t * socket = &server_socket->socket[queue];
 
         next_platform_mutex_acquire( &socket->receive_mutex );
-        const int prev_off_index = ( socket->receive_counter + 1 ) % 2;
-        socket->receive_buffer[prev_off_index].num_packets = 0;
         socket->receive_counter++;
+        const int on_index = socket->receive_counter % 2;
         const int off_index = ( socket->receive_counter + 1 ) % 2;
+        socket->receive_buffer[on_index].num_packets = 0;
         next_platform_mutex_release( &socket->receive_mutex );
 
         // now we can access the off receive buffer without contention with the receive thread
@@ -1519,8 +1538,7 @@ void next_server_socket_receive_packets( next_server_socket_t * server_socket )
             uint8_t * packet_data = receive_buffer->packet_data + i * NEXT_MAX_PACKET_BYTES;
             const int packet_bytes = receive_buffer->packet_bytes[i];
 
-            if ( packet_bytes < 18 )
-                continue;
+            next_assert( packet_bytes >= 18 );
 
             const uint8_t packet_type = packet_data[0];
 
