@@ -1183,7 +1183,6 @@ static void pin_thread_to_cpu( int cpu )
 
 void xdp_send_thread_function( void * data )
 {
-    /*
     next_server_xdp_socket_t * socket = (next_server_xdp_socket_t*) data;
 
     next_assert( socket );
@@ -1333,7 +1332,6 @@ void xdp_send_thread_function( void * data )
             next_platform_sleep( 0.0 );
         }
     }
-    */
 }
 
 void xdp_receive_thread_function( void * data )
@@ -1409,9 +1407,9 @@ void xdp_receive_thread_function( void * data )
                 }
             }
 
-            next_platform_mutex_release( &socket->receive_mutex );
-
             xsk_ring_cons__release( &socket->receive_queue, num_packets );
+
+            next_platform_mutex_release( &socket->receive_mutex );
 
             // return processed packets to fill queue
 
