@@ -267,33 +267,8 @@ void next_client_socket_destroy( next_client_socket_t * client_socket )
     next_clear_and_free( client_socket->context, client_socket, sizeof(next_client_socket_t) );
 }
 
-// todo
-static inline bool verify_packet( const uint8_t * packet_data, int packet_bytes )
-{
-    const int start = packet_bytes % 256;
-    for ( int i = 0; i < packet_bytes; i++ )
-    {
-        if ( packet_data[i] != (uint8_t) ( ( start + i ) % 256 ) )
-        {
-            // todo
-            printf("%d: expected %d, got %d\n", i, ( start + i ) % 256, packet_data[i] );
-            return false;
-        }
-    }
-    return true;
-}
-
 void next_client_socket_send_packet_internal( next_client_socket_t * client_socket, next_address_t * to_address, uint8_t * packet_data, int packet_bytes )
 {
-    // todo
-    if ( packet_data[0] == NEXT_PACKET_DIRECT )
-    {
-        if ( !verify_packet( packet_data + 18, packet_bytes - 18 ) )
-        {
-            printf( "*** packet did not verify on client send packet *** (a)\n" );
-        }
-    }
-
     uint8_t to_address_data[32];
     next_address_data( to_address, to_address_data );
 
@@ -313,15 +288,6 @@ void next_client_socket_send_packet_internal( next_client_socket_t * client_sock
 
     next_generate_pittle( a, from_address_data, to_address_data, packet_bytes );
     next_generate_chonkle( b, magic, from_address_data, to_address_data, packet_bytes );
-
-    // todo
-    if ( packet_data[0] == NEXT_PACKET_DIRECT )
-    {
-        if ( !verify_packet( packet_data + 18, packet_bytes - 18 ) )
-        {
-            printf( "*** packet did not verify on client send packet *** (b)\n" );
-        }
-    }
 
     next_platform_socket_send_packet( client_socket->socket, to_address, packet_data, packet_bytes );
 }

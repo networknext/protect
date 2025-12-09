@@ -1451,25 +1451,6 @@ void xdp_receive_thread_function( void * data )
 
                     const int payload_bytes = packet_bytes - header_bytes;
 
-
-
-                    /*
-                    // todo: verify right off the network stack (!!!)
-                    {
-                        if ( payload_data[0] == NEXT_PACKET_DIRECT )
-                        {
-                            if ( !verify_packet( payload_data + 18, payload_bytes - 18 ) )
-                            {
-                                printf( "*** failed to verify in receive thread ***\n" );
-                                exit(1);
-                            }
-                        }
-                    }
-                    */
-
-
-
-
                     next_address_load_ipv4( &receive_buffer->from[index], (uint32_t) ip->saddr, udp->source );
 
                     memcpy( receive_buffer->eth[index], eth->h_source, ETH_ALEN );
@@ -1511,10 +1492,13 @@ void xdp_receive_thread_function( void * data )
                 poll( fds, 1, 0 );
             }
         }
+        // todo: ?
+        /*
         else
         {
             next_platform_sleep( 0.0 );            
         }
+        */
     }
 }
 
