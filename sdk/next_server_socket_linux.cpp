@@ -1453,7 +1453,7 @@ void xdp_receive_thread_function( void * data )
 
 
 
-
+                    /*
                     // todo: verify right off the network stack (!!!)
                     {
                         if ( payload_data[0] == NEXT_PACKET_DIRECT )
@@ -1465,6 +1465,7 @@ void xdp_receive_thread_function( void * data )
                             }
                         }
                     }
+                    */
 
 
 
