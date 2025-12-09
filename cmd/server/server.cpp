@@ -554,7 +554,7 @@ int main()
 
             if ( !verify_packet( packets->packet_data[i], packets->packet_bytes[i] ) )
             {
-                next_warn( " ---> packet did not verify" );
+                next_warn( " ---> packet %d/%d did not verify", i, packets->num_packets );
             }
             else
             {
