@@ -1162,13 +1162,11 @@ void next_server_socket_send_packets( struct next_server_socket_t * server_socke
 {
     for ( int queue = 0; queue < server_socket->num_queues; queue++ )
     {
-        // double buffer send buffer
+        // double buffer the send buffer
 
         next_server_xdp_socket_t * socket = &server_socket->socket[queue];
 
         next_assert( server_socket );
-
-        double start = next_platform_time();
 
         next_platform_mutex_acquire( &socket->send_mutex );
         socket->send_counter++;
@@ -1176,15 +1174,6 @@ void next_server_socket_send_packets( struct next_server_socket_t * server_socke
         socket->send_buffer[off_index].num_packets = 0;
         socket->send_buffer[off_index].packet_start_index = 0;
         next_platform_mutex_release( &socket->send_mutex );
-
-        double finish = next_platform_time();
-
-        double send_time = finish - start;
-
-        if ( send_time > 0.001 )
-        {
-            printf( "long send time on queue %d: %.1fms\n", queue, send_time * 1000.0 );
-        }
     }
 }
 
@@ -1481,6 +1470,10 @@ void xdp_receive_thread_function( void * data )
                 poll( fds, 1, 0 );
             }
         }
+        else
+        {
+            next_platform_sleep( 0.0 );            
+        }
     }
 }
 
@@ -1496,24 +1489,12 @@ void next_server_socket_receive_packets( next_server_socket_t * server_socket )
 
         next_server_xdp_socket_t * socket = &server_socket->socket[queue];
 
-        double start = next_platform_time();
-
         next_platform_mutex_acquire( &socket->receive_mutex );
         const int prev_off_index = ( socket->receive_counter + 1 ) % 2;
         socket->receive_buffer[prev_off_index].num_packets = 0;
         socket->receive_counter++;
         const int off_index = ( socket->receive_counter + 1 ) % 2;
         next_platform_mutex_release( &socket->receive_mutex );
-
-        double finish = next_platform_time();
-
-        double receive_time = finish - start;
-
-        // todo
-        if ( receive_time > 0.001 )
-        {
-            printf( "long receive on queue %d: %.1fms\n", queue, receive_time * 1000.0 );
-        }
 
         // now we can access the off receive buffer without contention with the receive thread
 
