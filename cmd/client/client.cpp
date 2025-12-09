@@ -132,7 +132,7 @@ int main()
         for ( int i = 0; i < 10; i++ )
         {
             uint8_t packet_data[256];
-            const int packet_bytes = generate_packet( packet_data, 100, 256 );
+            const int packet_bytes = generate_packet( packet_data, 100, 200 );
             next_client_socket_send_packet( client_socket, packet_data, packet_bytes );
         }
 
