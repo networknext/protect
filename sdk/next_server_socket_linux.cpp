@@ -38,23 +38,37 @@
 #include <stdio.h>
 #include <atomic>
 
+struct alignas(64) next_server_socket_send_packet_info_t
+{
+    next_address_t to;
+    uint8_t packet_type;
+    size_t packet_bytes;
+};
+
 struct next_server_socket_send_buffer_t
 {
-    uint8_t padding_0[1024];
+    uint8_t padding_0[4096];
 
     std::atomic<int> num_packets;
-    int packet_start_index;
-    next_address_t to[NEXT_XDP_SEND_QUEUE_SIZE];
-    uint8_t packet_type[NEXT_XDP_SEND_QUEUE_SIZE];
-    size_t packet_bytes[NEXT_XDP_SEND_QUEUE_SIZE];
-    uint8_t packet_data[NEXT_MAX_PACKET_BYTES*NEXT_XDP_SEND_QUEUE_SIZE];
 
-    uint8_t padding_1[1024];
+    uint8_t padding_1[4096];
+
+    int packet_start_index;
+
+    uint8_t padding_2[4096];
+
+    next_server_socket_send_packet_info_t packet_info[NEXT_XDP_SEND_QUEUE_SIZE];
+
+    uint8_t padding_3[4096];
+
+    uint8_t packet_data[NEXT_XDP_SEND_QUEUE_SIZE][NEXT_MAX_PACKET_BYTES];       // todo: increase to 2048 frame size
+
+    uint8_t padding_4[4096];
 };
 
 struct next_server_socket_receive_buffer_t
 {
-    uint8_t padding_0[1024];
+    uint8_t padding_0[4096];
 
     uint32_t num_packets;
     uint8_t eth[NEXT_XDP_RECV_QUEUE_SIZE][ETH_ALEN];
@@ -62,17 +76,17 @@ struct next_server_socket_receive_buffer_t
     size_t packet_bytes[NEXT_XDP_RECV_QUEUE_SIZE];
     uint8_t packet_data[NEXT_MAX_PACKET_BYTES*NEXT_XDP_RECV_QUEUE_SIZE];
 
-    uint8_t padding_1[1024];
+    uint8_t padding_1[4096];
 };
 
 struct next_server_xdp_socket_t
 {
-    uint8_t padding_0[1024];
+    uint8_t padding_0[4096];
 
     int queue;
     int num_queues;
 
-    uint8_t padding_1[1024];
+    uint8_t padding_1[4096];
 
     void * buffer;
     struct xsk_umem * umem;
@@ -82,7 +96,7 @@ struct next_server_xdp_socket_t
     struct xsk_ring_prod fill_queue;
     struct xsk_socket * xsk;
 
-    uint8_t padding_2[1024];
+    uint8_t padding_2[4096];
 
     std::atomic<bool> receive_quit;
     uint32_t receive_frame_index;
@@ -93,7 +107,7 @@ struct next_server_xdp_socket_t
     uint64_t receive_counter;
     struct next_server_socket_receive_buffer_t receive_buffer[2];
 
-    uint8_t padding_3[1024];
+    uint8_t padding_3[4096];
 
     std::atomic<bool> send_quit;
     uint32_t send_frame_index;
@@ -109,7 +123,7 @@ struct next_server_xdp_socket_t
     int send_off_index;
     struct next_server_socket_send_buffer_t send_buffer[2];
 
-    uint8_t padding_4[1024];
+    uint8_t padding_4[4096];
 };
 
 struct next_server_socket_t
@@ -1018,13 +1032,13 @@ uint8_t * next_server_socket_start_packet_internal( struct next_server_socket_t 
         return NULL;
     }
 
-    uint8_t * packet_data = send_buffer->packet_data + packet_index * NEXT_MAX_PACKET_BYTES;
+    uint8_t * packet_data = send_buffer->packet_data[packet_index];
 
     packet_data += NEXT_HEADER_BYTES;
 
-    send_buffer->to[packet_index] = *to;
-    send_buffer->packet_type[packet_index] = packet_type;
-    send_buffer->packet_bytes[packet_index] = 0;
+    send_buffer->packet_info[packet_index].to = *to;
+    send_buffer->packet_info[packet_index].packet_type = packet_type;
+    send_buffer->packet_info[packet_index].packet_bytes = 0;
 
     return packet_data;
 }
@@ -1054,11 +1068,9 @@ void next_server_socket_finish_packet( struct next_server_socket_t * server_sock
 
     next_server_socket_send_buffer_t * send_buffer = &socket->send_buffer[socket->send_off_index];
 
-    size_t offset = ( packet_data - send_buffer->packet_data );
+    size_t offset = ( packet_data - send_buffer->packet_data[0] );
 
     offset -= offset % NEXT_MAX_PACKET_BYTES;
-
-    next_assert( offset < NEXT_MAX_PACKET_BYTES*NEXT_XDP_SEND_QUEUE_SIZE );
 
     const int packet_index = (int) ( offset / NEXT_MAX_PACKET_BYTES );
 
@@ -1069,16 +1081,16 @@ void next_server_socket_finish_packet( struct next_server_socket_t * server_sock
     next_assert( packet_bytes > 0 );
     next_assert( packet_bytes <= NEXT_MTU );
 
-    send_buffer->packet_bytes[packet_index] = packet_bytes + NEXT_HEADER_BYTES;
+    send_buffer->packet_info[packet_index].packet_bytes = packet_bytes + NEXT_HEADER_BYTES;
 
     // write the packet header
 
     packet_data -= NEXT_HEADER_BYTES;
 
-    packet_data[0] = send_buffer->packet_type[packet_index];
+    packet_data[0] = send_buffer->packet_info[packet_index].packet_type;
 
     uint8_t to_address_data[32];
-    next_address_data( &send_buffer->to[packet_index], to_address_data );
+    next_address_data( &send_buffer->packet_info[packet_index].to, to_address_data );
 
     uint8_t from_address_data[32];
     next_address_data( &server_socket->public_address, from_address_data );
@@ -1103,18 +1115,17 @@ void next_server_socket_abort_packet( struct next_server_socket_t * server_socke
 
     next_server_socket_send_buffer_t * send_buffer = &socket->send_buffer[socket->send_off_index];
 
-    size_t offset = ( packet_data - send_buffer->packet_data );
+    long offset = ( packet_data - send_buffer->packet_data[0] );
 
-    offset -= offset % NEXT_MAX_PACKET_BYTES;
-
-    next_assert( offset < NEXT_MAX_PACKET_BYTES*NEXT_XDP_SEND_QUEUE_SIZE );
+    next_assert( offset >= 0 );
+    next_assert( offset < NEXT_MAX_PACKET_BYTES * NEXT_XDP_SEND_QUEUE_SIZE );
 
     const int packet_index = (int) ( offset / NEXT_MAX_PACKET_BYTES );
 
     next_assert( packet_index >= 0 );  
     next_assert( packet_index < NEXT_XDP_SEND_QUEUE_SIZE );  
 
-    send_buffer->packet_bytes[packet_index] = 0;
+    send_buffer->packet_info[packet_index].packet_bytes = 0;
 }
 
 void next_server_socket_send_packets( struct next_server_socket_t * server_socket )
@@ -1183,6 +1194,10 @@ static void pin_thread_to_cpu( int cpu )
 
 void xdp_send_thread_function( void * data )
 {
+    struct sched_param param;
+    param.sched_priority = sched_get_priority_max( SCHED_FIFO );
+    pthread_setschedparam( pthread_self(), SCHED_FIFO, &param );
+
     next_server_xdp_socket_t * socket = (next_server_xdp_socket_t*) data;
 
     next_assert( socket );
@@ -1256,7 +1271,7 @@ void xdp_send_thread_function( void * data )
                 if ( num_batch_packets >= NEXT_XDP_SEND_BATCH_SIZE )
                     break;
 
-                if ( send_buffer->packet_bytes[i] > 0 )
+                if ( send_buffer->packet_info[i].packet_bytes > 0 )
                 {
                     num_batch_packets++;
 
@@ -1273,12 +1288,12 @@ void xdp_send_thread_function( void * data )
 
                     uint8_t * packet_data = (uint8_t*)socket->buffer + frame;
 
-                    const int payload_bytes = send_buffer->packet_bytes[i];
+                    const int payload_bytes = send_buffer->packet_info[i].packet_bytes;
 
                     memcpy( packet_data + sizeof(struct ethhdr) + sizeof(struct iphdr) + sizeof(struct udphdr), send_buffer->packet_data + i * NEXT_MAX_PACKET_BYTES, payload_bytes );
 
-                    uint32_t to_address_big_endian = next_address_ipv4( &send_buffer->to[i] );
-                    uint16_t to_port_big_endian = next_platform_htons( send_buffer->to[i].port );
+                    uint32_t to_address_big_endian = next_address_ipv4( &send_buffer->packet_info[i].to );
+                    uint16_t to_port_big_endian = next_platform_htons( send_buffer->packet_info[i].to.port );
 
                     batch_packet_bytes[i] = generate_packet_header( packet_data, socket->server_ethernet_address, socket->gateway_ethernet_address, socket->server_address_big_endian, to_address_big_endian, socket->server_port_big_endian, to_port_big_endian, payload_bytes );
                 }
@@ -1336,6 +1351,10 @@ void xdp_send_thread_function( void * data )
 
 void xdp_receive_thread_function( void * data )
 {
+    struct sched_param param;
+    param.sched_priority = sched_get_priority_max( SCHED_FIFO );
+    pthread_setschedparam( pthread_self(), SCHED_FIFO, &param );
+
     next_server_xdp_socket_t * socket = (next_server_xdp_socket_t*) data;
 
     next_assert( socket );

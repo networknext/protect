@@ -39,7 +39,6 @@ struct next_server_socket_receive_buffer_t
 struct next_server_socket_t
 {
     void * context;
-    int num_queues;
     int state;
     next_address_t bind_address;
     next_address_t public_address;
@@ -61,12 +60,6 @@ next_server_socket_t * next_server_socket_create( void * context, const char * p
     (void) num_queues;  // not used
 
     next_assert( public_address_string );
-
-    const char * num_queues_env = getenv( "NEXT_SERVER_NUM_QUEUES" );
-    if ( num_queues_env )
-    {
-        num_queues = atoi( num_queues_env );
-    }
 
     const char * public_address_env = getenv( "NEXT_SERVER_PUBLIC_ADDRESS" );
     if ( public_address_env )
@@ -102,8 +95,6 @@ next_server_socket_t * next_server_socket_create( void * context, const char * p
     memset( server_socket, 0, sizeof( next_server_socket_t) );
     
     server_socket->context = context;
-
-    server_socket->num_queues = num_queues;
 
     server_socket->socket = next_platform_socket_create( server_socket->context, &bind_address, NEXT_PLATFORM_SOCKET_NON_BLOCKING, 0.0f, NEXT_SOCKET_SEND_BUFFER_SIZE, NEXT_SOCKET_RECEIVE_BUFFER_SIZE );
     if ( server_socket->socket == NULL )
@@ -386,7 +377,7 @@ struct next_server_socket_process_packets_t * next_server_socket_process_packets
 int next_server_socket_num_queues( struct next_server_socket_t * server_socket )
 {
     next_assert( server_socket );
-    return server_socket->num_queues;
+    return 0;
 }
 
 #else // #if NEXT_XDP == 0
