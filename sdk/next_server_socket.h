@@ -18,7 +18,7 @@ struct next_server_socket_t;
 #define NEXT_SERVER_SOCKET_RUNNING    1
 #define NEXT_SERVER_SOCKET_STOPPING   2
 
-struct next_server_socket_t * next_server_socket_create( void * context, const char * server_address, int num_queues = 2 );
+struct next_server_socket_t * next_server_socket_create( void * context, const char * server_address, int num_xdp_queues = 7, int num_os_cpus = 1 );
 
 void next_server_socket_destroy( struct next_server_socket_t * server_socket );
 

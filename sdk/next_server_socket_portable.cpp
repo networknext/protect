@@ -55,9 +55,10 @@ struct next_server_socket_t
 
 void next_server_socket_destroy( next_server_socket_t * server_socket );
 
-next_server_socket_t * next_server_socket_create( void * context, const char * public_address_string, int num_queues )
+next_server_socket_t * next_server_socket_create( void * context, const char * public_address_string, int num_xdp_queues, int num_os_cpus )
 {
-    (void) num_queues;  // not used
+    (void) num_xdp_queues;  // not used
+    (void) num_os_cpus;     // not used
 
     next_assert( public_address_string );
 

@@ -70,13 +70,17 @@ struct next_server_socket_receive_buffer_t
 {
     uint8_t padding_0[4096];
 
+    std::atomic<bool> ready;
+
+    uint8_t padding_1[4096];
+
     uint32_t num_packets;
     uint8_t eth[NEXT_XDP_RECV_QUEUE_SIZE][ETH_ALEN];
     next_address_t from[NEXT_XDP_RECV_QUEUE_SIZE];
     size_t packet_bytes[NEXT_XDP_RECV_QUEUE_SIZE];
-    uint8_t packet_data[NEXT_XDP_FRAME_SIZE*NEXT_XDP_RECV_QUEUE_SIZE];
+    uint8_t packet_data[NEXT_XDP_RECV_QUEUE_SIZE][NEXT_XDP_FRAME_SIZE];
 
-    uint8_t padding_1[4096];
+    uint8_t padding_2[4096];
 };
 
 struct next_server_xdp_socket_t
@@ -84,6 +88,7 @@ struct next_server_xdp_socket_t
     uint8_t padding_0[4096];
 
     int queue;
+    int num_os_cpus;
     int num_queues;
 
     uint8_t padding_1[4096];
@@ -98,32 +103,40 @@ struct next_server_xdp_socket_t
 
     uint8_t padding_2[4096];
 
-    std::atomic<bool> receive_quit;
-    uint32_t receive_frame_index;
+    std::atomic<bool> quit;
+
+    uint8_t padding_4[4096];
+
+    uint64_t receive_counter;
+
+    uint8_t padding_5[4096];
+
+    uint64_t send_counter;
+
+    uint8_t padding_6[4096];
+
+    next_platform_thread_t * xdp_thread;
+
+    next_platform_mutex_t send_mutex;
+    next_platform_mutex_t receive_mutex;
+
     int num_free_receive_frames;
     uint64_t receive_frames[NEXT_XDP_NUM_FRAMES/2];
-    next_platform_thread_t * receive_thread;
-    next_platform_mutex_t receive_mutex;
-    uint64_t receive_counter;
-    struct next_server_socket_receive_buffer_t receive_buffer[2];
 
-    uint8_t padding_3[4096];
-
-    std::atomic<bool> send_quit;
-    uint32_t send_frame_index;
     int num_free_send_frames;
     uint64_t send_frames[NEXT_XDP_NUM_FRAMES/2];
+    int send_next_index;
+
     uint8_t server_ethernet_address[ETH_ALEN];
     uint8_t gateway_ethernet_address[ETH_ALEN];
     uint32_t server_address_big_endian;
     uint16_t server_port_big_endian;
-    next_platform_thread_t * send_thread;
-    next_platform_mutex_t send_mutex;
-    uint64_t send_counter;
-    int send_off_index;
-    struct next_server_socket_send_buffer_t send_buffer[2];
 
-    uint8_t padding_4[4096];
+    struct next_server_socket_receive_buffer_t receive_buffer[NEXT_XDP_NUM_BUFFERS];
+
+    struct next_server_socket_send_buffer_t send_buffer[NEXT_XDP_NUM_BUFFERS];
+
+    uint8_t padding_7[4096];
 };
 
 struct next_server_socket_t
@@ -337,11 +350,9 @@ static void free_receive_frame( next_server_xdp_socket_t * socket, uint64_t fram
     socket->num_free_receive_frames++;
 }
 
-void xdp_send_thread_function( void * data );
+void xdp_thread_function( void * data );
 
-void xdp_receive_thread_function( void * data );
-
-next_server_socket_t * next_server_socket_create( void * context, const char * public_address_string, int num_queues )
+next_server_socket_t * next_server_socket_create( void * context, const char * public_address_string, int num_queues, int num_os_cpus )
 {
     next_assert( num_queues >= 1 );
     next_assert( public_address_string );
@@ -484,6 +495,8 @@ next_server_socket_t * next_server_socket_create( void * context, const char * p
         while ( fgets( buffer, sizeof(buffer), file ) != NULL ) {}
         pclose( file );
     }
+
+    // todo: we should set num queues on the sister NIC port as well (0/1)
 
     // look up the ethernet address of the network interface
 
@@ -676,6 +689,7 @@ next_server_socket_t * next_server_socket_create( void * context, const char * p
 
         socket->queue = queue;
         socket->num_queues = num_queues;
+        socket->num_os_cpus = num_os_cpus;
 
         // allocate umem
 
@@ -734,13 +748,6 @@ next_server_socket_t * next_server_socket_create( void * context, const char * p
         memcpy( socket->gateway_ethernet_address, server_socket->gateway_ethernet_address, ETH_ALEN );
         socket->server_address_big_endian = server_socket->server_address_big_endian;
         socket->server_port_big_endian = server_socket->server_port_big_endian;
-    }
-
-    // setup send threads
-
-    for ( int queue = 0; queue < num_queues; queue++ )
-    {
-        next_server_xdp_socket_t * socket = &server_socket->socket[queue];
 
         // initialize send frame allocator
 
@@ -754,37 +761,9 @@ next_server_socket_t * next_server_socket_create( void * context, const char * p
 
         socket->num_free_send_frames = NEXT_XDP_NUM_FRAMES / 2;
 
-        // make sure we start off with the correct send buffer off index
+        // make sure we start off with the correct send buffer next index
 
-        socket->send_off_index = ( socket->send_counter + 1 ) % 2;
-
-        // create send mutex
-
-        if ( !next_platform_mutex_create( &socket->send_mutex ) )
-        {
-            next_error( "server could not create send mutex %d", queue );
-            next_server_socket_destroy( server_socket );
-            return NULL;
-        }
-
-        // start send thread for queue
-
-        next_info( "starting send thread for socket queue %d", socket->queue );
-
-        socket->send_thread = next_platform_thread_create( NULL, xdp_send_thread_function, socket );
-        if ( !socket->send_thread )
-        {
-            next_error( "server could not create send thread %d", queue );
-            next_server_socket_destroy( server_socket );
-            return NULL;
-        }
-    }
-
-    // setup receive threads
-
-    for ( int queue = 0; queue < num_queues; queue++ )
-    {
-        next_server_xdp_socket_t * socket = &server_socket->socket[queue];
+        socket->send_next_index = ( socket->send_counter + 1 ) % NEXT_XDP_NUM_BUFFERS;
 
         // initialize receive frame allocator
 
@@ -830,23 +809,32 @@ next_server_socket_t * next_server_socket_create( void * context, const char * p
             xsk_ring_prod__submit( &socket->fill_queue, NEXT_XDP_FILL_QUEUE_SIZE );
         }
 
+        // create send mutex
+
+        if ( !next_platform_mutex_create( &socket->send_mutex ) )
+        {
+            next_error( "failed to create send mutex for queue %d", queue );
+            next_server_socket_destroy( server_socket );
+            return NULL;
+        }
+
         // create receive mutex
 
         if ( !next_platform_mutex_create( &socket->receive_mutex ) )
         {
-            next_error( "server could not create receive mutex %d", queue );
+            next_error( "failed to create receive mutex for queue %d", queue );
             next_server_socket_destroy( server_socket );
             return NULL;
-        }        
+        }
 
-        // start receive thread for queue
+        // start xdp thread
 
-        next_info( "starting receive thread for socket queue %d", socket->queue );
+        next_info( "starting xdp thread for socket queue %d", socket->queue );
 
-        socket->receive_thread = next_platform_thread_create( NULL, xdp_receive_thread_function, socket );
-        if ( !socket->receive_thread )
+        socket->xdp_thread = next_platform_thread_create( NULL, xdp_thread_function, socket );
+        if ( !socket->xdp_thread )
         {
-            next_error( "server could not create receive thread" );
+            next_error( "server could not create xdp thread %d", queue );
             next_server_socket_destroy( server_socket );
             return NULL;
         }
@@ -890,25 +878,19 @@ void next_server_socket_destroy( next_server_socket_t * server_socket )
     {
         next_server_xdp_socket_t * socket = &server_socket->socket[i];
 
-        // stop send thread
+        // stop xdp thread
 
-        if ( socket->send_thread )
+        if ( socket->xdp_thread )
         {
-            socket->send_quit = true;
-            next_platform_thread_join( socket->send_thread );
-            next_platform_thread_destroy( socket->send_thread );
-            next_platform_mutex_destroy( &socket->send_mutex );
+            socket->quit = true;
+            next_platform_thread_join( socket->xdp_thread );
+            next_platform_thread_destroy( socket->xdp_thread );
         }
 
-        // stop receive thread
+        // destroy mutexes
 
-        if ( socket->receive_thread )
-        {
-            socket->receive_quit = true;
-            next_platform_thread_join( socket->receive_thread );
-            next_platform_thread_destroy( socket->receive_thread );
-            next_platform_mutex_destroy( &socket->receive_mutex );
-        }
+        next_platform_mutex_destroy( &socket->send_mutex );
+        next_platform_mutex_destroy( &socket->receive_mutex );
 
         // destroy xdp socket
 
@@ -1018,17 +1000,17 @@ int generate_packet_header( void * data, uint8_t * server_ethernet_address, uint
     return sizeof(struct ethhdr) + sizeof(struct iphdr) + sizeof(struct udphdr) + payload_bytes; 
 }
 
-uint8_t * next_server_socket_start_packet_internal( struct next_server_socket_t * server_socket, int queue, const next_address_t * to, uint8_t packet_type )
+uint8_t * next_server_socket_start_packet_internal( struct next_server_socket_t * server_socket, uint64_t packet_id, int queue, const next_address_t * to, uint8_t packet_type )
 {
     next_server_xdp_socket_t * socket = &server_socket->socket[queue];
 
-    next_server_socket_send_buffer_t * send_buffer = &socket->send_buffer[socket->send_off_index];
+    next_server_socket_send_buffer_t * send_buffer = &socket->send_buffer[socket->send_next_index];
 
     int packet_index = send_buffer->num_packets.fetch_add(1);
 
     if ( packet_index >= NEXT_XDP_SEND_QUEUE_SIZE )
     {
-        next_warn( "sent too many packets. increase NEXT_XDP_SEND_QUEUE_SIZE" );
+        next_warn( "sent too many packets!" );
         return NULL;
     }
 
@@ -1053,7 +1035,7 @@ uint8_t * next_server_socket_start_packet( struct next_server_socket_t * server_
 
     const int queue = *packet_id % server_socket->num_queues;
 
-    return next_server_socket_start_packet_internal( server_socket, queue, to, NEXT_PACKET_DIRECT );
+    return next_server_socket_start_packet_internal( server_socket, *packet_id, queue, to, NEXT_PACKET_DIRECT );
 }
 
 void next_server_socket_finish_packet( struct next_server_socket_t * server_socket, uint64_t packet_id, uint8_t * packet_data, int packet_bytes )
@@ -1066,11 +1048,9 @@ void next_server_socket_finish_packet( struct next_server_socket_t * server_sock
 
     next_server_xdp_socket_t * socket = &server_socket->socket[queue];
 
-    next_server_socket_send_buffer_t * send_buffer = &socket->send_buffer[socket->send_off_index];
+    next_server_socket_send_buffer_t * send_buffer = &socket->send_buffer[socket->send_next_index];
 
     size_t offset = ( packet_data - send_buffer->packet_data[0] );
-
-    offset -= offset % NEXT_XDP_FRAME_SIZE;
 
     const int packet_index = (int) ( offset / NEXT_XDP_FRAME_SIZE );
 
@@ -1113,7 +1093,7 @@ void next_server_socket_abort_packet( struct next_server_socket_t * server_socke
 
     next_server_xdp_socket_t * socket = &server_socket->socket[queue];
 
-    next_server_socket_send_buffer_t * send_buffer = &socket->send_buffer[socket->send_off_index];
+    next_server_socket_send_buffer_t * send_buffer = &socket->send_buffer[socket->send_next_index];
 
     long offset = ( packet_data - send_buffer->packet_data[0] );
 
@@ -1132,19 +1112,24 @@ void next_server_socket_send_packets( struct next_server_socket_t * server_socke
 {
     for ( int queue = 0; queue < server_socket->num_queues; queue++ )
     {
-        // double buffer the send buffer
-
         next_server_xdp_socket_t * socket = &server_socket->socket[queue];
 
-        next_assert( server_socket );
-
         next_platform_mutex_acquire( &socket->send_mutex );
-        socket->send_counter++;
-        const int off_index = ( socket->send_counter + 1 ) % 2;
-        socket->send_buffer[off_index].num_packets = 0;
-        socket->send_buffer[off_index].packet_start_index = 0;
-        socket->send_off_index = off_index;
+        {
+            socket->send_counter++;
+        }
         next_platform_mutex_release( &socket->send_mutex );
+
+        socket->send_next_index = ( socket->send_counter + 1 ) % NEXT_XDP_NUM_BUFFERS;
+        const int on_index = socket->send_counter % NEXT_XDP_NUM_BUFFERS;
+        for ( int i = 0; i < NEXT_XDP_NUM_BUFFERS; i++ )
+        {
+            if ( i != on_index )
+            {
+                socket->send_buffer[i].num_packets = 0;
+                socket->send_buffer[i].packet_start_index = 0;
+            }
+        }
     }
 }
 
@@ -1192,42 +1177,224 @@ static void pin_thread_to_cpu( int cpu )
     pthread_setaffinity_np( current_thread, sizeof(cpu_set_t), &cpuset );
 }
 
-void xdp_send_thread_function( void * data )
+struct next_server_socket_process_packets_t * next_server_socket_process_packets( struct next_server_socket_t * server_socket )
 {
-    struct sched_param param;
-    param.sched_priority = sched_get_priority_max( SCHED_FIFO );
-    pthread_setschedparam( pthread_self(), SCHED_FIFO, &param );
+    next_assert( server_socket );
+    return &server_socket->process_packets;
+}
 
+int next_server_socket_num_queues( struct next_server_socket_t * server_socket )
+{
+    next_assert( server_socket );
+    return server_socket->num_queues;
+}
+
+void next_server_socket_receive_packets( next_server_socket_t * server_socket )
+{
+    next_assert( server_socket );
+
+    server_socket->process_packets.num_packets = 0;
+
+    for ( int queue = 0; queue < server_socket->num_queues; queue++ )
+    {
+        next_server_xdp_socket_t * socket = &server_socket->socket[queue];
+
+        next_platform_mutex_acquire( &socket->receive_mutex );
+        {
+            socket->receive_counter++;
+        }
+        next_platform_mutex_release( &socket->receive_mutex );        
+
+        const int on_buffer = ( socket->receive_counter ) % NEXT_XDP_NUM_BUFFERS;
+
+        for ( int j = 0; j < NEXT_XDP_NUM_BUFFERS; j++ )
+        {
+            if ( j == on_buffer )
+                continue;
+
+            next_server_socket_receive_buffer_t * receive_buffer = &socket->receive_buffer[j];
+
+            for ( int i = 0; i < receive_buffer->num_packets; i++ )
+            {
+                uint8_t * eth = receive_buffer->eth[i];
+                next_address_t from = receive_buffer->from[i];
+                uint8_t * packet_data = receive_buffer->packet_data[i];
+                const int packet_bytes = receive_buffer->packet_bytes[i];
+
+                next_assert( packet_bytes >= 18 );
+
+                const uint8_t packet_type = packet_data[0];
+
+                if ( packet_type == NEXT_PACKET_DIRECT )
+                { 
+                    next_server_socket_process_direct_packet( server_socket, eth, &from, packet_data, packet_bytes );
+                }
+                else
+                {
+                    next_server_socket_process_packet_internal( server_socket, eth, &from, packet_data, packet_bytes );
+                }
+            }
+
+            receive_buffer->num_packets = 0;
+        }
+    }
+}
+
+void xdp_thread_function( void * data )
+{
     next_server_xdp_socket_t * socket = (next_server_xdp_socket_t*) data;
 
     next_assert( socket );
 
-    pin_thread_to_cpu( socket->queue );
+    pin_thread_to_cpu( socket->num_os_cpus + socket->queue );
+
+    next_info( "pinning xdp thread %d to CPU %d", socket->queue, socket->num_os_cpus + socket->queue );
+
+    struct pollfd fds[1];
+    fds[0].fd = xsk_socket__fd( socket->xsk );
+    fds[0].events = POLLIN;
 
     int num_batch_packets = 0;
     int batch_frames[NEXT_XDP_SEND_BATCH_SIZE];
     int batch_packet_bytes[NEXT_XDP_SEND_BATCH_SIZE];
 
-    while ( !socket->send_quit )
-    {
-        // busy poll the xdp driver
+    int num_pending_return = 0;
+    uint64_t pending_return[NEXT_XDP_RECV_QUEUE_SIZE];
 
-        if ( xsk_ring_prod__needs_wakeup( &socket->send_queue ) )
+    while ( !socket->quit )
+    {
+        // busy poll the driver
+
+        poll( fds, 1, 0 );
+
+        // return pending frames to the fill queue
+
+        if ( num_pending_return > 0 )
         {
-            sendto( xsk_socket__fd( socket->xsk ), NULL, 0, MSG_DONTWAIT, NULL, 0 );
+            uint32_t fill_index;
+            int num_reserved = xsk_ring_prod__reserve( &socket->fill_queue, num_pending_return, &fill_index );
+            for ( int i = 0; i < num_reserved; i++ )
+            {
+                *xsk_ring_prod__fill_addr( &socket->fill_queue, fill_index + i ) = pending_return[i];
+            }
+
+            xsk_ring_prod__submit( &socket->fill_queue, num_reserved );
+
+            if ( num_reserved != num_pending_return )
+            {
+                int num_extra = num_pending_return - num_reserved;
+
+                next_assert( num_extra > 0 );
+
+                for ( int i = 0; i < num_extra; i++ )
+                {
+                    pending_return[i] = pending_return[num_reserved+i];
+                }
+            }
+            else
+            {
+                num_pending_return = 0;
+            }
+        }
+
+        // see if there are any packets to receive
+
+        uint32_t receive_index;
+        
+        uint32_t num_packets = xsk_ring_cons__peek( &socket->receive_queue, NEXT_XDP_RECV_QUEUE_SIZE, &receive_index );
+
+        if ( num_packets > 0 )
+        {
+            next_platform_mutex_acquire( &socket->receive_mutex );
+
+            const int on_index = socket->receive_counter % NEXT_XDP_NUM_BUFFERS;
+
+            next_server_socket_receive_buffer_t * __restrict__ receive_buffer = &socket->receive_buffer[on_index];
+
+            // receive packets
+
+            uint64_t frame[NEXT_XDP_RECV_QUEUE_SIZE];
+
+            for ( uint32_t i = 0; i < num_packets; i++ ) 
+            {
+                if ( receive_buffer->num_packets >= NEXT_XDP_RECV_QUEUE_SIZE )
+                    break;
+
+                const struct xdp_desc * __restrict__ desc = xsk_ring_cons__rx_desc( &socket->receive_queue, receive_index + i );
+
+                frame[i] = desc->addr;
+
+                uint8_t * __restrict__ packet_data = (uint8_t*)socket->buffer + desc->addr;
+
+                const int header_bytes = sizeof(ethhdr) + sizeof(iphdr) + sizeof(udphdr);
+
+                const int packet_bytes = desc->len;
+
+                if ( packet_bytes >= header_bytes + NEXT_HEADER_BYTES )
+                {
+                    const int index = receive_buffer->num_packets;
+
+                    struct ethhdr * __restrict__ eth = (ethhdr*) packet_data;
+                    struct iphdr  * __restrict__ ip  = (iphdr*) ( (uint8_t*)packet_data + sizeof( struct ethhdr ) );
+                    struct udphdr * __restrict__ udp = (udphdr*) ( (uint8_t*)ip + sizeof( struct iphdr ) );
+
+                    uint8_t * __restrict__ payload_data = packet_data + header_bytes;
+
+                    const int payload_bytes = packet_bytes - header_bytes;
+
+                    next_address_load_ipv4( &receive_buffer->from[index], (uint32_t) ip->saddr, udp->source );
+
+                    memcpy( receive_buffer->eth[index], eth->h_source, ETH_ALEN );
+
+                    memcpy( receive_buffer->packet_data[index], payload_data, payload_bytes );
+
+                    receive_buffer->packet_bytes[index] = payload_bytes;
+
+                    receive_buffer->num_packets++;
+                }
+            }
+
+            next_platform_mutex_release( &socket->receive_mutex );
+
+            xsk_ring_cons__release( &socket->receive_queue, num_packets );
+
+            // return processed packets to fill queue
+
+            uint32_t fill_index;
+            
+            int num_reserved = xsk_ring_prod__reserve( &socket->fill_queue, num_packets, &fill_index );
+
+            if ( num_reserved > 0 )
+            {
+                for ( int i = 0; i < num_reserved; i++ )
+                {
+                    *xsk_ring_prod__fill_addr( &socket->fill_queue, fill_index + i ) = frame[i];
+                }
+
+                xsk_ring_prod__submit( &socket->fill_queue, num_reserved );
+            }
+
+            // append frames we couldn't return to the pending return array
+
+            if ( num_reserved != num_packets )
+            {
+                next_assert( num_packets >= num_reserved );
+                const int num_extra = num_packets - num_reserved;
+                for ( int i = 0; i < num_extra; i++ )
+                {
+                    pending_return[num_pending_return++] = frame[num_reserved+i];
+                }
+            }
         }
 
         // mark any completed send packet frames as free to be reused
 
-        while ( true )
+        uint32_t complete_index;
+
+        unsigned int num_completed = xsk_ring_cons__peek( &socket->complete_queue, XSK_RING_CONS__DEFAULT_NUM_DESCS, &complete_index );
+
+        if ( num_completed > 0 )
         {
-            uint32_t complete_index;
-
-            unsigned int num_completed = xsk_ring_cons__peek( &socket->complete_queue, XSK_RING_CONS__DEFAULT_NUM_DESCS, &complete_index );
-
-            if ( num_completed == 0 )
-                break;
-
             for ( int i = 0; i < num_completed; i++ )
             {
                 uint64_t frame = *xsk_ring_cons__comp_addr( &socket->complete_queue, complete_index + i );
@@ -1237,13 +1404,13 @@ void xdp_send_thread_function( void * data )
             xsk_ring_cons__release( &socket->complete_queue, num_completed );
         }
 
-        // if we don't already have a batch of packes to send, get one
+        // if we don't already have a batch of packets to send, get one
 
         if ( num_batch_packets == 0 )
         {
             next_platform_mutex_acquire( &socket->send_mutex );
 
-            const int on_index = socket->send_counter % 2;
+            const int on_index = socket->send_counter % NEXT_XDP_NUM_BUFFERS;
 
             next_server_socket_send_buffer_t * __restrict__ send_buffer = &socket->send_buffer[on_index];        
 
@@ -1280,8 +1447,8 @@ void xdp_send_thread_function( void * data )
                     next_assert( frame != INVALID_FRAME );
                     if ( frame == INVALID_FRAME )
                     {
-                        next_error( "ran out of frames" );
-                        exit(1);
+                        next_error( "out of frames" );
+                        exit( 1 );
                     }
 
                     batch_frames[i] = frame;
@@ -1315,9 +1482,8 @@ void xdp_send_thread_function( void * data )
 
             if ( send_packets > 0 && send_packets != num_batch_packets )
             {
-                // IMPORTANT: if this ever fires, we need to implement logic to handle partial batch sends
                 next_error( "need more complicated logic for send batch packets" );
-                exit(1);
+                exit( 1 );
             }
 
             if ( send_packets > 0 )
@@ -1340,192 +1506,12 @@ void xdp_send_thread_function( void * data )
                 num_batch_packets = 0;
             }
         }
-        else
-        {
-            // IMPORTANT: if there are no packets to send, do a little sleep to be nice otherwise bad things happen
 
-            next_platform_sleep( 0.0 );
+        if ( xsk_ring_prod__needs_wakeup( &socket->send_queue ) )
+        {
+            sendto( xsk_socket__fd( socket->xsk ), NULL, 0, MSG_DONTWAIT, NULL, 0 );
         }
     }
-}
-
-void xdp_receive_thread_function( void * data )
-{
-    struct sched_param param;
-    param.sched_priority = sched_get_priority_max( SCHED_FIFO );
-    pthread_setschedparam( pthread_self(), SCHED_FIFO, &param );
-
-    next_server_xdp_socket_t * socket = (next_server_xdp_socket_t*) data;
-
-    next_assert( socket );
-
-    pin_thread_to_cpu( socket->num_queues + socket->queue );
-
-    struct pollfd fds[1];
-    fds[0].fd = xsk_socket__fd( socket->xsk );
-    fds[0].events = POLLIN;
-
-    while ( !socket->receive_quit )
-    {
-        // keep network driver active
-
-        poll( fds, 1, 0 );
-
-        // see if there are any packets to receive
-
-        uint32_t receive_index;
-        
-        uint32_t num_packets = xsk_ring_cons__peek( &socket->receive_queue, NEXT_XDP_RECV_QUEUE_SIZE, &receive_index );
-
-        if ( num_packets > 0 )
-        {
-            next_platform_mutex_acquire( &socket->receive_mutex );
-
-            const int on_index = socket->receive_counter % 2;
-
-            next_server_socket_receive_buffer_t * __restrict__ receive_buffer = &socket->receive_buffer[on_index];
-
-            // receive packets
-
-            static uint64_t frame[NEXT_XDP_RECV_QUEUE_SIZE];
-
-            for ( uint32_t i = 0; i < num_packets; i++ ) 
-            {
-                if ( receive_buffer->num_packets >= NEXT_XDP_RECV_QUEUE_SIZE )
-                    break;
-
-                const struct xdp_desc * __restrict__ desc = xsk_ring_cons__rx_desc( &socket->receive_queue, receive_index + i );
-
-                frame[i] = desc->addr;
-
-                uint8_t * __restrict__ packet_data = (uint8_t*)socket->buffer + desc->addr;
-
-                const int header_bytes = sizeof(ethhdr) + sizeof(iphdr) + sizeof(udphdr);
-
-                const int packet_bytes = desc->len;
-
-                if ( packet_bytes >= header_bytes + NEXT_HEADER_BYTES )
-                {
-                    const int index = receive_buffer->num_packets;
-
-                    struct ethhdr * __restrict__ eth = (ethhdr*) packet_data;
-                    struct iphdr  * __restrict__ ip  = (iphdr*) ( (uint8_t*)packet_data + sizeof( struct ethhdr ) );
-                    struct udphdr * __restrict__ udp = (udphdr*) ( (uint8_t*)ip + sizeof( struct iphdr ) );
-
-                    uint8_t * __restrict__ payload_data = packet_data + header_bytes;
-
-                    const int payload_bytes = packet_bytes - header_bytes;
-
-                    next_address_load_ipv4( &receive_buffer->from[index], (uint32_t) ip->saddr, udp->source );
-
-                    memcpy( receive_buffer->eth[index], eth->h_source, ETH_ALEN );
-
-                    memcpy( receive_buffer->packet_data + index * NEXT_XDP_FRAME_SIZE, payload_data, payload_bytes );
-
-                    receive_buffer->packet_bytes[index] = payload_bytes;
-
-                    receive_buffer->num_packets++;
-                }
-            }
-
-            next_platform_mutex_release( &socket->receive_mutex );
-
-            xsk_ring_cons__release( &socket->receive_queue, num_packets );
-
-            // return processed packets to fill queue
-
-            while ( true )
-            {
-                uint32_t fill_index;
-                int num_reserved = xsk_ring_prod__reserve( &socket->fill_queue, num_packets, &fill_index );
-                for ( int i = 0; i < num_reserved; i++ )
-                {
-                    *xsk_ring_prod__fill_addr( &socket->fill_queue, fill_index + i ) = frame[i];
-                }
-
-                if ( num_reserved == num_packets )
-                {
-                    xsk_ring_prod__submit( &socket->fill_queue, num_reserved );
-                    break;
-                }
-
-                if ( num_reserved > 0 )
-                {
-                    // IMPORTANT: If this ever trips we need to be smarter about how we return frames to the fill queue
-                    next_error( "need more complicated logic for return to fill queue" );
-                    exit(1);
-                }
-
-                poll( fds, 1, 0 );
-            }
-        }
-        else
-        {
-            next_platform_sleep( 0.0 );            
-        }
-    }
-}
-
-void next_server_socket_receive_packets( next_server_socket_t * server_socket )
-{
-    next_assert( server_socket );
-
-    server_socket->process_packets.num_packets = 0;
-
-    for ( int queue = 0; queue < server_socket->num_queues; queue++ )
-    {
-        // double buffer the receive buffer
-
-        next_server_xdp_socket_t * socket = &server_socket->socket[queue];
-
-        next_platform_mutex_acquire( &socket->receive_mutex );
-        socket->receive_counter++;
-        const int on_index = socket->receive_counter % 2;
-        const int off_index = ( socket->receive_counter + 1 ) % 2;
-        socket->receive_buffer[on_index].num_packets = 0;
-        next_platform_mutex_release( &socket->receive_mutex );
-
-        // now we can access the off receive buffer without contention with the receive thread
-
-        next_server_socket_receive_buffer_t * receive_buffer = &socket->receive_buffer[off_index];
-
-        for ( int i = 0; i < receive_buffer->num_packets; i++ )
-        {
-            uint8_t * eth = receive_buffer->eth[i];
-            next_address_t from = receive_buffer->from[i];
-            uint8_t * packet_data = receive_buffer->packet_data + i * NEXT_XDP_FRAME_SIZE;
-            const int packet_bytes = receive_buffer->packet_bytes[i];
-
-            next_assert( packet_bytes >= 18 );
-
-            const uint8_t packet_type = packet_data[0];
-
-            if ( packet_type == NEXT_PACKET_DIRECT )
-            { 
-                next_server_socket_process_direct_packet( server_socket, eth, &from, packet_data, packet_bytes );
-            }
-            else
-            {
-                next_server_socket_process_packet_internal( server_socket, eth, &from, packet_data, packet_bytes );
-            }
-        }
-
-        // clear receive buffer num packets. makes it safe to call this multiple times
-
-        receive_buffer->num_packets = 0;
-    }
-}
-
-struct next_server_socket_process_packets_t * next_server_socket_process_packets( struct next_server_socket_t * server_socket )
-{
-    next_assert( server_socket );
-    return &server_socket->process_packets;
-}
-
-int next_server_socket_num_queues( struct next_server_socket_t * server_socket )
-{
-    next_assert( server_socket );
-    return server_socket->num_queues;
 }
 
 #else // #if NEXT_XDP

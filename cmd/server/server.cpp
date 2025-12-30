@@ -509,8 +509,10 @@ int main()
 
     const int num_queues = next_server_socket_num_queues( server_socket );
 
+    // todo: num os cpus
+
 #ifdef __linux__
-    pin_thread_to_cpu( num_queues * 2 );
+    pin_thread_to_cpu( num_queues );
 #endif // #ifdef __linux__
 
 #if LOAD_TEST

@@ -248,7 +248,7 @@ next_client_socket_t * next_client_socket_create( void * context, const char * c
 void next_client_socket_destroy( next_client_socket_t * client_socket )
 {
     // IMPORTANT: Please call disconnect and wait for the client to disconnect before destroying the client
-    next_assert( client_socket->state == NEXT_CLIENT_SOCKET_DISCONNECTED );
+    next_assert( client_socket->state <= NEXT_CLIENT_SOCKET_DISCONNECTED );
 
     if ( client_socket->thread )
     {
@@ -403,7 +403,7 @@ void next_client_socket_process_packet( next_client_socket_t * client_socket, ne
 
     if ( from->type != NEXT_ADDRESS_IPV4 )
     {
-        next_info( "ignored packet from non-ipv4 address" );
+        next_warn( "ignored packet from non-ipv4 address" );
         return;
     }
 
@@ -411,7 +411,7 @@ void next_client_socket_process_packet( next_client_socket_t * client_socket, ne
 
     if ( !next_basic_packet_filter( packet_data, packet_bytes ) )
     {
-        next_info( "basic packet filter dropped packet" );
+        next_warn( "basic packet filter dropped packet" );
         return;
     }
 
