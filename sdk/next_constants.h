@@ -20,7 +20,7 @@
 
 #define NEXT_XDP_NUM_BUFFERS                                            2
 #define NEXT_XDP_NUM_FRAMES                                         65536
-#define NEXT_XDP_FRAME_SIZE                                          4096
+#define NEXT_XDP_FRAME_SIZE                                          4096  // IMPORTANT: This *must* be 4096 on packets will get corrupted on intel NICs! (Dec 30th, 2025)
 #define NEXT_XDP_SEND_QUEUE_SIZE                             ( 4096 * 4 )
 #define NEXT_XDP_RECV_QUEUE_SIZE                             ( 4096 * 4 )
 #define NEXT_XDP_FILL_QUEUE_SIZE                                     2048
