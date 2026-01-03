@@ -1203,7 +1203,7 @@ void next_server_socket_receive_packets( next_server_socket_t * server_socket )
         {
             socket->receive_counter++;
         }
-        next_platform_mutex_release( &socket->receive_mutex );        
+        next_platform_mutex_release( &socket->receive_mutex );
 
         const int on_buffer = ( socket->receive_counter ) % NEXT_XDP_NUM_BUFFERS;
 
@@ -1237,7 +1237,7 @@ void next_server_socket_receive_packets( next_server_socket_t * server_socket )
 
             receive_buffer->num_packets = 0;
         }
-    }
+    }        
 }
 
 void xdp_thread_function( void * data )
@@ -1247,6 +1247,10 @@ void xdp_thread_function( void * data )
     next_assert( socket );
 
     pin_thread_to_cpu( socket->num_os_cpus + socket->queue );
+
+    struct sched_param param;
+    param.sched_priority = sched_get_priority_min( SCHED_RR );
+    pthread_setschedparam( pthread_self(), SCHED_RR, &param );
 
     next_info( "pinning xdp thread %d to CPU %d", socket->queue, socket->num_os_cpus + socket->queue );
 
@@ -1440,8 +1444,6 @@ void xdp_thread_function( void * data )
 
                 if ( send_buffer->packet_info[i].packet_bytes > 0 )
                 {
-                    num_batch_packets++;
-
                     int frame = alloc_send_frame( socket );
 
                     next_assert( frame != INVALID_FRAME );
@@ -1450,8 +1452,6 @@ void xdp_thread_function( void * data )
                         next_error( "out of frames" );
                         exit( 1 );
                     }
-
-                    batch_frames[i] = frame;
 
                     uint8_t * packet_data = (uint8_t*)socket->buffer + frame;
 
@@ -1462,7 +1462,9 @@ void xdp_thread_function( void * data )
                     uint32_t to_address_big_endian = next_address_ipv4( &send_buffer->packet_info[i].to );
                     uint16_t to_port_big_endian = next_platform_htons( send_buffer->packet_info[i].to.port );
 
-                    batch_packet_bytes[i] = generate_packet_header( packet_data, socket->server_ethernet_address, socket->gateway_ethernet_address, socket->server_address_big_endian, to_address_big_endian, socket->server_port_big_endian, to_port_big_endian, payload_bytes );
+                    batch_frames[num_batch_packets] = frame;
+                    batch_packet_bytes[num_batch_packets] = generate_packet_header( packet_data, socket->server_ethernet_address, socket->gateway_ethernet_address, socket->server_address_big_endian, to_address_big_endian, socket->server_port_big_endian, to_port_big_endian, payload_bytes );
+                    num_batch_packets++;
                 }
 
                 send_buffer->packet_start_index++;
@@ -1511,6 +1513,10 @@ void xdp_thread_function( void * data )
         {
             sendto( xsk_socket__fd( socket->xsk ), NULL, 0, MSG_DONTWAIT, NULL, 0 );
         }
+
+        // IMPORTANT: Sleep so the driver gets all the time it wants. Otherwise, it can hitch us
+
+        next_platform_sleep( 0.0 );
     }
 }
 
